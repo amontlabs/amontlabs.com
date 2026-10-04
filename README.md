@@ -36,7 +36,7 @@ In `src/scripts/signature.js` the `J` object holds the tuning: progress `p` (0 t
 
 Lenis (lerp 0.09, wheel only, touch native, off under reduced motion) is started after idle from `Hero.astro` and advanced inside the scene's own frame (`setPreFrame`), so content and scene move together.
 
-The Silo exhibit shows the README showcase image of `amontlabs/silo` (`docs/silo-showcase.webp`, 3200x2200) in a 16:11 hairline frame, rendered by Astro's Picture (AVIF and WebP, 800 to 2560 px, lazy). It lives at `src/assets/silo/silo-showcase.webp`; the hourly Silo data workflow compares its git blob SHA with `showcaseSha` in `src/data/silo.json` and re-downloads it when it changes (if the Silo README stops referencing the file, it logs and keeps the current image).
+The Silo exhibit shows the transparent product windows from `amontlabs/silo` (`docs/silo-showcase-screens.webp`, 3266x2556, alpha, generated there with `npm --prefix demo run capture:showcase`). They float on the page with the scene behind them (no frame or panel); Astro's Picture outputs AVIF and WebP (800 to 2560 px, alpha kept) and CSS cancels the image's transparent margin so the windows themselves sit on the grid. It lives at `src/assets/silo/silo-screens.webp`; the hourly Silo data workflow compares its git blob SHA with `screensSha` in `src/data/silo.json` and re-downloads it when it changes.
 
 ## Silo data
 

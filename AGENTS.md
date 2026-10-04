@@ -32,7 +32,7 @@ Regenerate data in `amontlabs/amont`, copy `site/signature/data/img-meta.json` t
 ## Silo exhibit and smooth scroll
 
 - Lenis drives scroll; it is advanced by the scene's frame (`setPreFrame`). Keep scroll coupling at zero lag (`scripts/perf-scroll.mjs` measures it). Keyboard and anchors stay native.
-- The Silo exhibit is one visual: the showcase image from the silo repo's README (never invented or edited here; it syncs through `scripts/update-silo-data.mjs`, see README). The name "Silo" stands on its hairline frame. The earlier film and screenshots were removed.
+- The Silo exhibit is one visual: the transparent product windows from the silo repo (`docs/silo-showcase-screens.webp`; never invented or edited here; it syncs through `scripts/update-silo-data.mjs`, see README). No frame or panel; the transparent margin is cancelled in `sections.css` (`.shot img`). The name "Silo" stands above it.
 - Layout: 12-column grid, labels in the left rail, content from column 5, 8px rhythm (`src/styles/sections.css`). Links keep a 44px hit area. The footer is the final frame: the source glow lands above "En amont.".
 
 ## Theme switch
