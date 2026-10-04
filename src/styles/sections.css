@@ -155,11 +155,6 @@ section.block {
 .def i {
   font-style: italic;
 }
-.mark-note {
-  grid-column: 4 / span 6;
-  margin-top: 40px;
-  max-width: 44ch;
-}
 
 /* footer: the final frame. The source glow lands above the sign-off; everything sits on the bottom edge. */
 footer {
@@ -214,9 +209,6 @@ footer .wrap {
     padding: 0;
   }
   .def,
-  .mark-note {
-    grid-column: 1 / -1;
-  }
   .footrow .copy,
   .contact {
     grid-column: 1 / -1;
