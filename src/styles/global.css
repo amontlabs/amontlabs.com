@@ -8,6 +8,8 @@
   box-sizing: border-box;
 }
 html {
+  /* reserve the scrollbar's space on every page, so short pages (/legal) don't re-centre the header */
+  scrollbar-gutter: stable;
   background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
