@@ -91,10 +91,41 @@ a {
 
 /* header */
 .top {
-  position: absolute;
+  position: fixed;
   inset: 0 0 auto 0;
-  z-index: 3;
+  z-index: 5;
   padding-block: clamp(16px, 2.4vw, 28px);
+}
+/* content scrolling under the header stays clean: a soft fade of the page colour (tokens, so it follows the theme).
+   It appears over the first 120px of scroll so the hero composition is untouched at the top. */
+.top::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -32px 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    var(--bg) 0%,
+    color-mix(in srgb, var(--bg) 88%, transparent) 50%,
+    transparent 100%
+  );
+}
+@supports (animation-timeline: scroll()) {
+  .top::before {
+    opacity: 0;
+    animation: header-in linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 120px;
+  }
+}
+@keyframes header-in {
+  to {
+    opacity: 1;
+  }
+}
+.label,
+section.block {
+  scroll-margin-top: 96px;
 }
 .logo {
   display: block;
