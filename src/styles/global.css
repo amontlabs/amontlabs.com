@@ -400,6 +400,11 @@ html.lenis body {
 html.theme-anim {
   /* surfaces fade; text flips at the midpoint of the fade (a crossfade would pass through
      the background's own grey and vanish for a moment) */
-  transition: --bg 0.5s ease, --line 0.5s ease, --panel 0.5s ease,
-    --text 0.25s steps(1, end), --secondary 0.25s steps(1, end), --link 0.25s steps(1, end);
+  transition:
+    --bg 0.5s ease,
+    --line 0.5s ease,
+    --panel 0.5s ease,
+    --text 0.25s steps(1, end),
+    --secondary 0.25s steps(1, end),
+    --link 0.25s steps(1, end);
 }
