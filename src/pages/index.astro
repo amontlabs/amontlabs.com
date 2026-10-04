@@ -1,4 +1,5 @@
 ---
+import HeaderLinks from "../components/HeaderLinks.astro";
 import Hero from "../components/Hero.astro";
 import Logo from "../components/Logo.astro";
 import Silo from "../components/Silo.astro";
@@ -8,7 +9,7 @@ import Base from "../layouts/Base.astro";
 
 <Base>
   <header class="top">
-    <div class="wrap bar"><Logo /><ThemeSwitch /></div>
+    <div class="wrap bar"><Logo /><ThemeSwitch /><HeaderLinks /></div>
   </header>
   <main>
     <Hero />

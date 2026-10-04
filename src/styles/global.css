@@ -303,13 +303,13 @@ html.lenis body {
   align-items: start;
   gap: 16px;
 }
-.bar > :first-child {
+.bar > .logo {
   justify-self: start;
 }
-.bar > :nth-child(2) {
+.bar > .tsw:not(.tsw-links) {
   justify-self: center;
 }
-.bar > :nth-child(3) {
+.bar > .tsw-links {
   justify-self: end;
 }
 
@@ -343,7 +343,7 @@ html.lenis body {
 :root[data-pref="dark"] .tsw-thumb {
   transform: translateX(calc(var(--w) * 2));
 }
-.tsw button {
+.tsw :is(button, a) {
   position: relative;
   z-index: 1;
   display: grid;
@@ -358,21 +358,21 @@ html.lenis body {
   cursor: pointer;
   transition: color 0.2s;
 }
-.tsw button::before {
+.tsw :is(button, a)::before {
   content: "";
   position: absolute;
   inset: -9px 0;
 } /* 44px hit area */
-.tsw button:hover {
+.tsw :is(button, a):hover {
   color: var(--text);
 }
-.tsw button[aria-checked="true"],
-:root[data-pref="system"] .tsw button[data-v="system"],
-:root[data-pref="light"] .tsw button[data-v="light"],
-:root[data-pref="dark"] .tsw button[data-v="dark"] {
+.tsw :is(button, a)[aria-checked="true"],
+:root[data-pref="system"] .tsw :is(button, a)[data-v="system"],
+:root[data-pref="light"] .tsw :is(button, a)[data-v="light"],
+:root[data-pref="dark"] .tsw :is(button, a)[data-v="dark"] {
   color: var(--text);
 }
-.tsw button:focus-visible {
+.tsw :is(button, a):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 3px;
 }
@@ -388,13 +388,13 @@ html.lenis body {
   opacity: 0;
   transition: opacity 0.25s;
 }
-:root[data-pref="system"] .tsw button[data-v="system"] .tsw-dot,
-:root[data-pref="light"] .tsw button[data-v="light"] .tsw-dot,
-:root[data-pref="dark"] .tsw button[data-v="dark"] .tsw-dot {
+:root[data-pref="system"] .tsw :is(button, a)[data-v="system"] .tsw-dot,
+:root[data-pref="light"] .tsw :is(button, a)[data-v="light"] .tsw-dot,
+:root[data-pref="dark"] .tsw :is(button, a)[data-v="dark"] .tsw-dot {
   opacity: 1;
 }
 /* quiet label */
-.tsw button::after {
+.tsw :is(button, a)::after {
   content: attr(data-label);
   position: absolute;
   top: calc(100% + 14px);
@@ -409,15 +409,15 @@ html.lenis body {
     opacity 0.2s,
     transform 0.2s;
 }
-.tsw button:hover::after,
-.tsw button:focus-visible::after {
+.tsw :is(button, a):hover::after,
+.tsw :is(button, a):focus-visible::after {
   opacity: 1;
   transform: translate(-50%, 0);
 }
 @media (prefers-reduced-motion: reduce) {
   .tsw-thumb,
   .tsw-dot,
-  .tsw button::after {
+  .tsw :is(button, a)::after {
     transition: none;
   }
 }
@@ -447,4 +447,31 @@ html.theme-anim {
     --text 0.25s steps(1, end),
     --secondary 0.25s steps(1, end),
     --link 0.25s steps(1, end);
+}
+
+/* header links: same pill and behaviour as the switch, without the thumb; labels align to the right edge */
+.tsw-links a {
+  display: grid;
+  place-items: center;
+  width: var(--w);
+  height: calc(var(--h) - 2px);
+  border-radius: 999px;
+  position: relative;
+}
+.tsw-links a:hover {
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+}
+.tsw-links a::after {
+  left: auto;
+  right: 0;
+  transform: translate(0, -2px);
+}
+.tsw-links a:hover::after,
+.tsw-links a:focus-visible::after {
+  transform: translate(0, 0);
+}
+@media (max-width: 420px) {
+  .tsw {
+    --w: 32px;
+  }
 }
