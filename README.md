@@ -32,6 +32,10 @@ The scene is one fixed full-viewport layer (`.scene`, z-index -1) behind the who
 
 In `src/scripts/signature.js` the `J` object holds the tuning: progress `p` (0 top, 1 bottom) and `h` (scrollY / viewport height) are smoothed with a critically damped direct read of scrollY each frame (no spring; `J.smooth` only smooths the scroll velocity that drives river speed). `p` drives a dolly toward a point travelling up the river centreline (`J.dolly`, `J.path`), a pan that lands the source on its target, the river narrowing to a thread and its lower part fading (`uConv`), and a larger, calmer source. `h` drives terrain dimming and thinning while text is on screen (`J.dimText`, `J.keepText`), then nearly gone at the footer (`J.dimEnd`, `J.keepEnd`), and the removal of the hero's bottom fade (`uBotFade`). River flow speed follows scroll velocity slightly. Soft page-colour scrims behind text blocks are at the end of `src/styles/global.css`. Reduced motion or no WebGL: the poster stays fixed and is dimmed by a CSS scroll timeline; three.js is not loaded.
 
+## Smooth scroll and Silo media
+
+Lenis (lerp 0.09, wheel only, touch native, off under reduced motion) is started after idle from `Hero.astro` and advanced inside the scene's own frame (`setPreFrame`), so content and scene move together. The Silo exhibit uses Silo's own media (downloaded from silo.amontlabs.com/media): the tour film as `public/media/silo-tour.{av1.,}mp4` (1280x720, no audio; loaded only when the frame is 40% in view, paused out of view, never autoplayed under reduced motion, with a Play/Pause control) and six screenshots in `src/assets/silo/` (AVIF/WebP through Astro). Do not invent visuals.
+
 ## Silo data
 
 `src/data/silo.json` holds Silo's latest release and repo stats. `scripts/update-silo-data.mjs` refreshes it from the GitHub API, and `.github/workflows/update-silo-data.yml` runs it hourly, on manual dispatch and on `repository_dispatch` (`silo-release`), committing as github-actions[bot] to main. The site shows the version and release date; stars appear only from 100 up (`STARS_MIN` in `src/pages/index.astro`). Downloads and forks are stored but never shown.

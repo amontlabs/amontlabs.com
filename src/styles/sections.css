@@ -1,0 +1,287 @@
+/* Sections below the hero: 12-column grid, labels in the left rail, content from column 4. 8px rhythm. */
+:root {
+  --u: 8px;
+  --section: 128px;
+}
+@media (min-width: 1024px) {
+  :root {
+    --section: 192px;
+  }
+}
+@media (min-width: 1700px) {
+  :root {
+    --section: 240px;
+  }
+}
+body {
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+}
+
+section.block {
+  padding-top: var(--section);
+}
+.hero + section.block {
+  padding-top: calc(var(--section) / 2);
+}
+
+/* section rule: draws from the left as the section enters (scroll-driven; static where unsupported) */
+.label {
+  position: relative;
+  display: block;
+  padding-top: 16px;
+  margin-bottom: 64px;
+  font-weight: 400;
+}
+.label::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: var(--line);
+  transform-origin: 0 50%;
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .label::after {
+      animation: draw linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 28%;
+    }
+  }
+}
+@keyframes draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* work: a museum exhibit. The name stands on the frame; the placard sits in the left rail, bottom-aligned. */
+.silo-name {
+  grid-column: 1 / -1;
+  font-weight: 500;
+  font-size: clamp(112px, 21vw, 304px);
+  line-height: 0.74;
+  letter-spacing: -0.06em;
+  margin-left: -0.04em;
+  margin-bottom: 0.03em;
+}
+.frame {
+  grid-column: 4 / -1;
+  grid-row: 3;
+  position: relative;
+  z-index: 1;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #171c21;
+}
+.frame picture,
+.frame img,
+.frame video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.frame video {
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+.frame.is-playing video,
+.frame.is-started video {
+  opacity: 1;
+}
+.toggle {
+  grid-column: 4 / -1;
+  grid-row: 4;
+  justify-self: end;
+  display: none;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0 0 16px;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.toggle.is-js {
+  display: inline-flex;
+}
+.toggle:hover {
+  color: var(--text);
+}
+
+.placard {
+  grid-column: 1 / span 3;
+  grid-row: 3;
+  align-self: end;
+  display: grid;
+  gap: 24px;
+  padding-right: 16px;
+}
+.silo-head {
+  font-weight: 500;
+  font-size: clamp(28px, 2.6vw, 36px);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.placard p {
+  max-width: 36ch;
+  text-wrap: pretty;
+}
+.placard .meta {
+  display: grid;
+  gap: 4px;
+}
+.silo-links {
+  display: grid;
+  gap: 4px;
+}
+.silo-links a {
+  width: fit-content;
+}
+
+/* contact sheet: six real screens, captions in mono */
+.sheet {
+  grid-column: 1 / -1;
+  grid-row: 5;
+  margin-top: 64px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--gutter);
+}
+.sheet figure {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+.sheet picture,
+.sheet img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.sheet img {
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: top left;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+.sheet figcaption {
+  color: var(--secondary);
+}
+
+/* about */
+.def {
+  grid-column: 4 / -1;
+  font-family: var(--serif);
+  font-size: clamp(28px, 3vw, 44px);
+  line-height: 1.24;
+  letter-spacing: -0.01em;
+  max-width: 24em;
+  text-wrap: balance;
+}
+.def i {
+  font-style: italic;
+}
+.mark-note {
+  grid-column: 4 / span 6;
+  margin-top: 40px;
+  max-width: 44ch;
+}
+
+/* footer: the final frame. The source glow lands above the sign-off. */
+footer {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: stretch;
+  padding-block: var(--section) 48px;
+}
+footer .wrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 96px;
+  width: 100%;
+}
+.contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 40px;
+}
+.contact a {
+  display: block;
+  padding-block: 10px;
+}
+.contactrow {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+}
+.contactrow .contact {
+  grid-column: 4 / -1;
+}
+.copy {
+  margin-bottom: 16px;
+}
+.signoff {
+  width: fit-content;
+  font-family: var(--serif);
+  font-size: clamp(56px, 9vw, 144px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+@media (max-width: 900px) {
+  .frame {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+  .toggle {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+  .placard {
+    grid-column: 1 / -1;
+    grid-row: 5;
+    padding: 0;
+    margin-top: 24px;
+  }
+  .sheet {
+    grid-row: 6;
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    margin-inline: calc(var(--gutter) * -1);
+    padding-inline: var(--gutter);
+    margin-top: 64px;
+  }
+  .sheet li {
+    flex: 0 0 62vw;
+    scroll-snap-align: start;
+  }
+  .def,
+  .mark-note {
+    grid-column: 1 / -1;
+  }
+  .contactrow .contact {
+    grid-column: 1 / -1;
+  }
+}

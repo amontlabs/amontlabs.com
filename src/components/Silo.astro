@@ -1,0 +1,121 @@
+---
+import { Picture } from "astro:assets";
+import tour from "../assets/silo/silo-tour.png";
+import overview from "../assets/silo/overview.png";
+import network from "../assets/silo/network.png";
+import secrets from "../assets/silo/secrets.png";
+import tools from "../assets/silo/tools.png";
+import github from "../assets/silo/github.png";
+import backup from "../assets/silo/backup.png";
+import data from "../data/silo.json";
+
+const STARS_MIN = 100; // show stars only from this count up
+const released = new Date(data.releasedAt);
+const date = Number.isNaN(released.getTime())
+  ? null
+  : new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/Paris" }).format(released);
+const stars =
+  data.stars >= 1000 ? `${(Math.floor(data.stars / 100) / 10).toFixed(1).replace(/\.0$/, "")}k stars` : `${data.stars} stars`;
+const release = [data.version, date, data.stars >= STARS_MIN ? stars : null].filter(Boolean).join(" · ");
+
+const shots = [
+  { src: overview, label: "Computers", alt: "Silo: the list of computers, each running" },
+  { src: network, label: "Network", alt: "Silo: network settings" },
+  { src: secrets, label: "Secrets", alt: "Silo: secrets" },
+  { src: tools, label: "Tools", alt: "Silo: tools" },
+  { src: github, label: "GitHub", alt: "Silo: GitHub integration" },
+  { src: backup, label: "Backup", alt: "Silo: backup" },
+];
+---
+
+<section class="block" aria-labelledby="work">
+  <div class="wrap grid">
+    <h2 id="work" class="label mono dim" style="grid-column: 1 / -1">Work</h2>
+    <p class="silo-name" aria-label="Silo">Silo</p>
+
+    <div class="frame" id="frame">
+      <Picture
+        src={tour}
+        formats={["avif", "webp"]}
+        widths={[640, 1024, 1312]}
+        sizes="(max-width: 900px) 100vw, 75vw"
+        alt="Silo release film: A computer. For your agents."
+        loading="lazy"
+        decoding="async"
+      />
+      <video id="tour" muted loop playsinline preload="none" aria-label="Silo release film" data-av1="/media/silo-tour.av1.mp4" data-mp4="/media/silo-tour.mp4"></video>
+    </div>
+    <button class="toggle mono dim" id="toggle" type="button" aria-label="Play film">Play</button>
+
+    <div class="placard">
+      <h3 class="silo-head">Computers for your agents.</h3>
+      <p>Run Linux sandboxes locally or remotely, with a desktop and computer use.</p>
+      <p class="mono dim meta">
+        <span>macOS · Linux · Open source (MIT)</span>
+        <span>{release}</span>
+      </p>
+      <p class="silo-links">
+        <a class="link is-link" href="https://silo.amontlabs.com">silo.amontlabs.com ↗</a>
+        <a class="link is-link" href="https://github.com/amontlabs/silo">Source ↗</a>
+      </p>
+    </div>
+
+    <ul class="sheet" role="list">
+      {shots.map((s) => (
+        <li>
+          <figure>
+            <Picture src={s.src} formats={["avif", "webp"]} widths={[320, 640]} sizes="(max-width: 900px) 62vw, 200px" alt={s.alt} loading="lazy" decoding="async" />
+            <figcaption class="mono">{s.label}</figcaption>
+          </figure>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<script>
+  const frame = document.getElementById("frame")!;
+  const video = document.getElementById("tour") as HTMLVideoElement;
+  const toggle = document.getElementById("toggle") as HTMLButtonElement;
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  toggle.classList.add("is-js");
+
+  let loaded = false;
+  let wantPlay = !reduced; // autoplay only when in view and motion is fine
+  let inView = false;
+  const load = () => {
+    if (loaded) return;
+    loaded = true;
+    for (const [type, src] of [["video/mp4; codecs=av01.0.05M.08", video.dataset.av1], ["video/mp4", video.dataset.mp4]] as const) {
+      const s = document.createElement("source");
+      s.src = src!;
+      s.type = type;
+      video.append(s);
+    }
+    video.load();
+  };
+  const sync = () => {
+    if (inView && wantPlay) {
+      load();
+      void video.play().catch(() => {});
+    } else video.pause();
+  };
+  const label = () => {
+    const playing = !video.paused;
+    toggle.textContent = playing ? "Pause" : "Play";
+    toggle.setAttribute("aria-label", playing ? "Pause film" : "Play film");
+    frame.classList.toggle("is-playing", playing);
+  };
+  video.addEventListener("playing", () => frame.classList.add("is-started"));
+  video.addEventListener("play", label);
+  video.addEventListener("pause", label);
+  toggle.addEventListener("click", () => {
+    wantPlay = video.paused;
+    if (wantPlay) { load(); void video.play().catch(() => {}); } else video.pause();
+  });
+  new IntersectionObserver(
+    (es) => { inView = es[0].isIntersecting; sync(); },
+    { threshold: 0.4 },
+  ).observe(frame);
+  label();
+</script>

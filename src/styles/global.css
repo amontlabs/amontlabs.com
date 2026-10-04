@@ -1,5 +1,6 @@
 @import "./fonts.css";
 @import "./tokens.css";
+@import "./sections.css";
 
 *,
 *::before,
@@ -52,6 +53,7 @@ a {
 
 /* links: underline draws in from the left */
 .link {
+  position: relative;
   background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
   padding-bottom: 2px;
   transition:
@@ -78,8 +80,8 @@ a {
 }
 .mono {
   font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 20px;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
@@ -194,125 +196,8 @@ h1 span {
   color: var(--secondary);
 }
 
-/* sections */
-section.block {
-  padding-top: clamp(120px, 16vw, 220px);
-}
-.hero + section.block {
-  padding-top: clamp(48px, 8vw, 120px);
-}
-.label {
-  display: block;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
-  margin-bottom: clamp(40px, 6vw, 80px);
-}
-
-/* work */
-.silo-name {
-  font-weight: 500;
-  font-size: clamp(88px, 17vw, 248px);
-  line-height: 0.82;
-  letter-spacing: -0.06em;
-  margin-left: -0.04em;
-}
-.silo-body {
-  display: grid;
-  gap: 40px;
-  margin-top: clamp(40px, 6vw, 88px);
-  grid-template-columns: repeat(12, 1fr);
-  column-gap: var(--gutter);
-}
-.silo-head {
-  grid-column: 1 / span 6;
-  font-weight: 500;
-  font-size: clamp(28px, 3.4vw, 44px);
-  line-height: 1.1;
-  letter-spacing: -0.035em;
-  text-wrap: balance;
-}
-.silo-info {
-  grid-column: 8 / span 5;
-  display: grid;
-  gap: 24px;
-  align-content: start;
-}
-.silo-info p {
-  font-size: 16px;
-  max-width: 44ch;
-  text-wrap: pretty;
-}
-.silo-info .mono {
-  font-size: 12px;
-}
-.silo-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 28px;
-}
-
-/* about */
-.def {
-  font-family: var(--serif);
-  font-size: clamp(24px, 2.6vw, 36px);
-  line-height: 1.28;
-  letter-spacing: -0.01em;
-  max-width: 26em;
-  text-wrap: balance;
-}
-.def i {
-  font-style: italic;
-}
-.about-body {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  column-gap: var(--gutter);
-  row-gap: 40px;
-}
-.about-body > .def {
-  grid-column: 1 / span 8;
-}
-.mark-note {
-  grid-column: 1 / span 4;
-  max-width: 40ch;
-  margin-top: 8px;
-}
-.contact {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 32px;
-  margin-top: clamp(56px, 7vw, 96px);
-}
-
-footer {
-  padding-block: clamp(120px, 16vw, 200px) clamp(32px, 5vw, 56px);
-}
-.copy {
-  margin-bottom: 24px;
-}
-.signoff {
-  width: fit-content;
-  font-family: var(--serif);
-  font-size: clamp(32px, 4vw, 56px);
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-
-@media (max-width: 760px) {
-  .silo-head,
-  .silo-info,
-  .about-body > .def,
-  .mark-note {
-    grid-column: 1 / -1;
-  }
-}
-.meta {
-  display: grid;
-  gap: 2px;
-}
-
 /* soft scrims: the page colour, feathered, behind small text so the river never fights it (no visible boxes) */
-.silo-info,
+.placard,
 .silo-head,
 .def,
 .mark-note,
@@ -324,7 +209,7 @@ footer {
   position: relative;
   isolation: isolate;
 }
-.silo-info::before,
+.placard::before,
 .silo-head::before,
 .def::before,
 .mark-note::before,
@@ -348,7 +233,7 @@ body {
   overflow-x: clip;
 }
 @media (max-width: 760px) {
-  .silo-info::before,
+  .placard::before,
   .silo-head::before,
   .def::before,
   .mark-note::before,
@@ -359,4 +244,23 @@ body {
   .label::before {
     inset: -24px -16px;
   }
+}
+
+/* 44px hit area without moving the underline */
+.link::after {
+  content: "";
+  position: absolute;
+  inset: -12px -6px;
+}
+
+/* lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
 }
