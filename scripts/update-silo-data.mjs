@@ -3,8 +3,8 @@
 // Writes the file only when something other than updatedAt changed. Always exits 0.
 import { readFileSync, writeFileSync } from "node:fs";
 
-const IMAGE = new URL("../src/assets/silo/silo-showcase.webp", import.meta.url);
-const SHOWCASE_PATH = "docs/silo-showcase.webp";
+const IMAGE = new URL("../src/assets/silo/silo-screens.webp", import.meta.url);
+const SHOWCASE_PATH = "docs/silo-showcase-screens.webp";
 
 const FILE = new URL("../src/data/silo.json", import.meta.url);
 const headers = { Accept: "application/vnd.github+json", "User-Agent": "amontlabs.com" };
@@ -22,28 +22,19 @@ try {
   if (!latest) throw new Error("no published release");
   const prev = JSON.parse(readFileSync(FILE, "utf8"));
 
-  // The Silo exhibit shows the README showcase image: re-download it when its blob SHA changes.
-  let showcaseSha = prev.showcaseSha;
+  // The Silo exhibit shows the transparent product windows from the silo repo (docs/silo-showcase-screens.webp): re-download it when its blob SHA changes.
+  let screensSha = prev.screensSha;
   try {
-    const readme = await (
-      await fetch("https://api.github.com/repos/amontlabs/silo/readme", {
-        headers: { ...headers, Accept: "application/vnd.github.raw+json" },
-      })
-    ).text();
-    if (!readme.includes(SHOWCASE_PATH))
-      console.warn(`README no longer references ${SHOWCASE_PATH}; keeping the current image`);
-    else {
-      const file = await get(`/contents/${SHOWCASE_PATH}`);
-      if (file.sha !== prev.showcaseSha) {
-        const img = await fetch(file.download_url);
-        if (!img.ok) throw new Error(`showcase ${img.status}`);
-        writeFileSync(IMAGE, Buffer.from(await img.arrayBuffer()));
-        showcaseSha = file.sha;
-        console.log("showcase image updated", file.sha);
-      }
+    const file = await get(`/contents/${SHOWCASE_PATH}`);
+    if (file.sha !== prev.screensSha) {
+      const img = await fetch(file.download_url);
+      if (!img.ok) throw new Error(`screens ${img.status}`);
+      writeFileSync(IMAGE, Buffer.from(await img.arrayBuffer()));
+      screensSha = file.sha;
+      console.log("screens image updated", file.sha);
     }
   } catch (e) {
-    console.error("showcase not updated:", e.message);
+    console.error("screens image not updated:", e.message);
   }
   const next = {
     version: latest.tag_name,
@@ -51,7 +42,7 @@ try {
     releases: published.length,
     stars: repo.stargazers_count,
     forks: repo.forks_count,
-    showcaseSha,
+    screensSha,
     downloads: releases.reduce((n, r) => n + r.assets.reduce((m, a) => m + a.download_count, 0), 0),
   };
   const same = Object.keys(next).every((k) => prev[k] === next[k]);
