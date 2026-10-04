@@ -44,3 +44,7 @@ Top right, System / Light / Dark (`ThemeSwitch.astro`, styles at the end of `glo
 Fixed grid header: logo | theme switch (true centre) | contact icons (`HeaderLinks.astro`, same `.tsw` pill language; email, GitHub, X; labels on hover/focus; aria-labelled). The page-colour fade behind it is `.top::before`, driven by a CSS scroll timeline. Do not target header children by `:nth-child` (the switch ships an inline script element); use classes.
 
 Header tooltips are real `.tip` spans (centred under their icon, nudged inward by `__fitTip` only at the viewport edge). The email control is a button that copies hello@amontlabs.com (clipboard API, textarea fallback; cmd/ctrl+click opens mailto; tooltip says Copied for 1.6 s; aria-live announces it). GitHub and X tooltips show the handle (@amontlabs). `scripts/tips.mjs` checks alignment and the copy in headless Chrome.
+
+## Legal page
+
+`/legal` (`src/pages/legal.astro`): plain page, noindex, same header, no scene. The sentence "no cookies, no analytics and no third-party services" was verified (every request on `/` and `/legal` is same-origin); re-verify if anything external is ever added (fonts, analytics, embeds) and change the page if so. The home page links to it with one tiny "Legal" at the very bottom, in the padding below About (do not make it more prominent, and keep it out of the header). There is no sitemap or robots.txt.

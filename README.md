@@ -55,3 +55,7 @@ System, Light or Dark from the switch top right; stored in localStorage (`theme`
 ## Header
 
 Fixed, three columns: logo left, the theme switch at the true centre, contact icons right (email, GitHub, X: hand-drawn hairline SVG in the switch's pill, label below on hover or focus). A scroll-driven fade of the page colour (tokens) appears behind it after the first 120px; anchors use `scroll-margin-top`.
+
+## Pages
+
+`/` (the site) and `/legal` (legal notice, noindex, linked discreetly from the bottom of the home page).
