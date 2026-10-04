@@ -106,8 +106,8 @@ const D = "(prefers-color-scheme: dark)";
         const r = def.getBoundingClientRect();
         const top = r.top + scrollY - max;
         const beside = r.left > 160;
-        const x = beside ? r.left - 112 : innerWidth - 64;
-        const y = beside ? top + 40 : top - 44;
+        const x = beside ? r.left - 112 : r.left + 8;
+        const y = beside ? top + 40 : top - 56;
         sig.setSourceTarget(x / innerWidth, y / vh);
       }
     };
