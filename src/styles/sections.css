@@ -186,7 +186,7 @@ section.block {
 }
 .silo-links {
   display: grid;
-  gap: 0;
+  gap: 16px;
 }
 .silo-links a {
   width: fit-content;
