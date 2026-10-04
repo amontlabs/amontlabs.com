@@ -231,9 +231,6 @@ h1 span {
 .placard,
 .silo-head,
 .def,
-.contact,
-.copy,
-.signoff,
 .hero-text h1,
 .label {
   position: relative;
@@ -242,9 +239,6 @@ h1 span {
 .placard::before,
 .silo-head::before,
 .def::before,
-.contact::before,
-.copy::before,
-.signoff::before,
 .hero-text h1::before,
 .label::before {
   content: "";
@@ -265,9 +259,6 @@ body {
   .placard::before,
   .silo-head::before,
   .def::before,
-  .contact::before,
-  .copy::before,
-  .signoff::before,
   .hero-text h1::before,
   .label::before {
     inset: -24px -16px;

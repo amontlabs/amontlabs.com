@@ -384,7 +384,7 @@ export async function mount(el, opts = {}) {
   const J = {
     dolly: 0.34,                       // fraction of the way toward the river point reached at the bottom of the page
     path: [0.62, 0.0],                 // river parameter s (1 = downstream, 0 = source) at the top and bottom of the page
-    dimText: 0.30, dimEnd: 0.07,       // terrain alpha while text is on screen / at the footer
+    dimText: 0.30, dimEnd: 0.07,       // terrain alpha while text is on screen / at the end of the page
     keepText: 0.62, keepEnd: 0.14,     // fraction of terrain points kept (same two stops)
     light: { dimText: 0.13, keepText: 0.4 },   // the light theme needs more dimming than the dark one
     smooth: 0.05,                      // smoothing time (s) of the scroll velocity that drives the river speed

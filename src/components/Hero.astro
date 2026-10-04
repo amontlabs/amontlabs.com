@@ -95,16 +95,20 @@ const D = "(prefers-color-scheme: dark)";
       const a = anchor();
       if (a.join() !== last) { last = a.join(); sig.setFit('cover', a); }
     }, { passive: true });
-    // scroll journey: tell the scene where we are, and where the source should land at the end ("En amont.")
-    const signoff = document.querySelector('.signoff') as HTMLElement | null;
+    // scroll journey: tell the scene where we are, and where the source should land at the end (beside the About definition)
+    const def = document.querySelector('.def') as HTMLElement | null;
     const feed = () => {
       const vh = innerHeight;
       const max = Math.max(1, document.documentElement.scrollHeight - vh);
       sig.setMetrics(vh, max);
-      if (signoff) {
-        const r = signoff.getBoundingClientRect();
-        const endTop = r.top + scrollY - max;
-        sig.setSourceTarget((r.left + r.width / 2) / innerWidth, (endTop - 0.15 * vh) / vh);
+      if (def) {
+        // where the source lands at the end of the page: beside the definition (a footnote marker), or above it on narrow screens
+        const r = def.getBoundingClientRect();
+        const top = r.top + scrollY - max;
+        const beside = r.left > 160;
+        const x = beside ? r.left - 112 : innerWidth - 64;
+        const y = beside ? top + 28 : top - 44;
+        sig.setSourceTarget(x / innerWidth, y / vh);
       }
     };
     feed();

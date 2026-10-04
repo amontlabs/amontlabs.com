@@ -156,45 +156,9 @@ section.block {
   font-style: italic;
 }
 
-/* footer: the final frame. The source glow lands above the sign-off; everything sits on the bottom edge. */
-footer {
-  position: relative;
-  min-height: 100svh;
-  display: flex;
-  padding-block: var(--section) 48px;
-}
-footer .wrap {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 16px;
-  width: 100%;
-}
-.footrow {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  column-gap: var(--gutter);
-  align-items: baseline;
-}
-.footrow .copy {
-  grid-column: 1 / span 4;
-}
-.contact {
-  grid-column: 5 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 40px;
-}
-.contact a {
-  display: block;
-  padding-block: 10px;
-}
-.signoff {
-  width: fit-content;
-  font-family: var(--serif);
-  font-size: clamp(56px, 9vw, 144px);
-  line-height: 1;
-  letter-spacing: -0.03em;
+/* the page ends with the About section; the river's source lands beside the definition */
+main {
+  padding-bottom: clamp(128px, 22vh, 224px);
 }
 
 @media (max-width: 900px) {
@@ -208,16 +172,7 @@ footer .wrap {
     margin-top: 32px;
     padding: 0;
   }
-  .def,
-  .footrow .copy,
-  .contact {
+  .def {
     grid-column: 1 / -1;
-  }
-  .footrow .copy {
-    order: 2;
-    margin-top: 8px;
-  }
-  footer .wrap {
-    gap: 8px;
   }
 }

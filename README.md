@@ -28,9 +28,9 @@ The hero is a WebGL scene (a point-cloud mountain with a Fonte river). It is gen
 
 ## Scroll choreography
 
-The scene is one fixed full-viewport layer (`.scene`, z-index -1) behind the whole page; sections have no backgrounds. Scrolling is the journey upstream, native scroll, no jacking. `Hero.astro` feeds scroll position to the scene (`setScroll`) and the screen position where the source should land at the end (`setSourceTarget`, centred above "En amont.").
+The scene is one fixed full-viewport layer (`.scene`, z-index -1) behind the whole page; sections have no backgrounds. The page has no footer: it ends with the About section, and the journey ends there with the river converging on the source. Scrolling is the journey upstream, native scroll, no jacking. `Hero.astro` feeds scroll position to the scene (`setScroll`) and the screen position where the source should land at the end (`setSourceTarget`: beside the About definition like a footnote marker, above it on narrow screens).
 
-In `src/scripts/signature.js` the `J` object holds the tuning: progress `p` (0 top, 1 bottom) and `h` (scrollY / viewport height) are smoothed with a critically damped direct read of scrollY each frame (no spring; `J.smooth` only smooths the scroll velocity that drives river speed). `p` drives a dolly toward a point travelling up the river centreline (`J.dolly`, `J.path`), a pan that lands the source on its target, the river narrowing to a thread and its lower part fading (`uConv`), and a larger, calmer source. `h` drives terrain dimming and thinning while text is on screen (`J.dimText`, `J.keepText`), then nearly gone at the footer (`J.dimEnd`, `J.keepEnd`), and the removal of the hero's bottom fade (`uBotFade`). River flow speed follows scroll velocity slightly. Soft page-colour scrims behind text blocks are at the end of `src/styles/global.css`. Reduced motion or no WebGL: the poster stays fixed and is dimmed by a CSS scroll timeline; three.js is not loaded.
+In `src/scripts/signature.js` the `J` object holds the tuning: progress `p` (0 top, 1 bottom) and `h` (scrollY / viewport height) are smoothed with a critically damped direct read of scrollY each frame (no spring; `J.smooth` only smooths the scroll velocity that drives river speed). `p` drives a dolly toward a point travelling up the river centreline (`J.dolly`, `J.path`), a pan that lands the source on its target, the river narrowing to a thread and its lower part fading (`uConv`), and a larger, calmer source. `h` drives terrain dimming and thinning while text is on screen (`J.dimText`, `J.keepText`), then nearly gone at the end of the page (`J.dimEnd`, `J.keepEnd`), and the removal of the hero's bottom fade (`uBotFade`). River flow speed follows scroll velocity slightly. Soft page-colour scrims behind text blocks are at the end of `src/styles/global.css`. Reduced motion or no WebGL: the poster stays fixed and is dimmed by a CSS scroll timeline; three.js is not loaded.
 
 ## Smooth scroll and the Silo image
 
@@ -51,3 +51,7 @@ Vercel, static, on push to `main` (no adapter). `vercel.json` sets cache headers
 ## Theme
 
 System, Light or Dark from the switch top right; stored in localStorage (`theme`), applied before first paint by an inline script in `src/layouts/Base.astro` (no flash).
+
+## Header
+
+Fixed, three columns: logo left, the theme switch at the true centre, contact icons right (email, GitHub, X: hand-drawn hairline SVG in the switch's pill, label below on hover or focus). A scroll-driven fade of the page colour (tokens) appears behind it after the first 120px; anchors use `scroll-margin-top`.
