@@ -89,7 +89,15 @@ const D = "(prefers-color-scheme: dark)";
       lod: 'auto',
     });
     if (sig.fallback) return;
-    document.addEventListener('themechange', (e) => sig.setTheme((e as CustomEvent).detail));
+    // theme change: fade the canvas out, switch, fade back in (the shader's theme switch is binary)
+    let themeT = 0;
+    document.addEventListener('themechange', (e) => {
+      const t = (e as CustomEvent).detail;
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) { sig.setTheme(t); return; }
+      live.classList.add('switching');
+      clearTimeout(themeT);
+      themeT = window.setTimeout(() => { sig.setTheme(t); requestAnimationFrame(() => live.classList.remove('switching')); }, 220);
+    });
     let last = anchor().join();
     addEventListener('resize', () => {
       const a = anchor();

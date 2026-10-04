@@ -44,13 +44,14 @@ const og = new URL("/og.png", canonical).href;
         };
         const set = (p) => {
           try { p === "system" ? localStorage.removeItem(KEY) : localStorage.setItem(KEY, p); } catch {}
-          const go = () => apply(p);
-          if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-            document.startViewTransition(() => {
-              go();
-              return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-            });
-          } else go();
+          // plain CSS colour fade (no View Transitions: snapshotting the full-screen WebGL canvas
+          // and swapping the poster sources mid-transition aborted it and could take the page down)
+          if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            d.classList.add("theme-anim");
+            clearTimeout(window.__themeT);
+            window.__themeT = setTimeout(() => d.classList.remove("theme-anim"), 650);
+          }
+          apply(p);
         };
         mq.addEventListener("change", () => { if (pref() === "system") apply("system"); });
         window.__theme = { pref, set, sync, resolved: () => d.dataset.theme };
