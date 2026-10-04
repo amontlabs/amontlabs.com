@@ -1,6 +1,6 @@
 ---
 import { Picture } from "astro:assets";
-import showcase from "../assets/silo/silo-showcase.webp";
+import screens from "../assets/silo/silo-screens.webp";
 import data from "../data/silo.json";
 
 const STARS_MIN = 100; // show stars only from this count up
@@ -19,13 +19,13 @@ const release = [data.version, date, data.stars >= STARS_MIN ? stars : null].fil
     <h2 id="work" class="label mono dim" style="grid-column: 1 / -1">Work</h2>
     <p class="silo-name" aria-label="Silo">Silo</p>
 
-    <div class="frame">
+    <div class="shot">
       <Picture
-        src={showcase}
+        src={screens}
         formats={["avif", "webp"]}
         widths={[800, 1280, 1920, 2560]}
-        sizes="(max-width: 900px) 100vw, 66vw"
-        alt="Silo showing a Linux desktop, local and remote computers, and GitHub access controls"
+        sizes="(max-width: 900px) 112vw, 64vw"
+        alt="Silo's Linux desktop with an agent terminal, its computers list, and per-computer GitHub permissions"
         loading="lazy"
         decoding="async"
       />

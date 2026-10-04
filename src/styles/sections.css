@@ -75,28 +75,26 @@ section.block {
   margin-left: -0.04em;
   margin-bottom: 0.1em;
 }
-.frame {
+/* the three product windows float on the page (transparent WebP, no frame). The image has a transparent margin
+   around the windows (160/3266 sides, 162/2556 top, 159/2556 bottom): cancel it so the windows themselves sit on the grid. */
+.shot {
   grid-column: 5 / -1;
   grid-row: 3;
   position: relative;
   z-index: 1;
-  aspect-ratio: 16 / 11;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: #171c21;
 }
-.frame picture,
-.frame img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.shot picture,
+.shot img {
   display: block;
 }
+.shot img {
+  width: 110.9%;
+  max-width: none;
+  height: auto;
+  margin: -5.5% 0 -5.4% -5.43%;
+}
 
-/* the placard: headline aligned to the frame's top edge, metadata and links to its bottom edge */
+/* the placard: headline aligned to the windows' top edge, metadata and links to their bottom edge */
 .placard {
   grid-column: 1 / span 4;
   grid-row: 3;
@@ -201,7 +199,7 @@ footer .wrap {
 }
 
 @media (max-width: 900px) {
-  .frame {
+  .shot {
     grid-column: 1 / -1;
     grid-row: 3;
   }
