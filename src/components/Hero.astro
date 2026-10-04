@@ -1,0 +1,87 @@
+---
+import { getImage } from "astro:assets";
+import dark from "../assets/signature/poster-dark.png";
+import light from "../assets/signature/poster-light.png";
+
+const widths = [1280, 1920, 2560, 3840];
+const sizes = "max(100vw, 150svh)";
+const make = async (src: ImageMetadata, format: "avif" | "webp") => {
+  const imgs = await Promise.all(
+    widths.map((width) => getImage({ src, width, format, quality: format === "avif" ? 55 : 80 })),
+  );
+  return imgs.map((i, n) => `${i.src} ${widths[n]}w`).join(", ");
+};
+const [darkAvif, darkWebp, lightAvif, lightWebp] = await Promise.all([
+  make(dark, "avif"),
+  make(dark, "webp"),
+  make(light, "avif"),
+  make(light, "webp"),
+]);
+const fallback = await getImage({ src: light, width: 1920, format: "webp", quality: 80 });
+const D = "(prefers-color-scheme: dark)";
+---
+
+<section class="hero">
+  <div class="scene" id="scene">
+    <picture>
+      <source media={D} type="image/avif" srcset={darkAvif} sizes={sizes} />
+      <source media={D} type="image/webp" srcset={darkWebp} sizes={sizes} />
+      <source type="image/avif" srcset={lightAvif} sizes={sizes} />
+      <img
+        src={fallback.src}
+        srcset={lightWebp}
+        sizes={sizes}
+        width="1920"
+        height="1280"
+        alt="Point-cloud rendering of a mountain range with a turquoise river flowing from its summit"
+        fetchpriority="high"
+        decoding="async"
+      />
+    </picture>
+    <div class="live" id="live" aria-hidden="true"></div>
+  </div>
+  <div class="hero-text wrap">
+    <h1>Independent software studio in Paris. <span>Practical, open-source software on emerging tech.</span></h1>
+  </div>
+</section>
+
+<script>
+  const scene = document.getElementById('scene')!;
+  const live = document.getElementById('live')!;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dark = matchMedia('(prefers-color-scheme: dark)');
+
+  const start = async () => {
+    const gl = document.createElement('canvas').getContext('webgl2');
+    if (!gl) return;
+    const { mount } = await import('../scripts/signature.js');
+    const anchor = (): [number, number] => {
+      const s = getComputedStyle(scene);
+      return [parseFloat(s.getPropertyValue('--ax')), parseFloat(s.getPropertyValue('--ay'))];
+    };
+    const sig = await mount(live, {
+      theme: dark.matches ? 'dark' : 'light',
+      transparent: true,
+      fit: 'cover',
+      anchor: anchor(),
+      source: 'image',
+      intro: false,
+      lod: 'auto',
+    });
+    if (sig.fallback) return;
+    dark.addEventListener('change', () => sig.setTheme(dark.matches ? 'dark' : 'light'));
+    let last = anchor().join();
+    addEventListener('resize', () => {
+      const a = anchor();
+      if (a.join() !== last) { last = a.join(); sig.setFit('cover', a); }
+    }, { passive: true });
+    requestAnimationFrame(() => requestAnimationFrame(() => scene.classList.add('is-live')));
+    if (import.meta.env.DEV) (window as unknown as { __sig: unknown }).__sig = sig;
+  };
+
+  if (!reduced) {
+    const go = () => void start();
+    if (document.readyState === 'complete') setTimeout(go, 0);
+    else addEventListener('load', () => ('requestIdleCallback' in window ? requestIdleCallback(go, { timeout: 1500 }) : setTimeout(go, 200)), { once: true });
+  }
+</script>

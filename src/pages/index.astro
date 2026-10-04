@@ -1,0 +1,67 @@
+---
+import Hero from "../components/Hero.astro";
+import Logo from "../components/Logo.astro";
+import Base from "../layouts/Base.astro";
+import silo from "../data/silo.json";
+
+const STARS_MIN = 100; // show stars only from this count up
+const released = new Date(silo.releasedAt);
+const date = Number.isNaN(released.getTime())
+  ? null
+  : new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/Paris" })
+      .format(released);
+const stars =
+  silo.stars >= 1000 ? `${(Math.floor(silo.stars / 100) / 10).toFixed(1).replace(/\.0$/, "")}k stars` : `${silo.stars} stars`;
+const release = [silo.version, date, silo.stars >= STARS_MIN ? stars : null].filter(Boolean).join(" · ");
+---
+
+<Base>
+  <header class="top">
+    <div class="wrap"><Logo /></div>
+  </header>
+  <main>
+    <Hero />
+
+    <section class="block" aria-labelledby="work">
+      <div class="wrap">
+        <h2 id="work" class="label mono dim" style="font-weight:400">Work</h2>
+        <p class="silo-name" aria-label="Silo">Silo</p>
+        <div class="silo-body">
+          <h3 class="silo-head">Computers for your agents.</h3>
+          <div class="silo-info">
+            <p>Run Linux sandboxes locally or remotely, with a desktop and computer use.</p>
+            <p class="mono dim meta">
+              <span>macOS · Linux · Open source (MIT)</span>
+              <span>{release}</span>
+            </p>
+            <p class="silo-links">
+              <a class="link is-link" href="https://silo.amontlabs.com">silo.amontlabs.com ↗</a>
+              <a class="link is-link" href="https://github.com/amontlabs/silo">Source ↗</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="about">
+      <div class="wrap">
+        <h2 id="about" class="label mono dim" style="font-weight:400">About</h2>
+        <div class="about-body">
+          <p class="def">Amont, <i>n. m.</i> The upstream side of a river, toward its source. From <i>à mont</i>, “toward the mountain”.</p>
+          <p class="mark-note dim">The accent after the name is a footnote mark, drawn as the summit where rivers begin.</p>
+        </div>
+        <p class="contact">
+          <a class="link" href="mailto:hello@amontlabs.com">hello@amontlabs.com</a>
+          <a class="link" href="https://github.com/amontlabs">GitHub</a>
+          <a class="link" href="https://x.com/amontlabs">X</a>
+        </p>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <div class="wrap">
+      <p class="copy mono dim">© 2026 Amont Labs</p>
+      <p class="signoff">En amont.</p>
+    </div>
+  </footer>
+</Base>

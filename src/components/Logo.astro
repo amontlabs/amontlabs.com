@@ -1,0 +1,13 @@
+---
+import raw from "../assets/logo/amont-superscript.svg?raw";
+
+const svg = raw
+  .replace(/ width="\d+" height="\d+"/, "")
+  .replace("<svg ", '<svg aria-hidden="true" focusable="false" ')
+  .replace(/<title>.*?<\/title>/, "")
+  .replace(/ role="img" aria-label="amont"/, "")
+  .replace('fill="#101418"', 'fill="currentColor"')
+  .replace('fill="#0F9AC3"', 'fill="var(--fonte)"');
+---
+
+<a class="logo" href="/" aria-label="Amont Labs" set:html={svg} />
