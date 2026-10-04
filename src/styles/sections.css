@@ -73,10 +73,10 @@ section.block {
   line-height: 0.74;
   letter-spacing: -0.06em;
   margin-left: -0.04em;
-  margin-bottom: 0.03em;
+  margin-bottom: 0.1em;
 }
 .frame {
-  grid-column: 4 / -1;
+  grid-column: 5 / -1;
   grid-row: 3;
   position: relative;
   z-index: 1;
@@ -105,91 +105,97 @@ section.block {
   opacity: 1;
 }
 .toggle {
-  grid-column: 4 / -1;
-  grid-row: 4;
-  justify-self: end;
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
   display: none;
   align-items: center;
+  gap: 8px;
   min-height: 44px;
-  padding: 0 0 0 16px;
-  border: 0;
-  background: none;
+  padding: 0 16px;
+  border: 1px solid color-mix(in srgb, #f7f8f5 18%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, #101418 78%, transparent);
+  color: #f7f8f5;
   font: inherit;
   cursor: pointer;
-  transition: color 0.2s;
+  opacity: 0;
+  transition:
+    opacity 0.25s,
+    background 0.2s;
 }
 .toggle.is-js {
   display: inline-flex;
 }
+.frame:hover .toggle,
+.frame:focus-within .toggle,
+.toggle:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .toggle {
+    opacity: 1;
+  }
+}
 .toggle:hover {
-  color: var(--text);
+  background: #101418;
+}
+.toggle .i-pause,
+.toggle.is-on .i-play {
+  display: none;
+}
+.toggle.is-on .i-pause {
+  display: block;
 }
 
+/* the placard: headline aligned to the frame's top edge, metadata and links to its bottom edge */
 .placard {
-  grid-column: 1 / span 3;
+  grid-column: 1 / span 4;
   grid-row: 3;
-  align-self: end;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  padding-right: 24px;
+}
+.placard-top {
   display: grid;
   gap: 24px;
-  padding-right: 16px;
 }
 .silo-head {
   font-weight: 500;
-  font-size: clamp(28px, 2.6vw, 36px);
-  line-height: 1.12;
+  font-size: clamp(32px, 2.8vw, 40px);
+  line-height: 1.1;
   letter-spacing: -0.035em;
   text-wrap: balance;
+  margin-top: -0.12em;
 }
 .placard p {
-  max-width: 36ch;
+  max-width: 44ch;
   text-wrap: pretty;
+}
+.placard-top p {
+  font-size: 18px;
+  line-height: 28px;
 }
 .placard .meta {
   display: grid;
   gap: 4px;
+  margin-bottom: 16px;
 }
 .silo-links {
   display: grid;
-  gap: 4px;
+  gap: 0;
 }
 .silo-links a {
   width: fit-content;
-}
-
-/* contact sheet: six real screens, captions in mono */
-.sheet {
-  grid-column: 1 / -1;
-  grid-row: 5;
-  margin-top: 64px;
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--gutter);
-}
-.sheet figure {
-  display: grid;
-  gap: 12px;
-  align-content: start;
-}
-.sheet picture,
-.sheet img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.sheet img {
-  aspect-ratio: 16 / 10;
-  object-fit: cover;
-  object-position: top left;
-  border: 1px solid var(--line);
-  border-radius: 2px;
-}
-.sheet figcaption {
-  color: var(--secondary);
+  padding-block: 0;
 }
 
 /* about */
 .def {
-  grid-column: 4 / -1;
+  grid-column: 5 / -1;
   font-family: var(--serif);
   font-size: clamp(28px, 3vw, 44px);
   line-height: 1.24;
@@ -206,22 +212,31 @@ section.block {
   max-width: 44ch;
 }
 
-/* footer: the final frame. The source glow lands above the sign-off. */
+/* footer: the final frame. The source glow lands above the sign-off; everything sits on the bottom edge. */
 footer {
   position: relative;
   min-height: 100svh;
   display: flex;
-  align-items: stretch;
   padding-block: var(--section) 48px;
 }
 footer .wrap {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 96px;
+  justify-content: flex-end;
+  gap: 16px;
   width: 100%;
 }
+.footrow {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  align-items: baseline;
+}
+.footrow .copy {
+  grid-column: 1 / span 4;
+}
 .contact {
+  grid-column: 5 / -1;
   display: flex;
   flex-wrap: wrap;
   gap: 0 40px;
@@ -229,17 +244,6 @@ footer .wrap {
 .contact a {
   display: block;
   padding-block: 10px;
-}
-.contactrow {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  column-gap: var(--gutter);
-}
-.contactrow .contact {
-  grid-column: 4 / -1;
-}
-.copy {
-  margin-bottom: 16px;
 }
 .signoff {
   width: fit-content;
@@ -254,34 +258,30 @@ footer .wrap {
     grid-column: 1 / -1;
     grid-row: 3;
   }
-  .toggle {
-    grid-column: 1 / -1;
-    grid-row: 4;
-  }
   .placard {
     grid-column: 1 / -1;
-    grid-row: 5;
+    grid-row: 4;
+    margin-top: 32px;
     padding: 0;
-    margin-top: 24px;
   }
-  .sheet {
-    grid-row: 6;
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    margin-inline: calc(var(--gutter) * -1);
-    padding-inline: var(--gutter);
-    margin-top: 64px;
-  }
-  .sheet li {
-    flex: 0 0 62vw;
-    scroll-snap-align: start;
+  .toggle {
+    opacity: 1;
+    right: 8px;
+    bottom: 8px;
   }
   .def,
   .mark-note {
     grid-column: 1 / -1;
   }
-  .contactrow .contact {
+  .footrow .copy,
+  .contact {
     grid-column: 1 / -1;
+  }
+  .footrow .copy {
+    order: 2;
+    margin-top: 8px;
+  }
+  footer .wrap {
+    gap: 8px;
   }
 }

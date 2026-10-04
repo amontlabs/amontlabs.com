@@ -34,7 +34,7 @@ In `src/scripts/signature.js` the `J` object holds the tuning: progress `p` (0 t
 
 ## Smooth scroll and Silo media
 
-Lenis (lerp 0.09, wheel only, touch native, off under reduced motion) is started after idle from `Hero.astro` and advanced inside the scene's own frame (`setPreFrame`), so content and scene move together. The Silo exhibit uses Silo's own media (downloaded from silo.amontlabs.com/media): the tour film as `public/media/silo-tour.{av1.,}mp4` (1280x720, no audio; loaded only when the frame is 40% in view, paused out of view, never autoplayed under reduced motion, with a Play/Pause control) and six screenshots in `src/assets/silo/` (AVIF/WebP through Astro). Do not invent visuals.
+Lenis (lerp 0.09, wheel only, touch native, off under reduced motion) is started after idle from `Hero.astro` and advanced inside the scene's own frame (`setPreFrame`), so content and scene move together. The Silo exhibit uses Silo's own media (downloaded from silo.amontlabs.com/media): the tour film as `public/media/silo-tour.{av1.,}mp4` (1280x720, no audio; loaded only when the frame is 40% in view, paused out of view, never autoplayed under reduced motion, with a Play/Pause control) and the poster frame in `src/assets/silo/` (AVIF/WebP through Astro). The film is trimmed to 3.9–53.0 s of the original so it starts on real product UI (the title card and end card use an orange accent; Amont has one accent). Do not invent visuals.
 
 ## Silo data
 

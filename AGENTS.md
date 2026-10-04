@@ -32,5 +32,5 @@ Regenerate data in `amontlabs/amont`, copy `site/signature/data/img-meta.json` t
 ## Silo exhibit and smooth scroll
 
 - Lenis drives scroll; it is advanced by the scene's frame (`setPreFrame`). Keep scroll coupling at zero lag (`scripts/perf-scroll.mjs` measures it). Keyboard and anchors stay native.
-- The Silo exhibit is one visual (Silo's own release film, 16:9 frame, the name "stands" on it) plus a six-screenshot contact sheet with mono captions. Only real media from silo.amontlabs.com. Video bytes must not load before the frame is in view (LCP stays the hero poster).
+- The Silo exhibit is one visual (Silo's own release film, 16:9 frame, the name "stands" on it) with a Play/Pause control (hover or focus on desktop, always visible on touch); the film is trimmed to skip the orange title card (the six screenshots were removed: pale and sparse on the page). Only real media from silo.amontlabs.com. Video bytes must not load before the frame is in view (LCP stays the hero poster).
 - Layout: 12-column grid, labels in the left rail, content from column 4, 8px rhythm (`src/styles/sections.css`). Links keep a 44px hit area. The footer is the final frame: the source glow lands above "En amont.".

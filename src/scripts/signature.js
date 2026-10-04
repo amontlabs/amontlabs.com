@@ -365,6 +365,7 @@ export async function mount(el, opts = {}) {
     path: [0.62, 0.0],                 // river parameter s (1 = downstream, 0 = source) at the top and bottom of the page
     dimText: 0.30, dimEnd: 0.07,       // terrain alpha while text is on screen / at the footer
     keepText: 0.62, keepEnd: 0.14,     // fraction of terrain points kept (same two stops)
+    light: { dimText: 0.13, keepText: 0.4 },   // the light theme needs more dimming than the dark one
     smooth: 0.05,                      // smoothing time (s) of the scroll velocity that drives the river speed
   };
   const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
@@ -434,7 +435,8 @@ export async function mount(el, opts = {}) {
       Bv.set(0, 0, cam.dist);
       Tv.copy(Pv).sub(Bv).multiplyScalar(J.dolly * sm(0, 1, p));
       T = Tv; dollied = Tv.z;
-      tmat.uniforms.uJ.value.set(lerp(lerp(1, J.dimText, text), J.dimEnd, foot), lerp(lerp(1, J.keepText, text), J.keepEnd, foot));
+      const dT = S.theme === 'light' ? J.light.dimText : J.dimText, kT = S.theme === 'light' ? J.light.keepText : J.keepText;
+      tmat.uniforms.uJ.value.set(lerp(lerp(1, dT, text), J.dimEnd, foot), lerp(lerp(1, kT, text), J.keepEnd, foot));
       U.uBotFade.value = 1 - text; U.uConv.value = conv;
       smat.uniforms.uGs.value = 1.5 * (1 + 0.9 * sm(0.5, 1.0, p));
       U.uPulse.value = reduced ? 0 : 1 - 0.45 * foot;
