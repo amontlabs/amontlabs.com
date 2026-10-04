@@ -1,6 +1,6 @@
 ---
 import { Picture } from "astro:assets";
-import tour from "../assets/silo/silo-tour.png";
+import showcase from "../assets/silo/silo-showcase.webp";
 import data from "../data/silo.json";
 
 const STARS_MIN = 100; // show stars only from this count up
@@ -19,21 +19,16 @@ const release = [data.version, date, data.stars >= STARS_MIN ? stars : null].fil
     <h2 id="work" class="label mono dim" style="grid-column: 1 / -1">Work</h2>
     <p class="silo-name" aria-label="Silo">Silo</p>
 
-    <div class="frame" id="frame">
+    <div class="frame">
       <Picture
-        src={tour}
+        src={showcase}
         formats={["avif", "webp"]}
-        widths={[640, 1024, 1312]}
+        widths={[800, 1280, 1920, 2560]}
         sizes="(max-width: 900px) 100vw, 66vw"
-        alt="Silo release film: an agent session running on a Linux desktop inside Silo"
+        alt="Silo showing a Linux desktop, local and remote computers, and GitHub access controls"
         loading="lazy"
         decoding="async"
       />
-      <video id="tour" muted loop playsinline preload="none" aria-label="Silo release film" data-av1="/media/silo-tour.av1.mp4" data-mp4="/media/silo-tour.mp4"></video>
-      <button class="toggle mono" id="toggle" type="button" aria-label="Play film">
-        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12"><path class="i-play" d="M2 1 11 6 2 11z" fill="currentColor"/><path class="i-pause" d="M2 1h3v10H2zM7 1h3v10H7z" fill="currentColor"/></svg>
-        <span id="toggle-label">Play</span>
-      </button>
     </div>
 
     <div class="placard">
@@ -54,52 +49,3 @@ const release = [data.version, date, data.stars >= STARS_MIN ? stars : null].fil
     </div>
   </div>
 </section>
-
-<script>
-  const frame = document.getElementById("frame")!;
-  const video = document.getElementById("tour") as HTMLVideoElement;
-  const toggle = document.getElementById("toggle") as HTMLButtonElement;
-  const label_ = document.getElementById("toggle-label")!;
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  toggle.classList.add("is-js");
-
-  let loaded = false;
-  let wantPlay = !reduced; // autoplay only when in view and motion is fine
-  let inView = false;
-  const load = () => {
-    if (loaded) return;
-    loaded = true;
-    for (const [type, src] of [["video/mp4; codecs=av01.0.05M.08", video.dataset.av1], ["video/mp4", video.dataset.mp4]] as const) {
-      const s = document.createElement("source");
-      s.src = src!;
-      s.type = type;
-      video.append(s);
-    }
-    video.load();
-  };
-  const sync = () => {
-    if (inView && wantPlay) {
-      load();
-      void video.play().catch(() => {});
-    } else video.pause();
-  };
-  const label = () => {
-    const playing = !video.paused;
-    label_.textContent = playing ? "Pause" : "Play";
-    toggle.setAttribute("aria-label", playing ? "Pause film" : "Play film");
-    toggle.classList.toggle("is-on", playing);
-    frame.classList.toggle("is-playing", playing);
-  };
-  video.addEventListener("playing", () => frame.classList.add("is-started"));
-  video.addEventListener("play", label);
-  video.addEventListener("pause", label);
-  toggle.addEventListener("click", () => {
-    wantPlay = video.paused;
-    if (wantPlay) { load(); void video.play().catch(() => {}); } else video.pause();
-  });
-  new IntersectionObserver(
-    (es) => { inView = es[0].isIntersecting; sync(); },
-    { threshold: 0.4 },
-  ).observe(frame);
-  label();
-</script>
