@@ -3,8 +3,8 @@ import { getImage } from "astro:assets";
 import dark from "../assets/signature/poster-dark.png";
 import light from "../assets/signature/poster-light.png";
 
-const widths = [1280, 1920, 2560, 3840];
-const sizes = "max(100vw, 150svh)";
+const widths = [960, 1280, 1920, 2560, 3840];
+const sizes = "(max-aspect-ratio: 4/5) 62svh, max(100vw, 150svh)";
 const make = async (src: ImageMetadata, format: "avif" | "webp") => {
   const imgs = await Promise.all(
     widths.map((width) => getImage({ src, width, format, quality: format === "avif" ? 55 : 80 })),

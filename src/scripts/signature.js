@@ -236,12 +236,11 @@ export async function mount(el, opts = {}) {
 
   // ---- terrain
   const n = tb.byteLength / 8;
-  const raw = new DataView(tb);
+  const i16 = new Int16Array(tb), u8 = new Uint8Array(tb);        // 8 bytes per point: int16 x3, uint8 x2 (little-endian)
   const pos = new Int16Array(n * 3), attr = new Uint8Array(n * 2);
   for (let i = 0; i < n; i++) {
-    const b = i * 8;
-    pos[i * 3] = raw.getInt16(b, true); pos[i * 3 + 1] = raw.getInt16(b + 2, true); pos[i * 3 + 2] = raw.getInt16(b + 4, true);
-    attr[i * 2] = raw.getUint8(b + 6); attr[i * 2 + 1] = raw.getUint8(b + 7);
+    pos[i * 3] = i16[i * 4]; pos[i * 3 + 1] = i16[i * 4 + 1]; pos[i * 3 + 2] = i16[i * 4 + 2];
+    attr[i * 2] = u8[i * 8 + 6]; attr[i * 2 + 1] = u8[i * 8 + 7];
   }
   const tgeo = new THREE.BufferGeometry();
   tgeo.setAttribute('position', new THREE.BufferAttribute(pos, 3, true));
