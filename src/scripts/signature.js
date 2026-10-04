@@ -56,10 +56,10 @@ void main() {
   float d = 2.0 * r * uPx;
   if (d < uMinD) { a *= (d * d) / (uMinD * uMinD); d = uMinD; }
   // light theme reads as a scan: the faintest points are thinned
-  if (uLight > 0.5 && tone < 0.30 && hash(seed * 3.3) < uThin * 3.0) a = 0.0;
+  if (tone < 0.30 && hash(seed * 3.3) < uThin * 3.0) a *= 1.0 - uLight;
   a *= q * uJ.x;
   if (hash(seed * 5.1) > uJ.y) a = 0.0;
-  vCol = mix(uLo, uHi, clamp(uLight > 0.5 ? (tone < 0.30 ? 0.0 : 1.0) : tone * 1.15 - 0.05, 0.0, 1.0));
+  vCol = mix(uLo, uHi, clamp(mix(tone * 1.15 - 0.05, step(0.30, tone), uLight), 0.0, 1.0));
   vec4 gp = projectionMatrix * mv;
   vA = a * (1.0 - uBotFade * smoothstep(0.72, 1.0, 0.5 - 0.5 * gp.y / gp.w)); vD = d;
   gl_Position = gp;
@@ -111,7 +111,7 @@ void main() {
   float wave = 0.5 + 0.5 * sin(6.2831853 * (u * 4.0 - uTime * 0.12));
   float pulse = 1.0 + uPulse * (0.55 * exp(-u * 9.0) * (0.5 + 0.5 * sin(uTime * 1.7)) + 0.10 * wave);
   float r = (1.1 + 0.55 * (1.0 - u) + 0.35 * rnd) * pulse * uSizeK;
-  float a = (uLight > 0.5 ? 0.78 + 0.22 * sqrt(1.0 - u) : 0.80 + 0.20 * rnd) * on * (1.0 - smoothstep(0.88, 1.0, u));
+  float a = mix(0.80 + 0.20 * rnd, 0.78 + 0.22 * sqrt(1.0 - u), uLight) * on * (1.0 - smoothstep(0.88, 1.0, u));
   float d = 2.0 * r * uPx;
   if (d < uMinD) { a *= (d * d) / (uMinD * uMinD); d = uMinD; }
   vCol = vec3(${FONTE.map(v => v.toFixed(5)).join(',')});
@@ -181,9 +181,9 @@ void main() {
   float w = max(fwidth(r), 1e-4);
   float core = 1.0 - smoothstep(5.6 - w * 0.5, 5.6 + w * 0.5, r);
   // soft halo: one smooth falloff from the core edge, no step (a pale ring on paper otherwise)
-  float halo = exp(-pow(max(r - (uLight > 0.5 ? 4.0 : 5.0), 0.0) / (uLight > 0.5 ? 6.0 : 9.0), uLight > 0.5 ? 1.5 : 1.2)) * (uLight > 0.5 ? 0.42 : 0.95) * (1.0 - smoothstep(14.0, 26.0, r));
+  float halo = exp(-pow(max(r - mix(5.0, 4.0, uLight), 0.0) / mix(9.0, 6.0, uLight), mix(1.2, 1.5, uLight))) * mix(0.95, 0.42, uLight) * (1.0 - smoothstep(14.0, 26.0, r));
   vec3 fonte = vec3(${FONTE.map(v => v.toFixed(5)).join(',')});
-  vec3 hot = mix(fonte, vec3(0.62, 0.92, 1.0), (uLight > 0.5 ? 0.0 : 0.30));
+  vec3 hot = mix(fonte, vec3(0.62, 0.92, 1.0), 0.30 * (1.0 - uLight));
   float a = clamp(core + halo * (1.0 - core) * vK, 0.0, 1.0) * clamp(vK * 1.4, 0.0, 1.0);
   vec3 col = mix(fonte, hot, core);
   gl_FragColor = vec4(col * a, a);
@@ -316,12 +316,33 @@ export async function mount(el, opts = {}) {
   };
   const frame = { cw: 1, ch: 1, k: 1, a: 0, b: 0, kDev: 1 };
 
-  function applyTheme(name) {
-    const th = { ...THEMES[name], ...(img ? IMG_THEMES[name] : {}) }; S.theme = name;
+  // theme: every uniform glides to its target (0.5 s, same timing as the page's CSS colour fade)
+  const TW = { from: null, to: null, t0: 0, dur: 500 };
+  const themeVec = (name) => {
+    const th = { ...THEMES[name], ...(img ? IMG_THEMES[name] : {}) };
+    return { th, v: [...th.r, ...th.aK, th.dim, ...th.lo, ...th.hi, th.thin, name === 'light' ? 1 : 0] };
+  };
+  const curVec = () => {
     const m = tmat.uniforms;
-    m.uRad.value.set(...th.r); m.uAlphaK.value.set(...th.aK); m.uDim.value = th.dim;
-    m.uLo.value.set(...th.lo); m.uHi.value.set(...th.hi); m.uThin.value = th.thin;
-    U.uLight.value = name === 'light' ? 1 : 0;
+    return [m.uRad.value.x, m.uRad.value.y, m.uRad.value.z, m.uAlphaK.value.x, m.uAlphaK.value.y, m.uDim.value,
+      m.uLo.value.x, m.uLo.value.y, m.uLo.value.z, m.uHi.value.x, m.uHi.value.y, m.uHi.value.z, m.uThin.value, U.uLight.value];
+  };
+  function setVec(v) {
+    const m = tmat.uniforms;
+    m.uRad.value.set(v[0], v[1], v[2]); m.uAlphaK.value.set(v[3], v[4]); m.uDim.value = v[5];
+    m.uLo.value.set(v[6], v[7], v[8]); m.uHi.value.set(v[9], v[10], v[11]); m.uThin.value = v[12]; U.uLight.value = v[13];
+  }
+  function stepTheme(now) {
+    if (!TW.to) return false;
+    const k = Math.min(1, (now - TW.t0) / TW.dur), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    setVec(TW.from.map((a, i) => a + (TW.to[i] - a) * e));
+    if (k >= 1) TW.to = null;
+    return true;
+  }
+  function applyTheme(name, animate = false) {
+    const { th, v } = themeVec(name); S.theme = name;
+    if (animate && !reduced && S.started) { TW.from = curVec(); TW.to = v; TW.t0 = performance.now(); }
+    else { TW.to = null; setVec(v); }
     if (!o.transparent) renderer.setClearColor(th.bg, 1); else renderer.setClearColor(0x000000, 0);
     el.dispatchEvent(new CustomEvent('signature:theme', { detail: name }));
   }
@@ -420,6 +441,7 @@ export async function mount(el, opts = {}) {
     if (S.intro0 === null) S.intro0 = now;
     S.t += dt;
     U.uTime.value = S.t;
+    stepTheme(now); S.started = true;
     U.uIntro.value = reduced || !o.intro ? 9 : Math.min((now - S.intro0) / 1000 / 2.2 * 1.9 + 0.0, 9);
     let T = T0, dollied = 0;
     if (S.journey) {
@@ -435,7 +457,7 @@ export async function mount(el, opts = {}) {
       Bv.set(0, 0, cam.dist);
       Tv.copy(Pv).sub(Bv).multiplyScalar(J.dolly * sm(0, 1, p));
       T = Tv; dollied = Tv.z;
-      const dT = S.theme === 'light' ? J.light.dimText : J.dimText, kT = S.theme === 'light' ? J.light.keepText : J.keepText;
+      const L = U.uLight.value, dT = lerp(J.dimText, J.light.dimText, L), kT = lerp(J.keepText, J.light.keepText, L);
       tmat.uniforms.uJ.value.set(lerp(lerp(1, dT, text), J.dimEnd, foot), lerp(lerp(1, kT, text), J.keepEnd, foot));
       U.uBotFade.value = 1 - text; U.uConv.value = conv;
       smat.uniforms.uGs.value = 1.5 * (1 + 0.9 * sm(0.5, 1.0, p));
@@ -509,7 +531,7 @@ export async function mount(el, opts = {}) {
 
   const api = {
     renderer, scene, camera, meta, state: S, uniforms: U, terrainMaterial: tmat, riverMaterial: rmat, lod, count: n, reduced,
-    setTheme: (t) => { applyTheme(t); kick(); },
+    setTheme: (t) => { applyTheme(t, true); kick(); if (reduced) renderer.render(scene, camera); },
     setSizeScale: (v) => { U.uSizeK.value = v; S.size = v; kick(); },
     setCount: (c) => { tgeo.setDrawRange(0, Math.min(n, Math.round(c))); S.drawN = c; kick(); },
     setRiverSpeed: (v) => { S.speed = v; },
