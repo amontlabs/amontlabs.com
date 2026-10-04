@@ -385,13 +385,12 @@ html.lenis body {
 :root[data-pref="dark"] .tsw :is(button, a)[data-v="dark"] .tsw-dot {
   opacity: 1;
 }
-/* quiet label */
-.tsw :is(button, a)::after {
-  content: attr(data-label);
+/* quiet label: centred under its own icon, shifted inward only as far as needed to stay in the viewport (see the script in ThemeSwitch) */
+.tip {
   position: absolute;
   top: calc(100% + 14px);
   left: 50%;
-  transform: translate(-50%, -2px);
+  transform: translate(calc(-50% + var(--shift, 0px)), -2px);
   font: 13px / 20px var(--mono);
   color: var(--secondary);
   white-space: nowrap;
@@ -401,15 +400,24 @@ html.lenis body {
     opacity 0.2s,
     transform 0.2s;
 }
-.tsw :is(button, a):hover::after,
-.tsw :is(button, a):focus-visible::after {
+.tsw :is(button, a):hover .tip,
+.tsw :is(button, a):focus-visible .tip,
+.tip.show {
   opacity: 1;
-  transform: translate(-50%, 0);
+  transform: translate(calc(-50% + var(--shift, 0px)), 0);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 @media (prefers-reduced-motion: reduce) {
   .tsw-thumb,
   .tsw-dot,
-  .tsw :is(button, a)::after {
+  .tip {
     transition: none;
   }
 }
@@ -452,15 +460,6 @@ html.theme-anim {
 }
 .tsw-links a:hover {
   background: color-mix(in srgb, var(--text) 9%, transparent);
-}
-.tsw-links a::after {
-  left: auto;
-  right: 0;
-  transform: translate(0, -2px);
-}
-.tsw-links a:hover::after,
-.tsw-links a:focus-visible::after {
-  transform: translate(0, 0);
 }
 @media (max-width: 420px) {
   .tsw {

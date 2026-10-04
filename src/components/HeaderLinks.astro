@@ -8,7 +8,7 @@ const links = [
 
 <nav class="tsw tsw-links" aria-label="Contact and social">
   {links.map((l) => (
-    <a href={l.href} aria-label={l.aria} data-label={l.label} {...(l.id !== "mail" ? { rel: "noopener" } : {})}>
+    <a href={l.href} aria-label={l.aria} {...(l.id !== "mail" ? { rel: "noopener" } : {})}>
       <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 16 16" fill="none">
         {l.id === "mail" && (
           <>
@@ -27,6 +27,16 @@ const links = [
           <path fill="currentColor" d="M12.2 2h2.2L9.6 7.5 15.2 14h-4.4L7.4 9.6 3.5 14H1.3l5.1-5.9L1 2h4.5l3.1 4.1L12.2 2zm-.8 10.7h1.2L4.7 3.2H3.4l8 9.5z" />
         )}
       </svg>
+      <span class="tip" aria-hidden="true">{l.label}</span>
     </a>
   ))}
 </nav>
+
+<script is:inline>
+  (() => {
+    for (const h of document.querySelectorAll(".tsw :is(button, a)")) {
+      h.addEventListener("pointerenter", () => window.__fitTip(h));
+      h.addEventListener("focus", () => window.__fitTip(h));
+    }
+  })();
+</script>

@@ -9,7 +9,7 @@ const options = [
 <div class="tsw" role="radiogroup" aria-label="Theme" id="tsw">
   <span class="tsw-thumb" aria-hidden="true"></span>
   {options.map((o) => (
-    <button type="button" role="radio" aria-checked="false" aria-label={`${o.label} theme`} data-v={o.v} data-label={o.label} tabindex="-1">
+    <button type="button" role="radio" aria-checked="false" aria-label={`${o.label} theme`} data-v={o.v} tabindex="-1">
       <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 16 16" fill="none">
         {o.v === "system" && (
           <>
@@ -21,12 +21,26 @@ const options = [
         {o.v === "dark" && <path d="M10.2 2.4a5.7 5.7 0 1 0 3.4 8.7A4.6 4.6 0 0 1 10.2 2.4z" fill="currentColor" />}
       </svg>
       <i class="tsw-dot" aria-hidden="true"></i>
+      <span class="tip" aria-hidden="true">{o.label}</span>
     </button>
   ))}
 </div>
 
 <script is:inline>
   (() => {
+    // keep every tooltip centred under its icon, nudged inward only if it would leave the viewport
+    window.__fitTip = (host) => {
+      const tip = host.querySelector(".tip");
+      if (!tip) return;
+      tip.style.setProperty("--shift", "0px");
+      const r = host.getBoundingClientRect();
+      const w = tip.offsetWidth;
+      const left = r.left + r.width / 2 - w / 2;
+      const m = 8;
+      const shift = left < m ? m - left : left + w > innerWidth - m ? innerWidth - m - (left + w) : 0;
+      tip.style.setProperty("--shift", `${shift}px`);
+    };
+
     const g = document.getElementById("tsw");
     const bs = [...g.querySelectorAll("button")];
     const show = () => {
