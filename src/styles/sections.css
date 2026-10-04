@@ -68,6 +68,7 @@ section.block {
 /* work: a museum exhibit. The name stands on the frame; the placard sits in the left rail, bottom-aligned. */
 .silo-name {
   grid-column: 1 / -1;
+  grid-row: 2;
   font-weight: 500;
   font-size: clamp(112px, 21vw, 304px);
   line-height: 0.74;
@@ -78,8 +79,11 @@ section.block {
 /* the three product windows float on the page (transparent WebP, no frame). The image has a transparent margin
    around the windows (160/3266 sides, 162/2556 top, 159/2556 bottom): cancel it so the windows themselves sit on the grid. */
 .shot {
+  /* the windows rise beside the name: the image's top-left is empty (the computers window sits lower),
+     so the word "Silo" occupies that space and the screens start at the top of the exhibit */
   grid-column: 5 / -1;
-  grid-row: 3;
+  grid-row: 2 / span 2;
+  align-self: start;
   position: relative;
   z-index: 1;
 }
