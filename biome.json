@@ -1,0 +1,10 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
+  "files": {
+    "includes": ["**", "!dist", "!.astro", "!.proof", "!public", "!**/*.astro", "!src/scripts/signature.js"]
+  },
+  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 110 },
+  "linter": { "enabled": true, "rules": { "recommended": true } },
+  "css": { "formatter": { "enabled": true } },
+  "html": { "formatter": { "enabled": false }, "experimentalFullSupportEnabled": false }
+}

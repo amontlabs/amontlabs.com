@@ -1,0 +1,8 @@
+.proof/
+.DS_Store
+dist/
+.astro/
+node_modules/
+.vercel/
+.env*
+*.log

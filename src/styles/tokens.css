@@ -1,0 +1,40 @@
+/* Brand tokens. Source of truth: amontlabs/amont, brand/colors/colors.css (semantic names kept). */
+:root {
+  --ink: #101418;
+  --paper: #f7f8f5;
+  --glacier: #edefea;
+  --scree: #5c636a;
+  --rule: #dcdfd9;
+  --fonte: #0f9ac3;
+  --fonte-text: #067a9c;
+
+  --bg: var(--paper);
+  --text: var(--ink);
+  --secondary: var(--scree);
+  --line: var(--rule);
+  --panel: var(--glacier);
+  --accent: var(--fonte);
+  --link: var(--fonte-text);
+  --focus: var(--fonte);
+
+  --sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+
+  --max: 1312px;
+  --gutter: clamp(16px, 3vw, 32px);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101418;
+    --text: #f7f8f5;
+    --secondary: #a3aab0;
+    --line: #2a3138;
+    --panel: #171c21;
+    --link: var(--fonte);
+  }
+}
