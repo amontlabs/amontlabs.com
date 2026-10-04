@@ -156,11 +156,6 @@ section.block {
   font-style: italic;
 }
 
-/* the page ends with the About section; the river's source lands beside the definition */
-main {
-  padding-bottom: clamp(128px, 22vh, 224px);
-}
-
 @media (max-width: 900px) {
   .shot {
     grid-column: 1 / -1;
@@ -201,15 +196,28 @@ main.legal {
   margin-top: 16px;
 }
 
-/* the legal link: barely there, in the padding below About (it does not change the page height or the journey's end) */
-main {
+/* the final frame: one viewport, the last thing on the page. The definition is composed inside it; the river's source lands beside it. */
+.finale {
   position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  margin-top: var(--section);
 }
+.finale .wrap {
+  width: 100%;
+  align-items: center;
+}
+.finale .def {
+  max-width: 22em;
+}
+
+/* legal: in the frame's bottom edge, adds no height */
 .legal-wrap {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 40px;
+  bottom: 28px;
 }
 .legal-link {
   --fade: 8%;

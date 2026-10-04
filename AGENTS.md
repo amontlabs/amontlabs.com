@@ -48,3 +48,7 @@ Header tooltips are real `.tip` spans (centred under their icon, nudged inward b
 ## Legal page
 
 `/legal` (`src/pages/legal.astro`): plain page, noindex, same header, no scene. The sentence "no cookies, no analytics and no third-party services" was verified (every request on `/` and `/legal` is same-origin); re-verify if anything external is ever added (fonts, analytics, embeds) and change the page if so. The home page links to it with one tiny "Legal" at the very bottom, in the padding below About (do not make it more prominent, and keep it out of the header). There is no sitemap or robots.txt.
+
+## Final frame
+
+The page ends with `.finale`: exactly `min-height: 100svh`, nothing after it. The definition is vertically centred on the columns used above; the river's source lands just left of its first word (`Hero.astro` measures `.def`). "Legal" is absolutely positioned inside the frame's bottom edge (adds no height). There is no About label (a visually hidden h2 names the section). Placement b (definition in the lower third) was tried and rejected: a looks calmer.

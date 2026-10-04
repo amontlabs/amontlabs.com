@@ -88,6 +88,10 @@ if (a.hover) {
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: hx, y: hy });
   await sleep(500);
 }
+if (a.pre) {
+  await ev(a.pre);
+  await sleep(300);
+}
 if (a.scrollf !== undefined) {
   await ev(`scrollTo(0, ${+a.scrollf} * (document.documentElement.scrollHeight - innerHeight))`);
   await sleep(2200);
