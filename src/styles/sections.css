@@ -176,3 +176,27 @@ main {
     grid-column: 1 / -1;
   }
 }
+
+/* legal notice: a plain page, narrow measure */
+main.legal {
+  padding-block: 160px var(--section);
+}
+.legal-body {
+  max-width: 60ch;
+}
+.legal-body h1 {
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  max-width: none;
+}
+.legal-body .sub {
+  margin-top: 8px;
+}
+.legal-body h2 {
+  margin: 56px 0 8px;
+  font-weight: 400;
+}
+.legal-body p + p {
+  margin-top: 16px;
+}

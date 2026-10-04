@@ -1,16 +1,12 @@
 ---
-import HeaderLinks from "../components/HeaderLinks.astro";
+import Header from "../components/Header.astro";
 import Hero from "../components/Hero.astro";
-import Logo from "../components/Logo.astro";
 import Silo from "../components/Silo.astro";
-import ThemeSwitch from "../components/ThemeSwitch.astro";
 import Base from "../layouts/Base.astro";
 ---
 
 <Base>
-  <header class="top">
-    <div class="wrap bar"><Logo /><ThemeSwitch /><HeaderLinks /></div>
-  </header>
+  <Header />
   <main>
     <Hero />
     <Silo />

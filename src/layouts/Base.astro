@@ -2,9 +2,18 @@
 import "../styles/global.css";
 import geist500 from "../assets/fonts/geist-500.woff2?url";
 
-const title = "Amont Labs";
-const description = "Independent software studio in Paris. Practical, open-source software on emerging tech.";
-const canonical = "https://amontlabs.com/";
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  robots?: string;
+}
+const {
+  title = "Amont Labs",
+  description = "Independent software studio in Paris. Practical, open-source software on emerging tech.",
+  canonical = "https://amontlabs.com/",
+  robots,
+} = Astro.props;
 const og = new URL("/og.png", canonical).href;
 ---
 
@@ -16,6 +25,7 @@ const og = new URL("/og.png", canonical).href;
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    {robots && <meta name="robots" content={robots} />}
     <meta name="theme-color" content="#f7f8f5" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#101418" media="(prefers-color-scheme: dark)" />
     <script is:inline>
