@@ -298,10 +298,19 @@ html.lenis body {
 
 /* header bar: logo left, theme switch right, both centred on the logo's x-height */
 .bar {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
   gap: 16px;
+}
+.bar > :first-child {
+  justify-self: start;
+}
+.bar > :nth-child(2) {
+  justify-self: center;
+}
+.bar > :nth-child(3) {
+  justify-self: end;
 }
 
 /* theme switch: three-state segmented control, hairline pill, sliding thumb */
