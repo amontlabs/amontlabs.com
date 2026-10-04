@@ -34,6 +34,8 @@ uniform vec2 uDepth;                  // near, far for the depth fade
 uniform float uDim;
 uniform vec3 uLo, uHi;
 uniform float uLight;
+uniform vec2 uJ;                      // journey: alpha factor, keep probability
+uniform float uBotFade;               // hero: soft fade toward the bottom edge (screen space)
 varying vec3 vCol;
 varying float vA;
 varying float vD;
@@ -55,10 +57,12 @@ void main() {
   if (d < uMinD) { a *= (d * d) / (uMinD * uMinD); d = uMinD; }
   // light theme reads as a scan: the faintest points are thinned
   if (uLight > 0.5 && tone < 0.30 && hash(seed * 3.3) < uThin * 3.0) a = 0.0;
-  a *= q;
+  a *= q * uJ.x;
+  if (hash(seed * 5.1) > uJ.y) a = 0.0;
   vCol = mix(uLo, uHi, clamp(uLight > 0.5 ? (tone < 0.30 ? 0.0 : 1.0) : tone * 1.15 - 0.05, 0.0, 1.0));
-  vA = a; vD = d;
-  gl_Position = projectionMatrix * mv;
+  vec4 gp = projectionMatrix * mv;
+  vA = a * (1.0 - uBotFade * smoothstep(0.72, 1.0, 0.5 - 0.5 * gp.y / gp.w)); vD = d;
+  gl_Position = gp;
   gl_PointSize = d + 2.0;
 }`;
 
@@ -121,7 +125,7 @@ void main() {
 const VERT_RIVER_IMG = /* glsl */`
 attribute vec4 aP;                    // s0, seed, size, 0
 uniform sampler2D uRiver;
-uniform float uNS, uTime, uSpeed, uPx, uIntro, uMinD, uPulse, uLight, uSizeK, uFlow;
+uniform float uNS, uTime, uSpeed, uPx, uIntro, uMinD, uPulse, uLight, uSizeK, uFlow, uFlowT, uConv, uBotFade;
 varying vec3 vCol;
 varying float vA;
 varying float vD;
@@ -134,22 +138,23 @@ vec3 cl(float f) {
 }
 void main() {
   float s0 = aP.x, seed = aP.y;
-  float ph = fract(uTime * uSpeed * 6.0 * (0.85 + 0.3 * fract(seed * 91.3)) + seed * 7.13);
+  float ph = fract(uFlowT * 6.0 * (0.85 + 0.3 * fract(seed * 91.3)) + seed * 7.13);
   float win = 0.022 * uFlow;
   float u = clamp(s0 + win * ph, 0.0, 1.0);
-  vec3 p = position + (cl(u) - cl(s0));
+  vec3 p = cl(u) + (position - cl(s0)) * (1.0 - 0.8 * uConv);   // uConv: the river narrows to a thread
   float env = uFlow > 0.0 ? sin(3.14159265 * ph) : 1.0;
   float reveal = smoothstep(0.0, 1.0, (uIntro - 1.05) / 1.1);
   float shown = step(s0, reveal * 1.05);
   float wave = 0.5 + 0.5 * sin(6.2831853 * (s0 * 4.0 - uTime * 0.12));
   float pulse = 1.0 + uPulse * (0.55 * exp(-s0 * 9.0) * (0.5 + 0.5 * sin(uTime * 1.7)) + 0.10 * wave);
   float r = (1.12 + 0.40 * aP.z) * pulse * uSizeK;
-  float a = (0.80 + 0.20 * aP.z) * (0.85 + 0.15 * env) * shown * (1.0 - smoothstep(0.93, 1.0, s0));
+  float a = (0.80 + 0.20 * aP.z) * (0.85 + 0.15 * env) * shown * (1.0 - smoothstep(0.93, 1.0, s0)) * (1.0 - uConv * smoothstep(0.04, 0.2, s0));
   float d = 2.0 * r * uPx;
   if (d < uMinD) { a *= (d * d) / (uMinD * uMinD); d = uMinD; }
   vCol = vec3(${FONTE.map(v => v.toFixed(5)).join(',')});
-  vA = a; vD = d;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+  vec4 gp = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+  vA = a * (1.0 - uBotFade * smoothstep(0.72, 1.0, 0.5 - 0.5 * gp.y / gp.w)); vD = d;
+  gl_Position = gp;
   gl_PointSize = d + 2.0;
 }`;
 
@@ -209,7 +214,7 @@ export function webglAvailable() {
 export async function mount(el, opts = {}) {
   const o = {
     theme: 'dark', transparent: true, lod: 'auto', dprCap: 2, fit: 'cover', anchor: [0.5, 0.5],
-    source: 'image', motion: 'auto', parallax: true, dev: false, poster: null, speed: 0.024, intro: true, ...opts,
+    source: 'image', motion: 'auto', parallax: true, dev: false, poster: null, speed: 0.024, intro: true, journey: false, ...opts,
   };
   const reduced = o.motion === 'static' || (o.motion === 'auto' && matchMedia('(prefers-reduced-motion: reduce)').matches);
   if (!webglAvailable()) {
@@ -247,14 +252,14 @@ export async function mount(el, opts = {}) {
   tgeo.setAttribute('aAttr', new THREE.BufferAttribute(attr, 2, true));
   const U = {
     uPx: { value: 1 }, uTime: { value: 0 }, uIntro: { value: 9 }, uMinD: { value: 1.0 }, uSizeK: { value: 1 },
-    uLight: { value: 0 }, uPulse: { value: reduced ? 0 : 1 }, uFlow: { value: reduced ? 0 : 1 },
+    uBotFade: { value: 0 }, uConv: { value: 0 }, uLight: { value: 0 }, uPulse: { value: reduced ? 0 : 1 }, uFlow: { value: reduced ? 0 : 1 },
   };
   const tmat = premultMaterial({
     vertexShader: VERT_TERRAIN, fragmentShader: FRAG_DISC,
     uniforms: {
       ...U, uBox: { value: new THREE.Vector3(...meta.box) },
       uRad: { value: new THREE.Vector3() }, uAlphaK: { value: new THREE.Vector2() }, uDepth: { value: img ? new THREE.Vector2(meta.depth[0], meta.depth[1]) : new THREE.Vector2(cam.dist * 0.72, cam.dist * 1.55) },
-      uDim: { value: 0.3 }, uLo: { value: new THREE.Vector3() }, uHi: { value: new THREE.Vector3() }, uThin: { value: 0 },
+      uJ: { value: new THREE.Vector2(1, 1) }, uDim: { value: 0.3 }, uLo: { value: new THREE.Vector3() }, uHi: { value: new THREE.Vector3() }, uThin: { value: 0 },
     },
   });
   const terrain = new THREE.Points(tgeo, tmat);
@@ -285,10 +290,11 @@ export async function mount(el, opts = {}) {
     rgeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(R.particles * 3), 3));
     rgeo.setAttribute('aP', new THREE.BufferAttribute(partF, 4));
   }
+  const centre = img ? new Float32Array(rb, 0, R.samples * 4) : null;   // river centreline, s = 0 at the source
   rtex.minFilter = rtex.magFilter = THREE.NearestFilter; rtex.needsUpdate = true;
   rmat = premultMaterial({
     vertexShader: img ? VERT_RIVER_IMG : VERT_RIVER, fragmentShader: FRAG_DISC,
-    uniforms: { ...U, uRiver: { value: rtex }, uNS: { value: R.samples }, uSpeed: { value: o.speed } },
+    uniforms: { ...U, uRiver: { value: rtex }, uNS: { value: R.samples }, uSpeed: { value: o.speed }, uFlowT: { value: 0 } },
   });
   const river = new THREE.Points(rgeo, rmat);
   river.frustumCulled = false;
@@ -305,6 +311,7 @@ export async function mount(el, opts = {}) {
   // ---- state
   const S = {
     theme: o.theme, drawN: n, size: 1, speed: o.speed, fit: o.fit, anchor: o.anchor, camMode: 'hero',
+    sy: 0, vh: 1, max: 1, jp: 0, jpv: 0, jh: 0, jhv: 0, tgt: [0.5, 0.6], flowT: 0, projBase: null, journey: o.journey,
     t: 0, intro0: null, px: 0, py: 0, tpx: 0, tpy: 0, running: true, visible: true, controls: null,
   };
   const frame = { cw: 1, ch: 1, k: 1, a: 0, b: 0, kDev: 1 };
@@ -336,18 +343,43 @@ export async function mount(el, opts = {}) {
       0, 0, -(fr + nr) / (fr - nr), -2 * fr * nr / (fr - nr),
       0, 0, -1, 0);
     camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+    if (!tile) S.projBase = camera.projectionMatrix.elements.slice();
     return k;
   }
   camera.updateProjectionMatrix = () => {};                      // projection is ours; keep OrbitControls from resetting it
 
-  function pose(dAz = 0, dPitch = 0) {
+  const T0 = new THREE.Vector3();
+  function pose(dAz = 0, dPitch = 0, T = T0) {
     const az = (cam.az + dAz) * Math.PI / 180, pi = (cam.pitch + dPitch) * Math.PI / 180;
     const fwd = new THREE.Vector3(Math.sin(az) * Math.cos(pi), -Math.sin(pi), -Math.cos(az) * Math.cos(pi));
-    camera.position.copy(fwd).multiplyScalar(-cam.dist);
+    camera.position.copy(fwd).multiplyScalar(-cam.dist).add(T);
     camera.up.set(0, 1, 0);
-    camera.lookAt(0, 0, 0);
+    camera.lookAt(camera.position.x + fwd.x, camera.position.y + fwd.y, camera.position.z + fwd.z);
     camera.updateMatrixWorld(true);
+    return fwd;
   }
+
+  // ---- journey: scrolling the page travels up the valley toward the source (see README: scroll choreography)
+  const J = {
+    dolly: 0.34,                       // fraction of the way toward the river point reached at the bottom of the page
+    path: [0.62, 0.0],                 // river parameter s (1 = downstream, 0 = source) at the top and bottom of the page
+    dimText: 0.30, dimEnd: 0.07,       // terrain alpha while text is on screen / at the footer
+    keepText: 0.62, keepEnd: 0.14,     // fraction of terrain points kept (same two stops)
+    smooth: 0.42,                      // spring smoothing time, seconds
+  };
+  const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const lerp = (a, b, t) => a + (b - a) * t;
+  function damp(x, v, target, smooth, dt) {   // critically damped spring (Game Programming Gems 4)
+    const w = 2 / smooth, e = 1 / (1 + w * dt + 0.48 * w * w * dt * dt + 0.235 * w * w * w * dt * dt * dt);
+    const d = x - target, t = (v + w * d) * dt;
+    return [target + (d + t) * e, (v - w * t) * e];
+  }
+  function riverPoint(sv, out) {
+    const x = Math.min(1, Math.max(0, sv)) * (R.samples - 1), i = Math.floor(x), f = x - i, j = Math.min(i + 1, R.samples - 1);
+    return out.set(lerp(centre[i * 4], centre[j * 4], f), lerp(centre[i * 4 + 1], centre[j * 4 + 1], f), lerp(centre[i * 4 + 2], centre[j * 4 + 2], f));
+  }
+  const Pv = new THREE.Vector3(), Bv = new THREE.Vector3(), Tv = new THREE.Vector3(), Sv = new THREE.Vector3();
+  const srcWorld = new THREE.Vector3(...(img ? meta.src : meta.source));
 
   function resize() {
     const dpr = Math.min(devicePixelRatio || 1, o.dprCap);
@@ -387,14 +419,43 @@ export async function mount(el, opts = {}) {
     S.t += dt;
     U.uTime.value = S.t;
     U.uIntro.value = reduced || !o.intro ? 9 : Math.min((now - S.intro0) / 1000 / 2.2 * 1.9 + 0.0, 9);
-    rmat.uniforms.uSpeed.value = S.speed;
+    let T = T0, dollied = 0;
+    if (S.journey) {
+      [S.jp, S.jpv] = damp(S.jp, S.jpv, S.max > 0 ? Math.min(1, Math.max(0, S.sy / S.max)) : 0, J.smooth, dt);
+      [S.jh, S.jhv] = damp(S.jh, S.jhv, S.sy / S.vh, J.smooth, dt);
+      const p = S.jp, h = S.jh, text = sm(0.04, 0.62, h), foot = sm(0.74, 1.0, p), conv = sm(0.62, 1.0, p);
+      // dolly toward a point that travels up the river
+      riverPoint(lerp(J.path[0], J.path[1], sm(0, 1, p)), Pv);
+      Bv.set(0, 0, cam.dist);
+      Tv.copy(Pv).sub(Bv).multiplyScalar(J.dolly * sm(0, 1, p));
+      T = Tv; dollied = Tv.z;
+      tmat.uniforms.uJ.value.set(lerp(lerp(1, J.dimText, text), J.dimEnd, foot), lerp(lerp(1, J.keepText, text), J.keepEnd, foot));
+      U.uBotFade.value = 1 - text; U.uConv.value = conv;
+      smat.uniforms.uGs.value = 1.5 * (1 + 0.9 * sm(0.5, 1.0, p));
+      U.uPulse.value = reduced ? 0 : 1 - 0.45 * foot;
+      tmat.uniforms.uDepth.value.set(meta.depth[0] - dollied, meta.depth[1] - dollied);
+    }
+    // river flow clock: speed follows scroll velocity a little
+    const boost = S.journey ? Math.min(2.2, Math.abs(S.jpv) * S.max / S.vh * 0.6) : 0;
+    S.flowT += dt * S.speed * (1 + boost);
+    rmat.uniforms.uFlowT.value = S.flowT;
     if (S.camMode === 'hero') {
       S.px += (S.tpx - S.px) * Math.min(1, dt * 2.2); S.py += (S.tpy - S.py) * Math.min(1, dt * 2.2);
       const drift = reduced ? 0 : 1;
       const aA = cam.drift[0] * 0.41, aP = cam.drift[1] * 0.3;
       const dAz = drift * aA * Math.sin(S.t * 0.11) + S.px * aA, dP = drift * aP * Math.sin(S.t * 0.07 + 1.3) - S.py * aP * 1.1;
-      pose(dAz, dP);
-    } else if (S.controls) S.controls.update();
+      pose(dAz, dP, T);
+    }
+    if (S.journey && S.projBase) {
+      // pan the whole image so the source lands on its target at the end of the page
+      const e = camera.projectionMatrix.elements;
+      e[8] = S.projBase[8]; e[9] = S.projBase[9];
+      const w = sm(0.5, 1.0, S.jp);
+      if (w > 0) {
+        Sv.copy(srcWorld).project(camera);
+        e[8] -= (S.tgt[0] * 2 - 1 - Sv.x) * w; e[9] -= (1 - S.tgt[1] * 2 - Sv.y) * w;
+      }
+    }
     renderer.render(scene, camera);
     if (!reduced || U.uIntro.value < 9) raf = requestAnimationFrame(tick);
     else if (reduced) { /* static: one frame is enough */ }
@@ -409,7 +470,7 @@ export async function mount(el, opts = {}) {
     const wasRunning = S.running; S.running = false; cancelAnimationFrame(raf); raf = 0;
     const transparentPrev = o.transparent; o.transparent = !x.background;
     applyTheme(theme);
-    U.uTime.value = x.time; U.uIntro.value = 9; U.uMinD.value = 0.0; if (img) U.uFlow.value = 0;
+    U.uTime.value = x.time; U.uIntro.value = 9; U.uBotFade.value = 0; U.uConv.value = 0; tmat.uniforms.uJ.value.set(1, 1); smat.uniforms.uGs.value = img ? 1.5 : 1; U.uMinD.value = 0.0; if (img) U.uFlow.value = 0;
     pose(0, 0);
     renderer.setPixelRatio(1);
     const out = document.createElement('canvas'); out.width = width; out.height = height;
@@ -445,6 +506,8 @@ export async function mount(el, opts = {}) {
     setSizeScale: (v) => { U.uSizeK.value = v; S.size = v; kick(); },
     setCount: (c) => { tgeo.setDrawRange(0, Math.min(n, Math.round(c))); S.drawN = c; kick(); },
     setRiverSpeed: (v) => { S.speed = v; },
+    setScroll: (y, vh, max) => { S.sy = y; S.vh = vh; S.max = max; kick(); },
+    setSourceTarget: (x, y) => { S.tgt = [x, y]; },
     setFit: (f, anchor) => { S.fit = f; if (anchor) S.anchor = anchor; resize(); kick(); },
     replayIntro: () => { S.intro0 = null; kick(); },
     exportPNG,

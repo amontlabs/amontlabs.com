@@ -78,6 +78,10 @@ await send("Emulation.setEmulatedMedia", {
 });
 await send("Page.navigate", { url: a.url || "http://localhost:4321/" });
 await sleep(+a.wait || 3000);
+if (a.scrollf !== undefined) {
+  await ev(`scrollTo(0, ${+a.scrollf} * (document.documentElement.scrollHeight - innerHeight))`);
+  await sleep(2200);
+}
 if (a.scroll) {
   await ev(`scrollTo(0, ${+a.scroll})`);
   await sleep(800);
