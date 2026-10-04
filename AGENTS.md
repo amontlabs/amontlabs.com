@@ -7,7 +7,7 @@ Context for the amontlabs.com site. Brand, decisions and the founder's taste liv
 - Every word earns its place. Plain, factual copy. No taglines, no marketing words, no invented stats.
 - Only Silo is shown. Never invent screenshots or UI mockups: Silo's visual is typography and space.
 - The only sign-off is "En amont."; it is the last text on the page.
-- Visible labels stay minimal (Work, About). No version numbers hardcoded: they come from `src/data/silo.json`.
+- Visible labels stay minimal (Products, About). No version numbers hardcoded: they come from `src/data/silo.json`.
 - Show stars only from `STARS_MIN` (100). Never show downloads or forks. Never show anything that looks small or empty.
 - Hero sentence is the meta description; keep both in sync (`Base.astro`, `Hero.astro`).
 
