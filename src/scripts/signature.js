@@ -414,6 +414,7 @@ export async function mount(el, opts = {}) {
   function tick(now) {
     raf = 0;
     if (!S.running || !S.visible || document.hidden) return;
+    if (S.pre) S.pre(now);                          // e.g. lenis.raf(now): scroll is advanced in the same frame we render
     const dt = Math.min((now - last) / 1000, 0.1); last = now;
     if (S.intro0 === null) S.intro0 = now;
     S.t += dt;
@@ -510,6 +511,7 @@ export async function mount(el, opts = {}) {
     setSizeScale: (v) => { U.uSizeK.value = v; S.size = v; kick(); },
     setCount: (c) => { tgeo.setDrawRange(0, Math.min(n, Math.round(c))); S.drawN = c; kick(); },
     setRiverSpeed: (v) => { S.speed = v; },
+    setPreFrame: (fn) => { S.pre = fn; },
     setMetrics: (vh, max) => { S.vh = vh; S.max = max; },
     setSourceTarget: (x, y) => { S.tgt = [x, y]; },
     setFit: (f, anchor) => { S.fit = f; if (anchor) S.anchor = anchor; resize(); kick(); },

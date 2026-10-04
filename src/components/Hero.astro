@@ -51,7 +51,25 @@ const D = "(prefers-color-scheme: dark)";
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const dark = matchMedia('(prefers-color-scheme: dark)');
 
+  // smooth scrolling (Lenis), advanced from the scene's own frame once it runs; until then from a plain rAF loop
+  let lenis: import('lenis').default | null = null;
+  let driven = false;
+  let lp: Promise<void> | null = null;
+  const startLenis = () => (lp ??= initLenis());
+  const initLenis = async () => {
+    if (reduced) return;
+    const { default: Lenis } = await import('lenis');
+    lenis = new Lenis({ autoRaf: false, lerp: 0.09, smoothWheel: true, anchors: true });
+    const loop = (t: number) => {
+      if (driven) return;
+      lenis?.raf(t);
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  };
+
   const start = async () => {
+    void startLenis();
     const gl = document.createElement('canvas').getContext('webgl2');
     if (!gl) return;
     const { mount } = await import('../scripts/signature.js');
@@ -89,6 +107,9 @@ const D = "(prefers-color-scheme: dark)";
       }
     };
     feed();
+    await startLenis();
+    sig.setPreFrame((t: number) => lenis?.raf(t));
+    driven = true;
     addEventListener('resize', feed, { passive: true });
     new ResizeObserver(feed).observe(document.body);
     requestAnimationFrame(() => requestAnimationFrame(() => scene.classList.add('is-live')));
