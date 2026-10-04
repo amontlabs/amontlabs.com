@@ -42,3 +42,5 @@ Top right, System / Light / Dark (`ThemeSwitch.astro`, styles at the end of `glo
 ## Header
 
 Fixed grid header: logo | theme switch (true centre) | contact icons (`HeaderLinks.astro`, same `.tsw` pill language; email, GitHub, X; labels on hover/focus; aria-labelled). The page-colour fade behind it is `.top::before`, driven by a CSS scroll timeline. Do not target header children by `:nth-child` (the switch ships an inline script element); use classes.
+
+Header tooltips are real `.tip` spans (centred under their icon, nudged inward by `__fitTip` only at the viewport edge). The email control is a button that copies hello@amontlabs.com (clipboard API, textarea fallback; cmd/ctrl+click opens mailto; tooltip says Copied for 1.6 s; aria-live announces it). GitHub and X tooltips show the handle (@amontlabs). `scripts/tips.mjs` checks alignment and the copy in headless Chrome.

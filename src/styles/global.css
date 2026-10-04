@@ -450,7 +450,7 @@ html.theme-anim {
 }
 
 /* header links: same pill and behaviour as the switch, without the thumb; labels align to the right edge */
-.tsw-links a {
+.tsw-links :is(a, button) {
   display: grid;
   place-items: center;
   width: var(--w);
@@ -458,7 +458,7 @@ html.theme-anim {
   border-radius: 999px;
   position: relative;
 }
-.tsw-links a:hover {
+.tsw-links :is(a, button):hover {
   background: color-mix(in srgb, var(--text) 9%, transparent);
 }
 @media (max-width: 420px) {
