@@ -311,7 +311,7 @@ export async function mount(el, opts = {}) {
   // ---- state
   const S = {
     theme: o.theme, drawN: n, size: 1, speed: o.speed, fit: o.fit, anchor: o.anchor, camMode: 'hero',
-    sy: 0, vh: 1, max: 1, jp: 0, jpv: 0, jh: 0, jhv: 0, tgt: [0.5, 0.6], flowT: 0, projBase: null, journey: o.journey,
+    sy: 0, vh: 1, max: 1, jp: 0, jh: 0, lastY: 0, jvs: 0, jvv: 0, tgt: [0.5, 0.6], flowT: 0, projBase: null, journey: o.journey,
     t: 0, intro0: null, px: 0, py: 0, tpx: 0, tpy: 0, running: true, visible: true, controls: null,
   };
   const frame = { cw: 1, ch: 1, k: 1, a: 0, b: 0, kDev: 1 };
@@ -365,7 +365,7 @@ export async function mount(el, opts = {}) {
     path: [0.62, 0.0],                 // river parameter s (1 = downstream, 0 = source) at the top and bottom of the page
     dimText: 0.30, dimEnd: 0.07,       // terrain alpha while text is on screen / at the footer
     keepText: 0.62, keepEnd: 0.14,     // fraction of terrain points kept (same two stops)
-    smooth: 0.42,                      // spring smoothing time, seconds
+    smooth: 0.05,                      // smoothing time (s) of the scroll velocity that drives the river speed
   };
   const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -421,8 +421,12 @@ export async function mount(el, opts = {}) {
     U.uIntro.value = reduced || !o.intro ? 9 : Math.min((now - S.intro0) / 1000 / 2.2 * 1.9 + 0.0, 9);
     let T = T0, dollied = 0;
     if (S.journey) {
-      [S.jp, S.jpv] = damp(S.jp, S.jpv, S.max > 0 ? Math.min(1, Math.max(0, S.sy / S.max)) : 0, J.smooth, dt);
-      [S.jh, S.jhv] = damp(S.jh, S.jhv, S.sy / S.vh, J.smooth, dt);
+      // coupled directly to the page: read the scroll position in this very frame, no spring on camera, dim or pan
+      const y = Math.max(0, scrollY);
+      S.jp = S.max > 0 ? Math.min(1, y / S.max) : 0; S.jh = y / S.vh;
+      // only the secondary effect (river speed) gets a very short smoothing of the scroll velocity
+      const vel = (y - S.lastY) / Math.max(dt, 1e-3) / S.vh; S.lastY = y;
+      [S.jvs, S.jvv] = damp(S.jvs, S.jvv, vel, J.smooth, dt);
       const p = S.jp, h = S.jh, text = sm(0.04, 0.62, h), foot = sm(0.74, 1.0, p), conv = sm(0.62, 1.0, p);
       // dolly toward a point that travels up the river
       riverPoint(lerp(J.path[0], J.path[1], sm(0, 1, p)), Pv);
@@ -436,7 +440,7 @@ export async function mount(el, opts = {}) {
       tmat.uniforms.uDepth.value.set(meta.depth[0] - dollied, meta.depth[1] - dollied);
     }
     // river flow clock: speed follows scroll velocity a little
-    const boost = S.journey ? Math.min(2.2, Math.abs(S.jpv) * S.max / S.vh * 0.6) : 0;
+    const boost = S.journey ? Math.min(2.2, Math.abs(S.jvs) * 0.6) : 0;
     S.flowT += dt * S.speed * (1 + boost);
     rmat.uniforms.uFlowT.value = S.flowT;
     if (S.camMode === 'hero') {
@@ -506,7 +510,7 @@ export async function mount(el, opts = {}) {
     setSizeScale: (v) => { U.uSizeK.value = v; S.size = v; kick(); },
     setCount: (c) => { tgeo.setDrawRange(0, Math.min(n, Math.round(c))); S.drawN = c; kick(); },
     setRiverSpeed: (v) => { S.speed = v; },
-    setScroll: (y, vh, max) => { S.sy = y; S.vh = vh; S.max = max; kick(); },
+    setMetrics: (vh, max) => { S.vh = vh; S.max = max; },
     setSourceTarget: (x, y) => { S.tgt = [x, y]; },
     setFit: (f, anchor) => { S.fit = f; if (anchor) S.anchor = anchor; resize(); kick(); },
     replayIntro: () => { S.intro0 = null; kick(); },

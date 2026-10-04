@@ -124,6 +124,8 @@ a {
   height: 100lvh;
   z-index: -1;
   pointer-events: none;
+  will-change: transform;
+  contain: strict;
 }
 @media (max-aspect-ratio: 4 / 5) {
   .scene {

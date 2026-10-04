@@ -81,7 +81,7 @@ const D = "(prefers-color-scheme: dark)";
     const feed = () => {
       const vh = innerHeight;
       const max = Math.max(1, document.documentElement.scrollHeight - vh);
-      sig.setScroll(scrollY, vh, max);
+      sig.setMetrics(vh, max);
       if (signoff) {
         const r = signoff.getBoundingClientRect();
         const endTop = r.top + scrollY - max;
@@ -89,8 +89,8 @@ const D = "(prefers-color-scheme: dark)";
       }
     };
     feed();
-    addEventListener('scroll', () => sig.setScroll(scrollY, innerHeight, Math.max(1, document.documentElement.scrollHeight - innerHeight)), { passive: true });
     addEventListener('resize', feed, { passive: true });
+    new ResizeObserver(feed).observe(document.body);
     requestAnimationFrame(() => requestAnimationFrame(() => scene.classList.add('is-live')));
     if (import.meta.env.DEV) (window as unknown as { __sig: unknown }).__sig = sig;
   };
