@@ -101,12 +101,16 @@ a {
 .top::before {
   content: "";
   position: absolute;
-  inset: 0 0 -32px 0;
+  inset: 0 0 -64px 0;
   z-index: -1;
   pointer-events: none;
+  /* solid behind the bar itself, then an eased fade (several stops, so no visible band edge) */
   background: linear-gradient(
     var(--bg) 0%,
-    color-mix(in srgb, var(--bg) 88%, transparent) 50%,
+    var(--bg) 55%,
+    color-mix(in srgb, var(--bg) 82%, transparent) 68%,
+    color-mix(in srgb, var(--bg) 52%, transparent) 80%,
+    color-mix(in srgb, var(--bg) 20%, transparent) 91%,
     transparent 100%
   );
 }
