@@ -32,9 +32,11 @@ The scene is one fixed full-viewport layer (`.scene`, z-index -1) behind the who
 
 In `src/scripts/signature.js` the `J` object holds the tuning: progress `p` (0 top, 1 bottom) and `h` (scrollY / viewport height) are smoothed with a critically damped direct read of scrollY each frame (no spring; `J.smooth` only smooths the scroll velocity that drives river speed). `p` drives a dolly toward a point travelling up the river centreline (`J.dolly`, `J.path`), a pan that lands the source on its target, the river narrowing to a thread and its lower part fading (`uConv`), and a larger, calmer source. `h` drives terrain dimming and thinning while text is on screen (`J.dimText`, `J.keepText`), then nearly gone at the footer (`J.dimEnd`, `J.keepEnd`), and the removal of the hero's bottom fade (`uBotFade`). River flow speed follows scroll velocity slightly. Soft page-colour scrims behind text blocks are at the end of `src/styles/global.css`. Reduced motion or no WebGL: the poster stays fixed and is dimmed by a CSS scroll timeline; three.js is not loaded.
 
-## Smooth scroll and Silo media
+## Smooth scroll and the Silo image
 
-Lenis (lerp 0.09, wheel only, touch native, off under reduced motion) is started after idle from `Hero.astro` and advanced inside the scene's own frame (`setPreFrame`), so content and scene move together. The Silo exhibit uses Silo's own media (downloaded from silo.amontlabs.com/media): the tour film as `public/media/silo-tour.{av1.,}mp4` (1280x720, no audio; loaded only when the frame is 40% in view, paused out of view, never autoplayed under reduced motion, with a Play/Pause control) and the poster frame in `src/assets/silo/` (AVIF/WebP through Astro). The film is trimmed to 3.9–53.0 s of the original so it starts on real product UI (the title card and end card use an orange accent; Amont has one accent). Do not invent visuals.
+Lenis (lerp 0.09, wheel only, touch native, off under reduced motion) is started after idle from `Hero.astro` and advanced inside the scene's own frame (`setPreFrame`), so content and scene move together.
+
+The Silo exhibit shows the README showcase image of `amontlabs/silo` (`docs/silo-showcase.webp`, 3200x2200) in a 16:11 hairline frame, rendered by Astro's Picture (AVIF and WebP, 800 to 2560 px, lazy). It lives at `src/assets/silo/silo-showcase.webp`; the hourly Silo data workflow compares its git blob SHA with `showcaseSha` in `src/data/silo.json` and re-downloads it when it changes (if the Silo README stops referencing the file, it logs and keeps the current image).
 
 ## Silo data
 
