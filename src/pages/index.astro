@@ -2,12 +2,13 @@
 import Hero from "../components/Hero.astro";
 import Logo from "../components/Logo.astro";
 import Silo from "../components/Silo.astro";
+import ThemeSwitch from "../components/ThemeSwitch.astro";
 import Base from "../layouts/Base.astro";
 ---
 
 <Base>
   <header class="top">
-    <div class="wrap"><Logo /></div>
+    <div class="wrap bar"><Logo /><ThemeSwitch /></div>
   </header>
   <main>
     <Hero />

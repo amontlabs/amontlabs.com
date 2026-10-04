@@ -264,3 +264,133 @@ html.lenis body {
 .lenis.lenis-stopped {
   overflow: clip;
 }
+
+/* header bar: logo left, theme switch right, both centred on the logo's x-height */
+.bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* theme switch: three-state segmented control, hairline pill, sliding thumb */
+.tsw {
+  --w: 36px;
+  --h: 28px;
+  position: relative;
+  display: flex;
+  height: var(--h);
+  margin-top: calc(26px * 0.57 - var(--h) / 2); /* centre on the x-height of the wordmark */
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--secondary);
+  background: color-mix(in srgb, var(--bg) 60%, transparent);
+}
+.tsw-thumb {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: calc(var(--w) + 2px);
+  height: var(--h);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 16%, transparent);
+  transition: transform 0.28s cubic-bezier(0.3, 1.2, 0.45, 1);
+}
+:root[data-pref="light"] .tsw-thumb {
+  transform: translateX(var(--w));
+}
+:root[data-pref="dark"] .tsw-thumb {
+  transform: translateX(calc(var(--w) * 2));
+}
+.tsw button {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--w);
+  height: calc(var(--h) - 2px);
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.tsw button::before {
+  content: "";
+  position: absolute;
+  inset: -9px 0;
+} /* 44px hit area */
+.tsw button:hover {
+  color: var(--text);
+}
+.tsw button[aria-checked="true"],
+:root[data-pref="system"] .tsw button[data-v="system"],
+:root[data-pref="light"] .tsw button[data-v="light"],
+:root[data-pref="dark"] .tsw button[data-v="dark"] {
+  color: var(--text);
+}
+.tsw button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.tsw-dot {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: 2px;
+  height: 2px;
+  margin-left: -1px;
+  border-radius: 50%;
+  background: var(--fonte);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+:root[data-pref="system"] .tsw button[data-v="system"] .tsw-dot,
+:root[data-pref="light"] .tsw button[data-v="light"] .tsw-dot,
+:root[data-pref="dark"] .tsw button[data-v="dark"] .tsw-dot {
+  opacity: 1;
+}
+/* quiet label */
+.tsw button::after {
+  content: attr(data-label);
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  transform: translate(-50%, -2px);
+  font: 13px / 20px var(--mono);
+  color: var(--secondary);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+.tsw button:hover::after,
+.tsw button:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tsw-thumb,
+  .tsw-dot,
+  .tsw button::after {
+    transition: none;
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.5s;
+  animation-timing-function: ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
+  }
+}

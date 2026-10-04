@@ -1,0 +1,53 @@
+---
+const options = [
+  { v: "system", label: "System" },
+  { v: "light", label: "Light" },
+  { v: "dark", label: "Dark" },
+];
+---
+
+<div class="tsw" role="radiogroup" aria-label="Theme" id="tsw">
+  <span class="tsw-thumb" aria-hidden="true"></span>
+  {options.map((o) => (
+    <button type="button" role="radio" aria-checked="false" aria-label={`${o.label} theme`} data-v={o.v} data-label={o.label} tabindex="-1">
+      <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        {o.v === "system" && (
+          <>
+            <circle cx="8" cy="8" r="5.25" stroke="currentColor" stroke-width="1.25" />
+            <path d="M8 2.75a5.25 5.25 0 0 1 0 10.5z" fill="currentColor" />
+          </>
+        )}
+        {o.v === "light" && <circle cx="8" cy="8" r="4" stroke="currentColor" stroke-width="1.25" />}
+        {o.v === "dark" && <path d="M10.2 2.4a5.7 5.7 0 1 0 3.4 8.7A4.6 4.6 0 0 1 10.2 2.4z" fill="currentColor" />}
+      </svg>
+      <i class="tsw-dot" aria-hidden="true"></i>
+    </button>
+  ))}
+</div>
+
+<script is:inline>
+  (() => {
+    const g = document.getElementById("tsw");
+    const bs = [...g.querySelectorAll("button")];
+    const show = () => {
+      const p = window.__theme.pref();
+      bs.forEach((b) => {
+        const on = b.dataset.v === p;
+        b.setAttribute("aria-checked", on);
+        b.tabIndex = on ? 0 : -1;
+      });
+    };
+    show();
+    bs.forEach((b, i) => {
+      b.addEventListener("click", () => { window.__theme.set(b.dataset.v); show(); });
+      b.addEventListener("keydown", (e) => {
+        const k = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+        if (!k) return;
+        e.preventDefault();
+        const n = bs[(i + k + bs.length) % bs.length];
+        n.focus();
+        n.click();
+      });
+    });
+  })();
+</script>

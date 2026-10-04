@@ -18,6 +18,45 @@ const og = new URL("/og.png", canonical).href;
     <link rel="canonical" href={canonical} />
     <meta name="theme-color" content="#f7f8f5" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#101418" media="(prefers-color-scheme: dark)" />
+    <script is:inline>
+      (() => {
+        const d = document.documentElement;
+        const mq = matchMedia("(prefers-color-scheme: dark)");
+        const KEY = "theme";
+        const pref = () => {
+          try { const v = localStorage.getItem(KEY); return v === "light" || v === "dark" ? v : "system"; } catch { return "system"; }
+        };
+        const resolve = (p) => (p === "system" ? (mq.matches ? "dark" : "light") : p);
+        const sync = () => {
+          const t = d.dataset.theme;
+          for (const s of document.querySelectorAll("source[data-theme]")) s.media = s.dataset.theme === t ? "all" : "not all";
+        };
+        const apply = (p) => {
+          const t = resolve(p);
+          d.dataset.theme = t;
+          d.dataset.pref = p;
+          for (const m of document.querySelectorAll('meta[name="theme-color"]')) {
+            m.content = t === "dark" ? "#101418" : "#f7f8f5";
+            m.removeAttribute("media");
+          }
+          sync();
+          document.dispatchEvent(new CustomEvent("themechange", { detail: t }));
+        };
+        const set = (p) => {
+          try { p === "system" ? localStorage.removeItem(KEY) : localStorage.setItem(KEY, p); } catch {}
+          const go = () => apply(p);
+          if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            document.startViewTransition(() => {
+              go();
+              return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+            });
+          } else go();
+        };
+        mq.addEventListener("change", () => { if (pref() === "system") apply("system"); });
+        window.__theme = { pref, set, sync, resolved: () => d.dataset.theme };
+        apply(pref());
+      })();
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
     <link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png" />

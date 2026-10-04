@@ -77,7 +77,17 @@ await send("Emulation.setEmulatedMedia", {
   ],
 });
 await send("Page.navigate", { url: a.url || "http://localhost:4321/" });
+if (a.pref) {
+  await sleep(1200);
+  await ev(`localStorage.setItem('theme','${a.pref}')`);
+  await send("Page.reload");
+}
 await sleep(+a.wait || 3000);
+if (a.hover) {
+  const [hx, hy] = a.hover.split(",").map(Number);
+  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: hx, y: hy });
+  await sleep(500);
+}
 if (a.scrollf !== undefined) {
   await ev(`scrollTo(0, ${+a.scrollf} * (document.documentElement.scrollHeight - innerHeight))`);
   await sleep(2200);
@@ -87,6 +97,10 @@ if (a.scroll) {
   await sleep(800);
 }
 let params = { format: "png" };
+if (a.clip) {
+  const [x, y, w, h, sc] = a.clip.split(",").map(Number);
+  params = { format: "png", clip: { x, y, width: w, height: h, scale: sc || 1 } };
+}
 if (a.full) {
   const h = await ev("document.documentElement.scrollHeight");
   params = {

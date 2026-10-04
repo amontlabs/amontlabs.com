@@ -24,9 +24,9 @@ const D = "(prefers-color-scheme: dark)";
 <section class="hero">
   <div class="scene" id="scene">
     <picture>
-      <source media={D} type="image/avif" srcset={darkAvif} sizes={sizes} />
-      <source media={D} type="image/webp" srcset={darkWebp} sizes={sizes} />
-      <source type="image/avif" srcset={lightAvif} sizes={sizes} />
+      <source data-theme="dark" media={D} type="image/avif" srcset={darkAvif} sizes={sizes} />
+      <source data-theme="dark" media={D} type="image/webp" srcset={darkWebp} sizes={sizes} />
+      <source data-theme="light" type="image/avif" srcset={lightAvif} sizes={sizes} />
       <img
         src={fallback.src}
         srcset={lightWebp}
@@ -38,6 +38,7 @@ const D = "(prefers-color-scheme: dark)";
         decoding="async"
       />
     </picture>
+    <script is:inline>window.__theme && window.__theme.sync();</script>
     <div class="live" id="live" aria-hidden="true"></div>
   </div>
   <div class="hero-text wrap">
@@ -49,7 +50,7 @@ const D = "(prefers-color-scheme: dark)";
   const scene = document.getElementById('scene')!;
   const live = document.getElementById('live')!;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const dark = matchMedia('(prefers-color-scheme: dark)');
+  const T = () => (window as unknown as { __theme: { resolved: () => string } }).__theme.resolved();
 
   // smooth scrolling (Lenis), advanced from the scene's own frame once it runs; until then from a plain rAF loop
   let lenis: import('lenis').default | null = null;
@@ -78,7 +79,7 @@ const D = "(prefers-color-scheme: dark)";
       return [parseFloat(s.getPropertyValue('--ax')), parseFloat(s.getPropertyValue('--ay'))];
     };
     const sig = await mount(live, {
-      theme: dark.matches ? 'dark' : 'light',
+      theme: T(),
       transparent: true,
       fit: 'cover',
       anchor: anchor(),
@@ -88,7 +89,7 @@ const D = "(prefers-color-scheme: dark)";
       lod: 'auto',
     });
     if (sig.fallback) return;
-    dark.addEventListener('change', () => sig.setTheme(dark.matches ? 'dark' : 'light'));
+    document.addEventListener('themechange', (e) => sig.setTheme((e as CustomEvent).detail));
     let last = anchor().join();
     addEventListener('resize', () => {
       const a = anchor();

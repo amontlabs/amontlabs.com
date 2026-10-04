@@ -28,8 +28,21 @@
   color-scheme: light dark;
 }
 
+/* dark: explicit (data-theme set by the inline script in <head>), or the system when JS is off */
+:root[data-theme="dark"] {
+  --bg: #101418;
+  --text: #f7f8f5;
+  --secondary: #a3aab0;
+  --line: #2a3138;
+  --panel: #171c21;
+  --link: var(--fonte);
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --bg: #101418;
     --text: #f7f8f5;
     --secondary: #a3aab0;

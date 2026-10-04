@@ -45,3 +45,7 @@ Optional instant refresh: Silo's release workflow can send `repository_dispatch`
 ## Deployment
 
 Vercel, static, on push to `main` (no adapter). `vercel.json` sets cache headers.
+
+## Theme
+
+System, Light or Dark from the switch top right; stored in localStorage (`theme`), applied before first paint by an inline script in `src/layouts/Base.astro` (no flash).
