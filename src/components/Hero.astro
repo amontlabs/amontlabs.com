@@ -66,6 +66,7 @@ const D = "(prefers-color-scheme: dark)";
       anchor: anchor(),
       source: 'image',
       intro: false,
+      journey: true,
       lod: 'auto',
     });
     if (sig.fallback) return;
@@ -75,6 +76,21 @@ const D = "(prefers-color-scheme: dark)";
       const a = anchor();
       if (a.join() !== last) { last = a.join(); sig.setFit('cover', a); }
     }, { passive: true });
+    // scroll journey: tell the scene where we are, and where the source should land at the end ("En amont.")
+    const signoff = document.querySelector('.signoff') as HTMLElement | null;
+    const feed = () => {
+      const vh = innerHeight;
+      const max = Math.max(1, document.documentElement.scrollHeight - vh);
+      sig.setScroll(scrollY, vh, max);
+      if (signoff) {
+        const r = signoff.getBoundingClientRect();
+        const endTop = r.top + scrollY - max;
+        sig.setSourceTarget((r.left + r.width / 2) / innerWidth, (endTop - 0.15 * vh) / vh);
+      }
+    };
+    feed();
+    addEventListener('scroll', () => sig.setScroll(scrollY, innerHeight, Math.max(1, document.documentElement.scrollHeight - innerHeight)), { passive: true });
+    addEventListener('resize', feed, { passive: true });
     requestAnimationFrame(() => requestAnimationFrame(() => scene.classList.add('is-live')));
     if (import.meta.env.DEV) (window as unknown as { __sig: unknown }).__sig = sig;
   };

@@ -17,7 +17,7 @@ Context for the amontlabs.com site. Brand, decisions and the founder's taste liv
 - Type: Geist 400/500, Geist Mono for metadata, Newsreader only for the definition and sign-off.
 - Zero JS except the hero loader (`Hero.astro`): after load and idle it checks WebGL2 and not reduced-motion, then dynamically imports the scene (separate chunk). Poster first (LCP), canvas fades in over it. Rendering pauses off-screen (in the scene).
 - Reduced motion: poster only, three.js never loads.
-- Scroll recede of the hero is CSS (`animation-timeline: scroll()`).
+- The scene is fixed behind the whole page and driven by scroll (dolly up the river to the source, terrain dims for text, the source lands above "En amont."). Tuning in the `J` object of `signature.js`; details in README. Keep text legible at every scroll position in both themes (scrims at the end of `global.css`); no horizontal overflow (it zooms out mobile browsers).
 - Scene framing: `fit: cover`, anchor from CSS vars `--ax/--ay` on `.scene` (summit headroom; portrait pans toward the source). The poster uses the same vars as `object-position`.
 - `signature.js` is the scene from the amont repo with: `three` imported from npm, data from `/signature/`, no orbit/dev camera, an `intro` option (off here), and the source glow fixed on light (smooth halo, no pale ring). Do not change its look.
 
