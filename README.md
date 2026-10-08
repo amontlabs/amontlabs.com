@@ -1,6 +1,6 @@
 # amontlabs.com
 
-The website of Amont Labs: an independent software studio in Paris. One page: the live signature scene, the products (Silo, LCU), about, contact.
+The website of Amont Labs: an independent software studio in Paris. One page: the live signature scene, Silo, about, contact.
 
 ## Stack
 
