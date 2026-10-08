@@ -142,6 +142,18 @@ section.block {
   padding-block: 0;
 }
 
+/* a text-only exhibit (no product visual): the same name and placard as Silo, without the windows */
+section.exhibit-next {
+  padding-top: calc(var(--section) * 0.75);
+}
+.lcu-name {
+  grid-row: 1;
+}
+.lcu-placard {
+  grid-row: 2;
+  gap: 40px;
+}
+
 /* about */
 .def {
   grid-column: 5 / -1;
@@ -169,6 +181,10 @@ section.block {
   }
   .def {
     grid-column: 1 / -1;
+  }
+  .lcu-placard {
+    grid-row: 2;
+    margin-top: 24px;
   }
 }
 
