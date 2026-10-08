@@ -5,7 +5,7 @@ Context for the amontlabs.com site. Brand, decisions and the founder's taste liv
 ## Content rules
 
 - Every word earns its place. Plain, factual copy. No taglines, no marketing words, no invented stats.
-- Only Silo is shown. Never invent screenshots or UI mockups: Silo's visual is typography and space.
+- Products shown: Silo and LCU. Never invent screenshots or UI mockups: Silo shows its real windows from the silo repo; LCU is text only (name and placard).
 - No sign-off and no footer: "En amont." was removed from the site at the founder's request. The page ends with the About section.
 - Visible labels stay minimal (Products, About). No version numbers hardcoded: they come from `src/data/silo.json`.
 - Show stars only from `STARS_MIN` (100). Never show downloads or forks. Never show anything that looks small or empty.
