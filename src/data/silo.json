@@ -1,10 +1,10 @@
 {
-  "version": "v0.11.1",
-  "releasedAt": "2026-10-03T21:21:58Z",
-  "releases": 29,
-  "stars": 3,
+  "version": "engine-v0.1.1",
+  "releasedAt": "2026-10-19T14:34:52Z",
+  "releases": 30,
+  "stars": 4,
   "forks": 0,
   "screensSha": "a3a3248dfd762c1070c8860fc289c80630c03ff6",
-  "downloads": 1321,
-  "updatedAt": "2026-10-19T04:54:32.113Z"
+  "downloads": 1337,
+  "updatedAt": "2026-10-19T17:33:26.563Z"
 }
