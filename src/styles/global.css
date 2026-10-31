@@ -228,11 +228,6 @@ h1 {
   text-wrap: balance;
   max-width: 26em;
 }
-h1 span {
-  display: block;
-  color: var(--secondary);
-}
-
 /* soft scrims: the page colour, feathered, behind small text so the river never fights it (no visible boxes) */
 .placard,
 .silo-head,
