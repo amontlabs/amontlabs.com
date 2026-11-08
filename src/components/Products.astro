@@ -1,0 +1,504 @@
+---
+import data from "../data/projects.json";
+import Icon from "./Icon.astro";
+
+type Film = { id: string; ratio: string; dur: number; audio: boolean; full: string };
+type Item = {
+  id: string;
+  name: string;
+  line: string;
+  sub?: string;
+  links: { kind: "site" | "github"; label: string; href: string }[];
+  tags: string[]; // categories, from one shared vocabulary: Agents, Security, Dev tools, Computer use, Public goods
+  needs: string[]; // integrations it needs (filled tags): T3 Code, Claude Code
+  kind: "app" | "cli" | "web";
+  platforms: ("macos" | "linux" | "windows")[];
+  film?: Film;
+  tier: "product" | "tool";
+};
+
+const items: Item[] = [
+  {
+    id: "silo",
+    name: "Silo",
+    line: "Computers for your agents.",
+    sub: "Run Linux sandboxes locally or remotely, with a desktop and computer use.",
+    links: [
+      { kind: "site", label: "silo.amontlabs.com", href: "https://silo.amontlabs.com" },
+      { kind: "github", label: "GitHub", href: "https://github.com/amontlabs/silo" },
+    ],
+    tags: ["Agents", "Security", "Computer use"],
+    needs: [],
+    kind: "app",
+    platforms: ["macos"],
+    film: { id: "silo", ratio: "16 / 9", dur: 33, audio: true, full: "/media/silo-full.mp4" },
+    tier: "product",
+  },
+  {
+    id: "fjord",
+    name: "Fjord",
+    line: "Connects your agents to everything they work with.",
+    sub: "Fjord connects your agents to everything they work with. Questions come to you; the rest stays out of your way.",
+    tags: ["Agents", "Dev tools"],
+    links: [{ kind: "github", label: "GitHub", href: "https://github.com/amontlabs/fjord" }],
+    needs: ["T3 Code"],
+    kind: "app",
+    platforms: ["macos"],
+    tier: "product",
+  },
+  {
+    id: "sic",
+    name: "Sic",
+    line: "Political debates, fact-checked live.",
+    sub: "Transcribes the debate, identifies who speaks, and checks factual claims against official sources, live or on replay. Built for the 2027 French presidential election.",
+    tags: ["Public goods"],
+    links: [
+      { kind: "site", label: "sic.observer", href: "https://sic.observer" },
+      { kind: "github", label: "GitHub", href: "https://github.com/amontlabs/sic" },
+    ],
+    needs: [],
+    kind: "web",
+    platforms: [],
+    film: { id: "sic", ratio: "4 / 3", dur: 24, audio: true, full: "/media/sic-full.mp4" },
+    tier: "product",
+  },
+  {
+    id: "lcu",
+    name: "LCU",
+    line: "Codex computer use, outside Codex.",
+    sub: "LCU brings the computer-use runtime of the Codex app to your own harness, without Codex authentication: desktop apps, and Chrome when enabled.",
+    links: [
+      { kind: "site", label: "lcu.amontlabs.com", href: "https://lcu.amontlabs.com" },
+      { kind: "github", label: "GitHub", href: "https://github.com/amontlabs/lcu" },
+    ],
+    tags: ["Agents", "Computer use"],
+    needs: [],
+    kind: "cli",
+    platforms: ["macos", "linux", "windows"],
+    film: { id: "lcu", ratio: "16 / 9", dur: 30, audio: true, full: "/media/lcu-full.mp4" },
+    tier: "tool",
+  },
+  {
+    id: "lastdrop",
+    name: "lastdrop",
+    line: "Any model as a subagent in Claude Code.",
+    sub: "Use any model as a built-in subagent in Claude Code, with a subscription or API key, and spread usage across your accounts.",
+    links: [
+      { kind: "site", label: "lastdrop.amontlabs.com", href: "https://lastdrop.amontlabs.com" },
+      { kind: "github", label: "GitHub", href: "https://github.com/amontlabs/lastdrop" },
+    ],
+    tags: ["Agents", "Dev tools"],
+    needs: ["Claude Code", "T3 Code"],
+    kind: "app",
+    platforms: ["macos"],
+    film: { id: "lastdrop", ratio: "16 / 9", dur: 37, audio: true, full: "/media/lastdrop-full.mp4" },
+    tier: "tool",
+  },
+];
+
+const num = (i: number) => String(i + 1).padStart(2, "0");
+const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+const products = items.filter((x) => x.tier === "product");
+const tools = items.filter((x) => x.tier === "tool");
+const films = items.filter((x) => x.film).map((x) => ({ id: x.id, name: x.name, line: x.line, links: x.links, ...x.film! }));
+
+// release, stars and forks, synced hourly from GitHub (scripts/update-projects-data.mjs)
+type Stats = { version: string | null; releasedAt: string | null; stars: number; forks: number };
+const stats = (id: string) => (data as unknown as Record<string, Stats>)[id];
+const year = new Date().getFullYear();
+const day = (iso: string) => {
+  const d = new Date(iso);
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", ...(d.getFullYear() !== year && { year: "numeric" }), timeZone: "Europe/Paris" }).format(d);
+};
+const count = (n: number) => (n >= 1000 ? `${(Math.round(n / 100) / 10).toFixed(1).replace(/\.0$/, "")}k` : String(n));
+const KIND = { app: "App", cli: "Command-line tool", web: "Website" } as const;
+const OS = { macos: "macOS", linux: "Linux", windows: "Windows" } as const;
+const runsOn = (it: Item) => [KIND[it.kind], it.platforms.map((p) => OS[p]).join(", ")].filter(Boolean).join(" for ");
+---
+
+<section class="block px" aria-labelledby="products" data-px>
+  <div class="wrap grid">
+    {/* left rail: the section label and a live index of the projects; sticky while the section is on screen */}
+    <nav class="px-rail" aria-label="Projects">
+      <h2 id="products" class="label mono dim">Products</h2>
+      <ol class="px-toc">
+        {products.map((it) => (
+          <li>
+            <a href={`#p-${it.id}`} data-to={it.id}>
+              <span class="px-toc-n mono">{num(items.indexOf(it))}</span>
+              <span class="px-toc-name">{it.name}</span>
+              <span class="px-toc-desc">{it.line}</span>
+              <span class="px-tags mono">{it.tags.map((t) => <span>{t}</span>)}{it.needs.map((t) => <span class="is-need">{t}</span>)}</span>
+              <span class="px-stats mono">
+                <span class="px-run" title={runsOn(it)}><Icon name={it.kind} />{it.platforms.map((o) => <Icon name={o} />)}<span class="sr-only">{runsOn(it)}</span></span>
+                {stats(it.id)?.version && <span class="px-rel" title="Latest release">{stats(it.id).version}<em>{day(stats(it.id).releasedAt!)}</em></span>}
+                {stats(it.id) && (
+                  <span class="px-pop"><span class="px-n is-stars" title={`${stats(it.id).stars} stars`}><Icon name="star" size={12} />{count(stats(it.id).stars)}<span class="sr-only"> stars</span></span><span class="px-n is-forks" title={`${stats(it.id).forks} forks`}><Icon name="fork" size={12} />{count(stats(it.id).forks)}<span class="sr-only"> forks</span></span></span>
+                )}
+              </span>
+              <i aria-hidden="true"><b /></i>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <p class="px-toc-tier mono dim">Tools</p>
+      <ol class="px-toc">
+        {tools.map((it) => (
+          <li>
+            <a href={`#p-${it.id}`} data-to={it.id}>
+              <span class="px-toc-n mono">{num(items.indexOf(it))}</span>
+              <span class="px-toc-name">{it.name}</span>
+              <span class="px-toc-desc">{it.line}</span>
+              <span class="px-tags mono">{it.tags.map((t) => <span>{t}</span>)}{it.needs.map((t) => <span class="is-need">{t}</span>)}</span>
+              <span class="px-stats mono">
+                <span class="px-run" title={runsOn(it)}><Icon name={it.kind} />{it.platforms.map((o) => <Icon name={o} />)}<span class="sr-only">{runsOn(it)}</span></span>
+                {stats(it.id)?.version && <span class="px-rel" title="Latest release">{stats(it.id).version}<em>{day(stats(it.id).releasedAt!)}</em></span>}
+                {stats(it.id) && (
+                  <span class="px-pop"><span class="px-n is-stars" title={`${stats(it.id).stars} stars`}><Icon name="star" size={12} />{count(stats(it.id).stars)}<span class="sr-only"> stars</span></span><span class="px-n is-forks" title={`${stats(it.id).forks} forks`}><Icon name="fork" size={12} />{count(stats(it.id).forks)}<span class="sr-only"> forks</span></span></span>
+                )}
+              </span>
+              <i aria-hidden="true"><b /></i>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+
+    <div class="px-content">
+      {items.map((it) => (
+        <>
+        {it === tools[0] && <h3 class="px-tools-label mono dim">Tools</h3>}
+        <article class:list={["px-ex", it.tier === "tool" && "is-tool"]} id={`p-${it.id}`} data-id={it.id} aria-labelledby={`n-${it.id}`}>
+          <header class="px-ex-head">
+            <span class="px-num mono">{num(items.indexOf(it))}</span>
+            <h3 class="px-name" id={`n-${it.id}`}>{it.name}</h3>
+            <span class="px-status mono dim">{it.tier === "tool" ? "Released" : "In development"}</span>
+          </header>
+          <div class="px-ex-lede" aria-hidden="true">
+            <p>{it.line}</p>
+            <p class="px-tags mono">{it.tags.map((t) => <span>{t}</span>)}{it.needs.map((t) => <span class="is-need">{t}</span>)}</p>
+            <span class="px-stats mono" aria-hidden="true">
+                <span class="px-run" title={runsOn(it)}><Icon name={it.kind} />{it.platforms.map((o) => <Icon name={o} />)}<span class="sr-only">{runsOn(it)}</span></span>
+                {stats(it.id)?.version && <span class="px-rel" title="Latest release">{stats(it.id).version}<em>{day(stats(it.id).releasedAt!)}</em></span>}
+                {stats(it.id) && (
+                  <span class="px-pop"><span class="px-n is-stars" title={`${stats(it.id).stars} stars`}><Icon name="star" size={12} />{count(stats(it.id).stars)}<span class="sr-only"> stars</span></span><span class="px-n is-forks" title={`${stats(it.id).forks} forks`}><Icon name="fork" size={12} />{count(stats(it.id).forks)}<span class="sr-only"> forks</span></span></span>
+                )}
+              </span>
+          </div>
+
+          {it.film ? (
+            <button class="px-film" type="button" data-film={it.film.id} style={`--ratio: ${it.film.ratio}`} aria-label={`Watch the ${it.name} film, ${clock(it.film.dur)}${it.film.audio ? ", with sound" : ""}`}>
+              <img src={`/media/${it.film.id}-1280.webp`} srcset={`/media/${it.film.id}-640.webp 640w, /media/${it.film.id}-1280.webp 1280w`} sizes="(max-width: 1199px) 100vw, 60vw" alt="" loading="lazy" decoding="async" />
+              <video muted loop playsinline disablepictureinpicture disableremoteplayback preload="none" data-src={`/media/${it.film.id}.mp4`} aria-hidden="true" />
+              <span class="px-ticks" aria-hidden="true"><i /><i /><i /><i /></span>
+              <span class="px-watch mono" aria-hidden="true"><b>▶</b> Watch <em>{clock(it.film.dur)}{it.film.audio ? " · sound" : ""}</em></span>
+              <span class="px-pbar" aria-hidden="true"><i /></span>
+            </button>
+          ) : (
+            <div class="px-film is-window">
+              <span class="px-ticks" aria-hidden="true"><i /><i /><i /><i /></span>
+              <p class="px-window-text">{it.sub}</p>
+              <span class="px-window-note mono dim">No film yet</span>
+            </div>
+          )}
+
+          <div class="px-ex-info">
+            <div>{it.film && it.sub && <p class="px-sub">{it.sub}</p>}</div>
+            <div class="px-aside">
+              {it.links.length > 0 && <p class="px-links">{it.links.map((l) => <a class="px-link" href={l.href}><Icon name={l.kind} /><span>{l.label}</span></a>)}</p>}
+            </div>
+          </div>
+        </article>
+        </>
+      ))}
+    </div>
+  </div>
+
+  {/* the viewer: one dialog, the film at full quality with sound, scrubbing and fullscreen */}
+  <dialog class="pv" aria-labelledby="pv-name">
+    <div class="pv-in">
+      <header class="pv-top">
+        <span class="pv-idx mono dim"></span>
+        <h2 class="pv-name" id="pv-name"></h2>
+        <span class="pv-line dim"></span>
+        <button class="pv-close mono" type="button" aria-label="Close">Close <kbd>Esc</kbd></button>
+      </header>
+      <div class="pv-frame">
+        <div class="pv-stage">
+          <video class="pv-video" playsinline disablepictureinpicture preload="auto"></video>
+          <button class="pv-hit" type="button" aria-label="Play or pause" tabindex="-1"></button>
+        </div>
+      </div>
+      <div class="pv-bar">
+        <button class="pv-btn pv-play" type="button" aria-label="Pause">
+          <svg class="i-pause" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="3" width="2.5" height="10" rx=".6" fill="currentColor" /><rect x="9.5" y="3" width="2.5" height="10" rx=".6" fill="currentColor" /></svg>
+          <svg class="i-play" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6c0 .5.5.8.9.5l7.4-4.8a.6.6 0 0 0 0-1L5.9 2.7c-.4-.3-.9 0-.9.5z" fill="currentColor" /></svg>
+        </button>
+        <div class="pv-scrub" role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+          <div class="pv-track"><i class="pv-buf"></i><i class="pv-fill"></i></div>
+          <span class="pv-ghost mono"></span>
+        </div>
+        <span class="pv-time mono dim">0:00 / 0:00</span>
+        <button class="pv-btn pv-mute mono" type="button">Sound on</button>
+        <button class="pv-btn pv-fs" type="button" aria-label="Fullscreen">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+      </div>
+      <footer class="pv-foot">
+        <span class="pv-links"></span>
+        <span class="pv-nav">
+          <button class="pv-btn pv-prev mono" type="button" aria-label="Previous film">← <span></span></button>
+          <button class="pv-btn pv-next mono" type="button" aria-label="Next film"><span></span> →</button>
+        </span>
+      </footer>
+    </div>
+  </dialog>
+  <script type="application/json" id="px-films" set:html={JSON.stringify(films)} />
+</section>
+
+<script>
+  // Everything here is event-driven: no animation-frame loop anywhere; progress bars run as compositor animations.
+  type F = { id: string; name: string; line: string; links: { label: string; href: string }[]; dur: number; audio: boolean; full: string; ratio: string };
+  const root = document.querySelector<HTMLElement>('[data-px]')!;
+  const FILMS: F[] = JSON.parse(document.getElementById('px-films')!.textContent!);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clock = (s: number) => (Number.isFinite(s) ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}` : '0:00');
+  const tocBar = (id: string) => root.querySelector<HTMLElement>(`.px-toc a[data-to="${id}"] b`);
+
+  // ---- previews: muted, only the most visible film plays; a source attaches as its film approaches the viewport
+  // Progress bars are compositor animations synced to the video's clock on play/pause/seek: no per-frame script or style work.
+  const SCALE = [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }];
+  const track = (v: HTMLVideoElement, bars: HTMLElement[], loop: boolean) => {
+    let anims: Animation[] = [];
+    const sync = () => {
+      const d = v.duration;
+      if (!Number.isFinite(d) || !d) return;
+      if (!anims.length) anims = bars.map((b) => b.animate(SCALE, { duration: d * 1000, iterations: loop ? Infinity : 1, fill: 'both' }));
+      for (const a of anims) {
+        a.currentTime = v.currentTime * 1000;
+        a.playbackRate = v.playbackRate;
+        if (v.paused || v.seeking) a.pause(); else a.play();
+      }
+    };
+    for (const ev of ['playing', 'pause', 'seeked', 'seeking', 'ratechange', 'waiting']) v.addEventListener(ev, sync, { passive: true });
+    return { sync, reset: () => { for (const a of anims) a.cancel(); anims = []; } };
+  };
+  type Card = { el: HTMLButtonElement; v: HTMLVideoElement; ratio: number };
+  const cards: Card[] = [...root.querySelectorAll<HTMLButtonElement>('.px-film[data-film]')].map((el) => {
+    const v = el.querySelector('video')!;
+    const bars = [el.querySelector<HTMLElement>('.px-pbar i')!, tocBar(el.dataset.film!)].filter(Boolean) as HTMLElement[];
+    track(v, bars, true);
+    v.addEventListener('playing', () => el.classList.add('is-live'), { once: true, passive: true });
+    return { el, v, ratio: 0 };
+  });
+  let viewerOpen = false, playing: Card | null = null;
+  const attach = (v: HTMLVideoElement) => { if (!v.src && v.dataset.src) v.src = v.dataset.src; };
+  function pick() {
+    let best: Card | null = null, r = 0.55;
+    if (!viewerOpen && !reduced && !document.hidden) for (const c of cards) if (c.ratio > r) { r = c.ratio; best = c; }
+    if (best === playing) return;
+    if (playing) { playing.v.pause(); playing.el.classList.remove('is-playing'); }
+    playing = best;
+    if (best) {
+      attach(best.v);
+      best.el.classList.add('is-playing');
+      void best.v.play().catch(() => {});
+    }
+  }
+  const near = new IntersectionObserver((es) => {
+    for (const e of es) if (e.isIntersecting && !reduced) { attach((e.target as HTMLElement).querySelector('video')!); near.unobserve(e.target); }
+  }, { rootMargin: '40% 0px' });
+  const byEl = new Map(cards.map((c) => [c.el as Element, c]));
+  const seen = new IntersectionObserver((es) => {
+    for (const e of es) byEl.get(e.target)!.ratio = e.intersectionRatio;
+    pick();
+  }, { threshold: [0, 0.55, 0.7, 0.85, 1] });
+  for (const c of cards) { near.observe(c.el); seen.observe(c.el); }
+  document.addEventListener('visibilitychange', pick);
+
+  // ---- rail index: lights the project crossing the reading line (45% down the viewport); clicks jump to it
+  const toc = [...root.querySelectorAll<HTMLAnchorElement>('.px-toc a')];
+  const rail = root.querySelector<HTMLElement>('.px-rail')!;
+  const setOn = (ids: string[]) => {
+    for (const a of toc) {
+      const on = ids.includes(a.dataset.to!);
+      a.classList.toggle('is-on', on);
+      if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+      // as a horizontal bar (narrow screens), keep the current chip in view without moving the page
+      if (on && rail.scrollWidth > rail.clientWidth) {
+        const ar = a.getBoundingClientRect(), rr = rail.getBoundingClientRect();
+        const x = ar.left - rr.left + rail.scrollLeft - (rr.width - ar.width) / 2;
+        rail.scrollTo({ left: Math.max(0, x), behavior: reduced ? 'auto' : 'smooth' });
+      }
+    }
+  };
+  // the current project is the last one whose top has passed the reading line (so the gaps between exhibits count
+  // for the one above). The observer only says when something crosses the line; the rects are read then, not per frame.
+  const exs = [...root.querySelectorAll<HTMLElement>('.px-ex')];
+  const spy = new IntersectionObserver(() => {
+    const line = innerHeight * 0.45;
+    let cur = exs[0];
+    for (const b of exs) if (b.getBoundingClientRect().top <= line) cur = b;
+    setOn([cur.dataset.id!]);
+  }, { rootMargin: '-45% 0px -55% 0px' });
+  for (const b of exs) spy.observe(b);
+  for (const a of toc) {
+    a.addEventListener('click', (e) => {
+      const t = document.getElementById(`p-${a.dataset.to}`);
+      if (!t) return;
+      e.preventDefault();
+      t.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+      history.replaceState(null, '', `#p-${a.dataset.to}`);
+    });
+  }
+
+  // ---- viewer (built lazily on first open)
+  const dlg = root.querySelector<HTMLDialogElement>('.pv')!;
+  const $ = <T extends HTMLElement>(s: string) => dlg.querySelector<T>(s)!;
+  const vid = $<HTMLVideoElement>('.pv-video');
+  const stage = $('.pv-stage'), scrub = $('.pv-scrub'), fill = $('.pv-fill'), buf = $('.pv-buf'), ghost = $('.pv-ghost'), time = $('.pv-time');
+  const playB = $<HTMLButtonElement>('.pv-play'), muteB = $<HTMLButtonElement>('.pv-mute'), prevB = $<HTMLButtonElement>('.pv-prev'), nextB = $<HTMLButtonElement>('.pv-next');
+  let idx = 0, from: HTMLElement | null = null, lastT = -1;
+
+  const scene = (open: boolean) => document.dispatchEvent(new CustomEvent('px:viewer', { detail: { open } }));
+  const vt = (fn: () => void) => {
+    const d = document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } };
+    if (reduced || !d.startViewTransition) { fn(); return; }
+    d.documentElement.classList.add('pv-vt');
+    d.startViewTransition(fn).finished.finally(() => d.documentElement.classList.remove('pv-vt'));
+  };
+  const fillTrack = track(vid, [fill], false);
+  const frame = () => {
+    if (!dlg.open) return;
+    const d = vid.duration || FILMS[idx].dur, t = vid.currentTime;
+    const s = Math.floor(t);
+    if (s === lastT) return;
+    lastT = s;
+    time.textContent = `${clock(t)} / ${clock(d)}`;
+    scrub.setAttribute('aria-valuenow', String(s));
+    scrub.setAttribute('aria-valuetext', `${clock(t)} of ${clock(d)}`);
+    if (vid.buffered.length) buf.style.transform = `scaleX(${vid.buffered.end(vid.buffered.length - 1) / d})`;
+  };
+  const kickFrame = () => { lastT = -1; frame(); };
+  vid.addEventListener('timeupdate', frame, { passive: true });
+  vid.addEventListener('loadedmetadata', () => { fillTrack.reset(); fillTrack.sync(); kickFrame(); }, { passive: true });
+
+  function load(i: number, at = 0) {
+    idx = (i + FILMS.length) % FILMS.length;
+    const f = FILMS[idx];
+    $('.pv-idx').textContent = `${idx + 1} / ${FILMS.length}`;
+    $('.pv-name').textContent = f.name;
+    $('.pv-line').textContent = f.line;
+    $('.pv-links').replaceChildren(...[...root.querySelectorAll(`#p-${f.id} .px-links a`)].map((a) => a.cloneNode(true)));
+    prevB.querySelector('span')!.textContent = FILMS[(idx - 1 + FILMS.length) % FILMS.length].name;
+    nextB.querySelector('span')!.textContent = FILMS[(idx + 1) % FILMS.length].name;
+    stage.style.setProperty('--r', f.ratio === '4 / 3' ? '1.3333' : '1.7778');
+    vid.poster = `/media/${f.id}-1280.webp`;
+    vid.src = f.full;
+    muteB.disabled = !f.audio;
+    scrub.setAttribute('aria-valuemax', String(f.dur));
+    const go = () => {
+      vid.currentTime = at;
+      void vid.play().catch(() => { vid.muted = true; void vid.play().catch(() => {}); });
+    };
+    if (vid.readyState >= 1) go(); else vid.addEventListener('loadedmetadata', go, { once: true });
+    kickFrame();
+  }
+
+  function open(card: HTMLElement) {
+    const c = byEl.get(card)!;
+    const at = c.v.currentTime || 0;
+    from = card;
+    viewerOpen = true;
+    pick();
+    vid.muted = false;
+    card.style.viewTransitionName = 'pv-film';
+    vt(() => {
+      card.style.viewTransitionName = '';
+      stage.style.viewTransitionName = 'pv-film';
+      load(FILMS.findIndex((f) => f.id === card.dataset.film), at);
+      dlg.showModal();
+      document.documentElement.classList.add('pv-open');
+    });
+    scene(true);
+  }
+  function close() {
+    if (!dlg.open) return;
+    const back = root.querySelector<HTMLElement>(`.px-film[data-film="${FILMS[idx].id}"]`) ?? from;
+    const at = vid.currentTime;
+    vid.pause();
+    vt(() => {
+      stage.style.viewTransitionName = '';
+      if (back) back.style.viewTransitionName = 'pv-film';
+      dlg.close();
+      document.documentElement.classList.remove('pv-open');
+      if (back) {
+        const v = byEl.get(back)!.v;
+        attach(v);
+        try { v.currentTime = at; } catch {}
+        if (back !== from) back.scrollIntoView({ block: 'center' });
+        back.focus({ preventScroll: true });
+      }
+    });
+    setTimeout(() => { if (back) back.style.viewTransitionName = ''; }, 600);
+    viewerOpen = false;
+    scene(false);
+    vid.removeAttribute('src');
+    vid.load(); // releases the decoder and the buffered film
+    setTimeout(pick, 50);
+  }
+
+  for (const c of cards) c.el.addEventListener('click', () => open(c.el));
+  dlg.addEventListener('cancel', (e) => { e.preventDefault(); close(); });
+  $('.pv-close').addEventListener('click', close);
+  dlg.addEventListener('click', (e) => { const t = e.target as HTMLElement; if (t === dlg || t.classList.contains('pv-in')) close(); });
+  const toggle = () => (vid.paused ? void vid.play() : vid.pause());
+  $('.pv-hit').addEventListener('click', toggle);
+  playB.addEventListener('click', toggle);
+  muteB.addEventListener('click', () => { vid.muted = !vid.muted; });
+  prevB.addEventListener('click', () => load(idx - 1));
+  nextB.addEventListener('click', () => load(idx + 1));
+  $('.pv-fs').addEventListener('click', () => {
+    const v = vid as HTMLVideoElement & { webkitEnterFullscreen?: () => void };
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else if (stage.requestFullscreen) void stage.requestFullscreen();
+    else v.webkitEnterFullscreen?.();
+  });
+  const sync = () => {
+    playB.setAttribute('aria-label', vid.paused ? 'Play' : 'Pause');
+    dlg.classList.toggle('is-paused', vid.paused);
+    muteB.textContent = muteB.disabled ? 'No sound' : vid.muted ? 'Sound off' : 'Sound on';
+    muteB.classList.toggle('is-off', vid.muted && !muteB.disabled);
+    kickFrame();
+  };
+  for (const ev of ['play', 'pause', 'volumechange', 'loadstart', 'seeked', 'progress']) vid.addEventListener(ev, sync, { passive: true });
+  vid.addEventListener('ended', () => load(idx + 1));
+
+  // scrubber: drag anywhere on the bar; hovering shows the time under the pointer
+  let rect: DOMRect | null = null;
+  const at = (e: PointerEvent) => {
+    rect ??= scrub.getBoundingClientRect();
+    const x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    return { x, t: x * (vid.duration || FILMS[idx].dur) };
+  };
+  scrub.addEventListener('pointerenter', () => { rect = scrub.getBoundingClientRect(); });
+  scrub.addEventListener('pointermove', (e) => {
+    const { x, t } = at(e);
+    ghost.textContent = clock(t);
+    ghost.style.transform = `translateX(calc(${x * (rect?.width ?? 0)}px - 50%))`;
+    if (scrub.hasPointerCapture(e.pointerId)) { vid.currentTime = t; fillTrack.sync(); kickFrame(); }
+  });
+  scrub.addEventListener('pointerdown', (e) => { rect = scrub.getBoundingClientRect(); scrub.setPointerCapture(e.pointerId); vid.currentTime = at(e).t; fillTrack.sync(); dlg.classList.add('is-scrubbing'); kickFrame(); });
+  scrub.addEventListener('pointerup', (e) => { scrub.releasePointerCapture(e.pointerId); dlg.classList.remove('is-scrubbing'); });
+  addEventListener('resize', () => { rect = null; }, { passive: true });
+
+  dlg.addEventListener('keydown', (e) => {
+    const k = e.key;
+    if (k === ' ' && !(e.target instanceof HTMLButtonElement)) { e.preventDefault(); toggle(); }
+    else if (k === 'ArrowLeft' || k === 'ArrowRight') {
+      e.preventDefault();
+      if (e.shiftKey) load(idx + (k === 'ArrowRight' ? 1 : -1));
+      else { vid.currentTime = Math.max(0, vid.currentTime + (k === 'ArrowRight' ? 5 : -5)); kickFrame(); }
+    } else if (k === 'm' || k === 'M') vid.muted = !vid.muted;
+  });
+</script>

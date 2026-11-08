@@ -96,38 +96,10 @@ a {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 5;
+  /* hidden tooltips sit past the right edge until hovered (then __fitTip pulls them in): a fixed element escapes
+     the body's clip, so clip here or phones and tablets widen the whole page to fit them */
+  overflow-x: clip;
   padding-block: clamp(16px, 2.4vw, 28px);
-}
-/* content scrolling under the header stays clean: a soft fade of the page colour (tokens, so it follows the theme).
-   It appears over the first 120px of scroll so the hero composition is untouched at the top. */
-.top::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 -64px 0;
-  z-index: -1;
-  pointer-events: none;
-  /* solid behind the bar itself, then an eased fade (several stops, so no visible band edge) */
-  background: linear-gradient(
-    var(--bg) 0%,
-    var(--bg) 55%,
-    color-mix(in srgb, var(--bg) 82%, transparent) 68%,
-    color-mix(in srgb, var(--bg) 52%, transparent) 80%,
-    color-mix(in srgb, var(--bg) 20%, transparent) 91%,
-    transparent 100%
-  );
-}
-@supports (animation-timeline: scroll()) {
-  .top::before {
-    opacity: 0;
-    animation: header-in linear both;
-    animation-timeline: scroll(root);
-    animation-range: 0 120px;
-  }
-}
-@keyframes header-in {
-  to {
-    opacity: 1;
-  }
 }
 .label,
 section.block {
@@ -229,16 +201,20 @@ h1 {
   max-width: 26em;
 }
 /* soft scrims: the page colour, feathered, behind small text so the river never fights it (no visible boxes) */
-.placard,
-.silo-head,
+.px-toc,
+.px-ex-head,
+.px-ex-info,
+.px-window-text,
 .def,
 .hero-text h1,
 .label {
   position: relative;
   isolation: isolate;
 }
-.placard::before,
-.silo-head::before,
+.px-toc::before,
+.px-ex-head::before,
+.px-ex-info::before,
+.px-window-text::before,
 .def::before,
 .hero-text h1::before,
 .label::before {
@@ -256,9 +232,16 @@ h1 {
 body {
   overflow-x: clip;
 }
+/* the text scrims reach 56px past their text: keep them inside the page (the body's clip propagates to the viewport,
+   which on phones and tablets does not stop the layout viewport from widening to fit them) */
+main {
+  overflow-x: clip;
+}
 @media (max-width: 760px) {
-  .placard::before,
-  .silo-head::before,
+  .px-toc::before,
+  .px-ex-head::before,
+  .px-ex-info::before,
+  .px-window-text::before,
   .def::before,
   .hero-text h1::before,
   .label::before {
@@ -273,33 +256,58 @@ body {
   inset: -12px -6px;
 }
 
-/* lenis */
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
-}
-.lenis.lenis-stopped {
-  overflow: clip;
-}
-
-/* header bar: logo left, theme switch right, both centred on the logo's x-height */
+/* header: one fixed pill, top right: theme switch | contact links, a hairline between them. The bar around it is
+   transparent and lets clicks through. The logo is not in it: it sits at the top of the page and scrolls away. */
 .bar {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: start;
-  gap: 16px;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
 }
-.bar > .logo {
-  justify-self: start;
+.ctl {
+  --h: 28px;
+  display: flex;
+  align-items: center;
+  height: calc(var(--h) + 2px);
+  margin-top: calc(26px * 0.57 - var(--h) / 2 - 1px); /* centre on the x-height of the wordmark */
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg); /* solid: content scrolls under it */
+  pointer-events: auto;
 }
-.bar > .tsw:not(.tsw-links) {
-  justify-self: center;
+/* the two groups inside are flat: only the outer pill has an outline */
+.ctl .tsw {
+  margin-top: 0;
+  border: 0;
+  background: none;
 }
-.bar > .tsw-links {
-  justify-self: end;
+.ctl .tsw-thumb {
+  top: 0;
+  left: 0;
+  width: var(--w);
+}
+.ctl .tsw:not(.tsw-links) {
+  margin-right: 13px;
+}
+.ctl .tsw:not(.tsw-links)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -7px;
+  width: 1px;
+  height: 16px;
+  transform: translateY(-50%);
+  background: var(--line);
+}
+/* only the logo itself takes clicks */
+.top-logo .logo {
+  pointer-events: auto;
+}
+.top-logo {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 6; /* above the fixed header, whose empty middle would otherwise catch its clicks */
+  pointer-events: none;
+  padding-block: clamp(16px, 2.4vw, 28px);
 }
 
 /* theme switch: three-state segmented control, hairline pill, sliding thumb */
@@ -313,7 +321,7 @@ html.lenis body {
   border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--secondary);
-  background: color-mix(in srgb, var(--bg) 60%, transparent);
+  background: var(--bg);
 }
 .tsw-thumb {
   position: absolute;
@@ -461,5 +469,10 @@ html.theme-anim {
 @media (max-width: 420px) {
   .tsw {
     --w: 32px;
+  }
+}
+@media (max-width: 370px) {
+  .tsw {
+    --w: 29px;
   }
 }

@@ -311,7 +311,7 @@ export async function mount(el, opts = {}) {
   // ---- state
   const S = {
     theme: o.theme, drawN: n, size: 1, speed: o.speed, fit: o.fit, anchor: o.anchor, camMode: 'hero',
-    sy: 0, vh: 1, max: 1, jp: 0, jh: 0, lastY: 0, jvs: 0, jvv: 0, tgt: [0.5, 0.6], flowT: 0, projBase: null, journey: o.journey,
+    sy: null, syv: 0, vh: 1, max: 1, jp: 0, jh: 0, lastY: 0, jvs: 0, jvv: 0, tgt: [0.5, 0.6], flowT: 0, projBase: null, journey: o.journey,
     t: 0, intro0: null, px: 0, py: 0, tpx: 0, tpy: 0, running: true, visible: true, controls: null,
   };
   const frame = { cw: 1, ch: 1, k: 1, a: 0, b: 0, kDev: 1 };
@@ -388,6 +388,7 @@ export async function mount(el, opts = {}) {
     keepText: 0.62, keepEnd: 0.14,     // fraction of terrain points kept (same two stops)
     light: { dimText: 0.13, keepText: 0.4 },   // the light theme needs more dimming than the dark one
     smooth: 0.05,                      // smoothing time (s) of the scroll velocity that drives the river speed
+    follow: 0.35,                      // smoothing time (s) of the scene's scroll position: the page scrolls natively, the scene glides after it
   };
   const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -445,8 +446,12 @@ export async function mount(el, opts = {}) {
     U.uIntro.value = reduced || !o.intro ? 9 : Math.min((now - S.intro0) / 1000 / 2.2 * 1.9 + 0.0, 9);
     let T = T0, dollied = 0;
     if (S.journey) {
-      // coupled directly to the page: read the scroll position in this very frame, no spring on camera, dim or pan
-      const y = Math.max(0, scrollY);
+      // the page scrolls natively; the scene follows the scroll position through a critically damped spring
+      const ty = Math.max(0, scrollY);
+      if (S.sy === null || reduced) { S.sy = ty; S.syv = 0; }
+      else [S.sy, S.syv] = damp(S.sy, S.syv, ty, J.follow, dt);
+      if (Math.abs(S.sy - ty) < 0.05 && Math.abs(S.syv) < 0.5) { S.sy = ty; S.syv = 0; }
+      const y = S.sy;
       S.jp = S.max > 0 ? Math.min(1, y / S.max) : 0; S.jh = y / S.vh;
       // only the secondary effect (river speed) gets a very short smoothing of the scroll velocity
       const vel = (y - S.lastY) / Math.max(dt, 1e-3) / S.vh; S.lastY = y;
@@ -536,6 +541,9 @@ export async function mount(el, opts = {}) {
     setCount: (c) => { tgeo.setDrawRange(0, Math.min(n, Math.round(c))); S.drawN = c; kick(); },
     setRiverSpeed: (v) => { S.speed = v; },
     setPreFrame: (fn) => { S.pre = fn; },
+    setRunning: (v) => { S.running = v; if (v) kick(); },
+    setDprCap: (v) => { o.dprCap = v; resize(); kick(); },   // adaptive resolution (see Hero.astro)
+    get dpr() { return renderer.getPixelRatio(); },   // pause rendering entirely (e.g. while a film plays full screen)
     setMetrics: (vh, max) => { S.vh = vh; S.max = max; },
     setSourceTarget: (x, y) => { S.tgt = [x, y]; },
     setFit: (f, anchor) => { S.fit = f; if (anchor) S.anchor = anchor; resize(); kick(); },

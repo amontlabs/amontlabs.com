@@ -4,6 +4,8 @@ import Logo from "./Logo.astro";
 import ThemeSwitch from "./ThemeSwitch.astro";
 ---
 
+<!-- the logo belongs to the page: it sits at the top and scrolls away; only the controls pill stays fixed (top right) -->
+<div class="top-logo wrap"><Logo /></div>
 <header class="top">
-  <div class="wrap bar"><Logo /><ThemeSwitch /><HeaderLinks /></div>
+  <div class="wrap bar"><div class="ctl"><ThemeSwitch /><HeaderLinks /></div></div>
 </header>

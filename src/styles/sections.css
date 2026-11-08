@@ -65,82 +65,7 @@ section.block {
   }
 }
 
-/* work: a museum exhibit. The name stands on the frame; the placard sits in the left rail, bottom-aligned. */
-.silo-name {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  font-weight: 500;
-  font-size: clamp(112px, 21vw, 304px);
-  line-height: 0.74;
-  letter-spacing: -0.06em;
-  margin-left: -0.04em;
-  margin-bottom: 0.1em;
-}
-/* the three product windows float on the page (transparent WebP, no frame). The image has a transparent margin
-   around the windows (160/3266 sides, 162/2556 top, 159/2556 bottom): cancel it so the windows themselves sit on the grid. */
-.shot {
-  /* the windows rise beside the name: the image's top-left is empty (the computers window sits lower),
-     so the word "Silo" occupies that space and the screens start at the top of the exhibit */
-  grid-column: 5 / -1;
-  grid-row: 2 / span 2;
-  align-self: start;
-  position: relative;
-  z-index: 1;
-}
-.shot picture,
-.shot img {
-  display: block;
-}
-.shot img {
-  width: 110.9%;
-  max-width: none;
-  height: auto;
-  margin: -5.5% 0 -5.4% -5.43%;
-}
-
-/* the placard: headline aligned to the windows' top edge, metadata and links to their bottom edge */
-.placard {
-  grid-column: 1 / span 4;
-  grid-row: 3;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 40px;
-  padding-right: 24px;
-}
-.placard-top {
-  display: grid;
-  gap: 24px;
-}
-.silo-head {
-  font-weight: 500;
-  font-size: clamp(32px, 2.8vw, 40px);
-  line-height: 1.1;
-  letter-spacing: -0.035em;
-  text-wrap: balance;
-  margin-top: -0.12em;
-}
-.placard p {
-  max-width: 44ch;
-  text-wrap: pretty;
-}
-.placard-top p {
-  font-size: 18px;
-  line-height: 28px;
-}
-.placard .meta {
-  display: grid;
-  gap: 4px;
-  margin-bottom: 16px;
-}
-.silo-links {
-  display: grid;
-  gap: 16px;
-}
-.silo-links a {
-  width: fit-content;
-  padding-block: 0;
-}
+/* products: see the end of this file */
 
 /* about */
 .def {
@@ -157,16 +82,6 @@ section.block {
 }
 
 @media (max-width: 900px) {
-  .shot {
-    grid-column: 1 / -1;
-    grid-row: 3;
-  }
-  .placard {
-    grid-column: 1 / -1;
-    grid-row: 4;
-    margin-top: 32px;
-    padding: 0;
-  }
   .def {
     grid-column: 1 / -1;
   }
@@ -240,4 +155,876 @@ main.legal {
 }
 .legal-link:hover {
   text-decoration-color: currentColor;
+}
+
+/* products ---------------------------------------------------------------------------------------------------------
+   Left rail: the section label and a sticky index of the projects (current one lit, with its film's progress).
+   Content from column 5: one exhibit per product (title, film, information), then the tools side by side.
+   Films preview muted while on screen (one at a time); clicking one opens the viewer (.pv) with sound. */
+.px .grid {
+  align-items: start;
+}
+.px-rail {
+  grid-column: 1 / span 4;
+  padding-right: 16px;
+  position: sticky;
+  top: 128px;
+}
+.px-rail .label {
+  margin-bottom: 24px;
+}
+.px-toc {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+}
+.px-toc li + li {
+  margin-top: 4px;
+}
+/* an entry: number, name; under it the one-line description and tags */
+.px-toc a {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-areas:
+    "n name"
+    ". desc"
+    ". tags"
+    ". stats";
+  align-items: baseline;
+  padding: 8px 0 10px;
+  color: var(--secondary);
+  transition: color 0.25s;
+}
+.px-toc-n {
+  grid-area: n;
+  font-size: 12px;
+  transition: color 0.25s;
+}
+.px-toc-name {
+  grid-area: name;
+  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+.px-toc-desc {
+  grid-area: desc;
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 20px;
+  text-wrap: pretty;
+}
+.px-toc .px-tags {
+  grid-area: tags;
+  margin-top: 8px;
+}
+.px-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.px-tags span {
+  padding: 1px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--secondary);
+  transition:
+    color 0.25s,
+    border-color 0.25s;
+}
+.px-toc a:hover,
+.px-toc a.is-on {
+  color: var(--text);
+}
+.px-toc a.is-on .px-toc-n {
+  color: var(--link);
+}
+.px-tags .is-need {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text);
+}
+.px-toc a.is-on .px-tags span:not(.is-need) {
+  border-color: color-mix(in srgb, var(--text) 22%, transparent);
+}
+.px-toc a:not(.is-on) .px-toc-desc,
+.px-toc a:not(.is-on) .px-tags {
+  opacity: 0.7;
+}
+/* the playing film's progress, a hairline under the current entry (scaled by script: transform only) */
+.px-toc a i {
+  position: absolute;
+  left: 36px;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--line);
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.px-toc a i b {
+  position: absolute;
+  inset: 0;
+  background: var(--fonte);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+.px-toc a.is-on i {
+  opacity: 1;
+}
+/* short screens: the index must fit under the header, so tags stay in the exhibits */
+@media (max-height: 860px) and (min-width: 1200px) {
+  .px-toc .px-tags {
+    display: none;
+  }
+  .px-toc a {
+    padding: 8px 0 10px;
+  }
+  .px-ex .px-ex-lede {
+    display: grid;
+    gap: 10px;
+    margin: -8px 0 20px;
+  }
+  .px-ex .px-ex-lede p:first-child {
+    display: none;
+  }
+}
+/* the stats row: kind and platforms, latest release, stars, forks */
+.px-stats {
+  /* fixed columns, so kind/platforms and release line up from one entry to the next; stars and forks end the row */
+  display: grid;
+  grid-template-columns: 92px 14ch 1fr;
+  column-gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.px-run {
+  grid-column: 1;
+}
+.px-rel {
+  grid-column: 2;
+}
+.px-pop {
+  /* stars and forks together, at the end of the row */
+  grid-column: 3;
+  justify-self: end;
+  display: inline-flex;
+  gap: 12px;
+}
+.px-toc .px-stats {
+  grid-area: stats;
+  margin-top: 10px;
+}
+.px-stats .icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--secondary);
+}
+.px-stats .px-n .icon {
+  width: 13px;
+  height: 13px;
+}
+.px-run .icon:first-child {
+  margin-right: 3px; /* the kind, then the platforms */
+}
+.px-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.px-rel em {
+  margin-left: 8px;
+  font-style: normal;
+  color: var(--secondary);
+}
+.px-n {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.px-toc a:not(.is-on) .px-stats {
+  opacity: 0.75;
+}
+.px-toc-tier {
+  margin: 20px 0 6px;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.px-content {
+  grid-column: 5 / -1;
+  padding-top: 56px; /* the first title sits level with the index's first entry */
+}
+.px-ex {
+  scroll-margin-top: 140px;
+}
+.px-ex + .px-ex {
+  margin-top: 144px;
+}
+.px-ex-head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.px-num {
+  font-size: 12px;
+  color: var(--link);
+}
+.px-name {
+  font-weight: 500;
+  font-size: clamp(40px, 4.2vw, 68px);
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  margin-left: -0.04em;
+}
+.px-status {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+/* a film: poster first, the muted preview fades in over it once it really plays */
+.px-film {
+  --scr: #0b0e11;
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--ratio, 16 / 9);
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--scr);
+  color: #e8ecef;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent),
+    0 32px 64px -40px rgb(0 0 0 / 0.5);
+  isolation: isolate;
+}
+.px-film img,
+.px-film video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition:
+    opacity 0.35s linear,
+    transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.px-film video {
+  opacity: 0;
+}
+.px-film.is-live video {
+  opacity: 1;
+}
+.px-film:hover img,
+.px-film:hover video {
+  transform: scale(1.012);
+}
+.px-film:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+}
+/* viewfinder corner ticks: they close in on hover */
+.px-ticks i {
+  position: absolute;
+  z-index: 2;
+  width: 12px;
+  height: 12px;
+  border: 0 solid rgb(255 255 255 / 0.4);
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 0.25s;
+}
+.px-ticks i:nth-child(1) {
+  top: 14px;
+  left: 14px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+.px-ticks i:nth-child(2) {
+  top: 14px;
+  right: 14px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+.px-ticks i:nth-child(3) {
+  bottom: 14px;
+  left: 14px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+.px-ticks i:nth-child(4) {
+  bottom: 14px;
+  right: 14px;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+.px-film:hover .px-ticks i {
+  border-color: rgb(255 255 255 / 0.85);
+}
+.px-film:hover .px-ticks i:nth-child(1) {
+  transform: translate(4px, 4px);
+}
+.px-film:hover .px-ticks i:nth-child(2) {
+  transform: translate(-4px, 4px);
+}
+.px-film:hover .px-ticks i:nth-child(3) {
+  transform: translate(4px, -4px);
+}
+.px-film:hover .px-ticks i:nth-child(4) {
+  transform: translate(-4px, -4px);
+}
+/* the call to watch: always there, quiet; brightens on hover */
+.px-watch {
+  position: absolute;
+  z-index: 2;
+  left: 24px;
+  bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  color: #fff;
+  background: rgb(11 14 17 / 0.78);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+  opacity: 0.9;
+  transition:
+    opacity 0.25s,
+    background 0.25s,
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.px-watch b {
+  font-weight: 400;
+  font-size: 9px;
+  color: var(--fonte);
+}
+.px-watch em {
+  font-style: normal;
+  color: rgb(255 255 255 / 0.6);
+}
+.px-film:hover .px-watch,
+.px-film:focus-visible .px-watch {
+  opacity: 1;
+  background: rgb(11 14 17 / 0.9);
+  transform: translateY(-2px);
+}
+@media (hover: hover) {
+  .px-film.is-live.is-playing:not(:hover, :focus-visible) .px-watch {
+    opacity: 0;
+  }
+}
+/* preview progress, a hairline along the bottom edge */
+.px-pbar {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: rgb(255 255 255 / 0.08);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.px-pbar i {
+  position: absolute;
+  inset: 0;
+  background: var(--fonte);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+.px-film.is-playing .px-pbar {
+  opacity: 1;
+}
+
+/* Fjord has no film yet: an open frame onto the river behind the page, with the product's sentence in it */
+.px-film.is-window {
+  aspect-ratio: 21 / 9;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(32px, 4vw, 56px);
+  background: none;
+  color: var(--text);
+  cursor: default;
+  box-shadow: inset 0 0 0 1px var(--line);
+  overflow: visible;
+}
+.px-film.is-window .px-ticks i {
+  border-color: var(--secondary);
+}
+.px-window-text {
+  position: relative;
+  max-width: 24em;
+  font-weight: 500;
+  font-size: clamp(22px, 2.2vw, 34px);
+  line-height: 1.18;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.px-window-note {
+  font-size: 12px;
+}
+
+.px-ex-lede {
+  display: none;
+}
+.px-ex-info {
+  /* description at full width, links on their own row under it */
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+.px-sub {
+  max-width: 64ch;
+  font-size: 17px;
+  line-height: 26px;
+  text-wrap: pretty;
+}
+.px-aside {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+.px-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+.px-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--link);
+}
+.px-link::after {
+  content: "";
+  position: absolute;
+  inset: -12px -6px;
+}
+.px-link span {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  padding-bottom: 1px;
+  transition: background-size 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.px-link:hover span {
+  background-size: 100% 1px;
+}
+
+/* tools: same exhibits as the products, after their own divider */
+.px-tools-label {
+  position: relative;
+  margin-top: 160px;
+  margin-bottom: 40px;
+  padding-top: 16px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  border-top: 1px solid var(--line);
+}
+
+/* below 1200px: one column. The rail becomes a sticky bar of project chips under the header (swipe, tap to jump;
+   the current one is lit and carries its film's progress); each exhibit shows its description, tags and stats under its title. */
+@media (max-width: 1199px) {
+  /* the rail is desktop-only: on one column the exhibits read top to bottom */
+  .px-rail {
+    display: none;
+  }
+  .px-content {
+    grid-column: 1 / -1;
+    padding-top: 8px;
+  }
+  .px-ex {
+    scroll-margin-top: 96px;
+  }
+  .px-ex-lede {
+    display: grid;
+    gap: 12px;
+    margin: -8px 0 24px;
+    font-size: 17px;
+    line-height: 24px;
+  }
+  /* stats under the title: icons, release, then stars and forks at the end */
+  .px-ex-lede .px-stats {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .px-ex-lede .px-pop {
+    margin-left: auto;
+  }
+  .px-ex + .px-ex {
+    margin-top: 112px;
+  }
+  .px-film.is-window {
+    aspect-ratio: auto;
+    min-height: 220px;
+    gap: 32px;
+    padding: 28px;
+  }
+  .px-tools-label {
+    margin-top: 128px;
+  }
+}
+@media (max-width: 600px) {
+  .px-ex + .px-ex {
+    margin-top: 88px;
+  }
+  .px-tools-label {
+    margin-top: 104px;
+  }
+  .px-name {
+    font-size: 48px;
+  }
+  .px-watch {
+    left: 14px;
+    bottom: 14px;
+    padding: 5px 10px 5px 8px;
+    font-size: 11px;
+  }
+  .px-ticks i {
+    width: 8px;
+    height: 8px;
+  }
+  .px-ticks i:nth-child(1) {
+    top: 10px;
+    left: 10px;
+  }
+  .px-ticks i:nth-child(2) {
+    top: 10px;
+    right: 10px;
+  }
+  .px-ticks i:nth-child(3) {
+    bottom: 10px;
+    left: 10px;
+  }
+  .px-ticks i:nth-child(4) {
+    bottom: 10px;
+    right: 10px;
+  }
+  .px-sub {
+    font-size: 16px;
+    line-height: 25px;
+  }
+}
+
+/* the viewer ------------------------------------------------------------------------------------------------------ */
+.pv {
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+.pv::backdrop {
+  background: transparent;
+}
+html.pv-open {
+  overflow: hidden;
+}
+.pv-in {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  justify-items: center;
+  gap: 16px;
+  padding: clamp(16px, 2.4vw, 28px) var(--gutter) clamp(16px, 2.4vw, 28px);
+}
+.pv-top,
+.pv-bar,
+.pv-foot {
+  width: min(100%, 1440px);
+}
+.pv-top {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  min-height: 44px;
+}
+.pv-idx {
+  font-size: 12px;
+}
+.pv-name {
+  font-weight: 500;
+  font-size: 28px;
+  letter-spacing: -0.04em;
+}
+.pv-line {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pv-close {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0 6px 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.pv-close:hover {
+  color: var(--text);
+}
+.pv-close kbd {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+  font: inherit;
+  font-size: 11px;
+}
+.pv-frame {
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  container-type: size;
+}
+/* the film fits the space left by the bars, at its own aspect ratio */
+.pv-stage {
+  position: relative;
+  width: min(100cqw, calc(100cqh * var(--r, 1.7778)));
+  aspect-ratio: var(--r, 1.7778);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0b0e11;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent),
+    0 40px 120px -40px rgb(0 0 0 / 0.6);
+}
+.pv-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.pv-hit {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.pv-stage:fullscreen {
+  border-radius: 0;
+  background: #000;
+}
+.pv-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 44px;
+}
+.pv-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background 0.2s;
+}
+.pv-btn:hover:not(:disabled) {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+.pv-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.pv-play {
+  color: var(--text);
+}
+.pv-play .i-play,
+.pv.is-paused .pv-play .i-pause {
+  display: none;
+}
+.pv.is-paused .pv-play .i-play {
+  display: block;
+}
+.pv-mute.is-off {
+  color: var(--secondary);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+/* scrubber: a hairline that thickens under the pointer; a time readout follows the pointer */
+.pv-scrub {
+  position: relative;
+  flex: 1;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  touch-action: none;
+}
+.pv-track {
+  position: relative;
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+  transition: height 0.15s;
+}
+.pv-scrub:hover .pv-track,
+.pv.is-scrubbing .pv-track {
+  height: 4px;
+}
+.pv-buf,
+.pv-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+}
+.pv-buf {
+  background: color-mix(in srgb, var(--text) 14%, transparent);
+}
+.pv-fill {
+  background: var(--fonte);
+}
+.pv-ghost {
+  position: absolute;
+  left: 0;
+  bottom: 30px;
+  font-size: 11px;
+  color: var(--secondary);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.pv-scrub:hover .pv-ghost,
+.pv.is-scrubbing .pv-ghost {
+  opacity: 1;
+}
+.pv-time {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.pv-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 32px;
+}
+.pv-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+.pv-links a {
+  white-space: nowrap;
+}
+.pv-nav {
+  display: flex;
+  gap: 8px;
+}
+@media (max-width: 700px) {
+  .pv-line,
+  .pv-time,
+  .pv-nav span {
+    display: none;
+  }
+  .pv-bar {
+    gap: 8px;
+  }
+}
+
+/* phones held sideways and other short screens: the film gets the height, the chrome shrinks to one line each */
+@media (max-height: 520px) {
+  .pv-in {
+    gap: 6px;
+    padding-block: 8px;
+  }
+  .pv-top {
+    min-height: 32px;
+  }
+  .pv-name {
+    font-size: 20px;
+  }
+  .pv-line,
+  .pv-links,
+  .pv-close kbd {
+    display: none;
+  }
+  .pv-bar {
+    height: 36px;
+  }
+  .pv-foot {
+    position: absolute;
+    top: 8px;
+    right: calc(var(--gutter) + 96px);
+    width: auto;
+    min-height: 32px;
+  }
+}
+
+/* the film grows from its place on the page into the viewer */
+::view-transition-group(pv-film) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0, 1);
+}
+::view-transition-old(pv-film),
+::view-transition-new(pv-film) {
+  height: 100%;
+  object-fit: cover;
+}
+html.pv-vt::view-transition-old(root),
+html.pv-vt::view-transition-new(root) {
+  animation-duration: 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .px-film img,
+  .px-film video,
+  .px-ticks i,
+  .px-watch {
+    transition: none;
+  }
+}
+@media (hover: none) {
+  .pv-close kbd {
+    display: none;
+  }
 }

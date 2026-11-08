@@ -1,10 +1,10 @@
-name: Update Silo data
+name: Update project data
 on:
   schedule:
     - cron: "17 * * * *"
   workflow_dispatch:
   repository_dispatch:
-    types: [silo-release]
+    types: [silo-release, release]
 permissions:
   contents: write
 jobs:
@@ -15,14 +15,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node scripts/update-silo-data.mjs
+      - run: node scripts/update-projects-data.mjs
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Commit
         run: |
-          if git diff --quiet -- src/data/silo.json src/assets/silo; then exit 0; fi
+          if git diff --quiet -- src/data/projects.json; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/data/silo.json src/assets/silo
-          git commit -m "chore: update Silo data"
+          git add src/data/projects.json
+          git commit -m "chore: update project data"
           git push origin HEAD:main

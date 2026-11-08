@@ -3,11 +3,12 @@ import { getImage } from "astro:assets";
 import dark from "../assets/signature/poster-dark.png";
 import light from "../assets/signature/poster-light.png";
 
-const widths = [960, 1280, 1920, 2560, 3840];
+// the poster is only on screen until the live scene fades in over it: 2560 is plenty, even on 2x screens
+const widths = [960, 1280, 1920, 2560];
 const sizes = "(max-aspect-ratio: 4/5) 62svh, max(100vw, 150svh)";
 const make = async (src: ImageMetadata, format: "avif" | "webp") => {
   const imgs = await Promise.all(
-    widths.map((width) => getImage({ src, width, format, quality: format === "avif" ? 55 : 80 })),
+    widths.map((width) => getImage({ src, width, format, quality: format === "avif" ? 48 : 74 })),
   );
   return imgs.map((i, n) => `${i.src} ${widths[n]}w`).join(", ");
 };
@@ -52,25 +53,7 @@ const D = "(prefers-color-scheme: dark)";
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const T = () => (window as unknown as { __theme: { resolved: () => string } }).__theme.resolved();
 
-  // smooth scrolling (Lenis), advanced from the scene's own frame once it runs; until then from a plain rAF loop
-  let lenis: import('lenis').default | null = null;
-  let driven = false;
-  let lp: Promise<void> | null = null;
-  const startLenis = () => (lp ??= initLenis());
-  const initLenis = async () => {
-    if (reduced) return;
-    const { default: Lenis } = await import('lenis');
-    lenis = new Lenis({ autoRaf: false, lerp: 0.09, smoothWheel: true, anchors: true });
-    const loop = (t: number) => {
-      if (driven) return;
-      lenis?.raf(t);
-      requestAnimationFrame(loop);
-    };
-    requestAnimationFrame(loop);
-  };
-
   const start = async () => {
-    void startLenis();
     const gl = document.createElement('canvas').getContext('webgl2');
     if (!gl) return;
     const { mount } = await import('../scripts/signature.js');
@@ -90,6 +73,8 @@ const D = "(prefers-color-scheme: dark)";
     });
     if (sig.fallback) return;
     document.addEventListener('themechange', (e) => sig.setTheme((e as CustomEvent).detail));
+    // a film open in the products viewer covers the scene: stop drawing it so the GPU goes to the video
+    document.addEventListener('px:viewer', (e) => sig.setRunning(!(e as CustomEvent).detail.open));
     let last = anchor().join();
     addEventListener('resize', () => {
       const a = anchor();
@@ -112,12 +97,28 @@ const D = "(prefers-color-scheme: dark)";
       }
     };
     feed();
-    await startLenis();
-    sig.setPreFrame((t: number) => lenis?.raf(t));
-    driven = true;
     addEventListener('resize', feed, { passive: true });
     new ResizeObserver(feed).observe(document.body);
     requestAnimationFrame(() => requestAnimationFrame(() => scene.classList.add('is-live')));
+    // adaptive resolution: watch real frame times for a while; if the scene can't hold the display's refresh rate,
+    // step its pixel ratio down (2 -> 1.5 -> 1.25). Machines that keep up never change. Stops after 30 s or at the floor.
+    const steps = [1.5, 1.25];
+    let samples: number[] = [], prevT = 0, fastest = 1000 / 60, until = performance.now() + 30000;
+    const watch = (t: number) => {
+      if (prevT && !document.hidden && sig.state.visible && sig.state.running) { samples.push(t - prevT); fastest = Math.min(fastest, Math.max(1000 / 144, t - prevT)); }
+      prevT = t;
+      if (samples.length >= 90) {
+        // the display's interval is the fastest frame seen (at most 60 Hz's); slower than ~1.45x that on median = not keeping up
+        const med = samples.sort((a, b) => a - b)[samples.length >> 1];
+        samples = [];
+        if (med > fastest * 1.45 && steps.length && sig.dpr > steps[0]) {
+          sig.setDprCap(steps.shift()!);
+          until = performance.now() + 30000;
+        }
+      }
+      if (performance.now() < until && steps.length) requestAnimationFrame(watch);
+    };
+    requestAnimationFrame(watch);
     if (import.meta.env.DEV) (window as unknown as { __sig: unknown }).__sig = sig;
   };
 

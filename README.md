@@ -32,17 +32,15 @@ The scene is one fixed full-viewport layer (`.scene`, z-index -1) behind the who
 
 In `src/scripts/signature.js` the `J` object holds the tuning: progress `p` (0 top, 1 bottom) and `h` (scrollY / viewport height) are smoothed with a critically damped direct read of scrollY each frame (no spring; `J.smooth` only smooths the scroll velocity that drives river speed). `p` drives a dolly toward a point travelling up the river centreline (`J.dolly`, `J.path`), a pan that lands the source on its target, the river narrowing to a thread and its lower part fading (`uConv`), and a larger, calmer source. `h` drives terrain dimming and thinning while text is on screen (`J.dimText`, `J.keepText`), then nearly gone at the end of the page (`J.dimEnd`, `J.keepEnd`), and the removal of the hero's bottom fade (`uBotFade`). River flow speed follows scroll velocity slightly. Soft page-colour scrims behind text blocks are at the end of `src/styles/global.css`. Reduced motion or no WebGL: the poster stays fixed and is dimmed by a CSS scroll timeline; three.js is not loaded.
 
-## Smooth scroll and the Silo image
+## Scroll
 
-Lenis (lerp 0.09, wheel only, touch native, off under reduced motion) is started after idle from `Hero.astro` and advanced inside the scene's own frame (`setPreFrame`), so content and scene move together.
+Page scroll is native. The scene follows the scroll position through a critically damped spring (`J.follow`, 0.35 s), so the background glides while the content stays under the finger.
 
-The Silo exhibit shows the transparent product windows from `amontlabs/silo` (`docs/silo-showcase-screens.webp`, 3266x2556, alpha, generated there with `npm --prefix demo run capture:showcase`). They float on the page with the scene behind them (no frame or panel); Astro's Picture outputs AVIF and WebP (800 to 2560 px, alpha kept) and CSS cancels the image's transparent margin so the windows themselves sit on the grid. It lives at `src/assets/silo/silo-screens.webp`; the hourly Silo data workflow compares its git blob SHA with `screensSha` in `src/data/silo.json` and re-downloads it when it changes.
+## Project data
 
-## Silo data
+`src/data/projects.json` holds, for Silo, Sic, Fjord, LCU and lastdrop, the latest app release (tags `vX.Y.Z`; Silo's `engine-` and `guest-` tags are skipped), its date, stars and forks. `scripts/update-projects-data.mjs` refreshes it from the GitHub API (keeping the last known values for a repo it can't reach), and `.github/workflows/update-projects-data.yml` runs it hourly, on manual dispatch and on `repository_dispatch` (`silo-release` or `release`), committing as github-actions[bot] to main. Each exhibit shows the version, release date, stars and forks; a project without a release or stars shows no stats line.
 
-`src/data/silo.json` holds Silo's latest release and repo stats. `scripts/update-silo-data.mjs` refreshes it from the GitHub API, and `.github/workflows/update-silo-data.yml` runs it hourly, on manual dispatch and on `repository_dispatch` (`silo-release`), committing as github-actions[bot] to main. The site shows the version and release date; stars appear only from 100 up (`STARS_MIN` in `src/pages/index.astro`). Downloads and forks are stored but never shown.
-
-Optional instant refresh: Silo's release workflow can send `repository_dispatch` with `event_type: silo-release` to `amontlabs/amontlabs.com`, using a fine-grained token with Contents read/write on this repo stored as a secret in `amontlabs/silo`.
+Optional instant refresh: a project's release workflow can send `repository_dispatch` with `event_type: release` (Silo already uses `silo-release`) to `amontlabs/amontlabs.com`, using a fine-grained token with Contents read/write on this repo stored as a secret in the project's repo.
 
 ## Deployment
 
