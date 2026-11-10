@@ -56,17 +56,18 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
         <h2 id="jr-h" class="sr-only">Activity</h2>
         <dl class="jr-nums">
           <div><dd>{nf.format(A.totals.commits)}</dd><dt>commits</dt></div>
-          <div><dd>{nf.format(A.totals.merged)}</dd><dt>PRs merged{A.totals.outside ? ` · ${nf.format(A.totals.outside)} from contributors` : ""}</dt></div>
+          <div><dd>{nf.format(A.totals.merged)}</dd><dt>PRs merged{A.totals.outside ? <span class="jr-contrib"> · {nf.format(A.totals.outside)} from contributors</span> : ""}</dt></div>
           <div><dd>{nf.format(A.totals.issues ?? 0)}</dd><dt>issues closed</dt></div>
           <div><dd>{nf.format(A.totals.releases)}</dd><dt>releases</dt></div>
           <div class="mono dim"><dt>in the last 30 days</dt></div>
         </dl>
-        <p class="mono dim"><a href="https://github.com/amontlabs"><Icon name="github" size={13} />amontlabs</a><span>Updated <time datetime={A.updatedAt}>{new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).format(new Date(A.updatedAt))}</time></span></p>
+        <p class="mono dim"><span class="jr-cap">Last 30 days{A.totals.outside ? ` · ${nf.format(A.totals.outside)} PRs from contributors` : ""}</span><a href="https://github.com/amontlabs"><Icon name="github" size={13} />amontlabs</a><span><span class="jr-upd">Updated </span><time datetime={A.updatedAt}>{new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).format(new Date(A.updatedAt))}</time></span></p>
       </header>
 
       <div class="jr-lead">
         <div class="jr-nav">
           <h3 aria-live="polite">{first && label(first)}</h3>
+          <button type="button" class="jr-daymore" aria-expanded="false" aria-label="The whole day"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
           <div>
             <button type="button" data-step="-1" aria-label="Earlier day"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
             <button type="button" data-step="1" aria-label="Later day"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
@@ -155,7 +156,20 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
               </div>
               <div class="jr-more" id={`jr-more-${id}`} role="region" aria-label={R.name}>
                 <div class="jr-more-in">
+                  {/* phones: the project is a sheet over the screen; its head switches projects and closes it */}
+                  <div class="jr-sheethead">
+                    <i class="jr-grab" aria-hidden="true"></i>
+                    <nav class="jr-chips2" aria-label="Projects">
+                      {ids.map((o) => <button type="button" data-open={o} aria-current={o === id ? "true" : undefined} style={`--c: ${color(o)}`}><i aria-hidden="true"></i>{name(o)}</button>)}
+                    </nav>
+                    <button type="button" class="jr-x" data-close aria-label="Close"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m4 4 8 8m0-8-8 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg></button>
+                  </div>
                   <div class:list={["jr-view", it?.film && "has-film"]}>
+                    <div class="jr-sheettitle">
+                      <p class="jr-sheetname" id={`jr-name-${id}`}><i aria-hidden="true"></i>{R.name}</p>
+                      <p class="jr-sheetlinks">{links.map((l) => <a href={l.href} aria-label={l.kind === "github" ? `${R.name} on GitHub` : `${R.name} website (${l.label})`}><Icon name={l.kind === "github" ? "github" : "site"} size={18} /></a>)}</p>
+                      <p class="jr-sheetline">{line}</p>
+                    </div>
                     {it?.film && (
                       <div class="jr-film" style={`aspect-ratio: ${it.film.ratio}`}>
                         <video muted loop playsinline disablepictureinpicture preload="none" poster={`/media/${it.film.id}-1280.webp`} data-src={`/media/${it.film.id}.mp4`} data-full={it.film.full}></video>
@@ -343,6 +357,12 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     gap: 0 18px;
     font-size: 12px;
     white-space: nowrap;
+  }
+  .jr-cap,
+  .jr-nav .jr-daymore,
+  .jr-sheethead,
+  .jr-sheettitle {
+    display: none;
   }
   .jr-head p a {
     display: inline-flex;
@@ -1242,35 +1262,65 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       --who: 300px;
     }
   }
+  /* ---- narrow screens (phones, small tablets): one column, built for the thumb.
+     Every row is one tap target, figures line up on the right edge, the time axis heads the charts it labels. */
   @media (max-width: 899px) {
     .jr-panel {
-      padding: 18px 16px 14px;
-      border-radius: 12px;
+      padding: 20px 20px 4px;
+      border-radius: 16px;
     }
+    /* the month in three figures, each with its label under it, then where it comes from */
     .jr-head {
       display: block;
     }
     .jr-nums {
-      gap: 0 18px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+      gap: 14px 16px;
+    }
+    .jr-nums div {
+      flex-direction: column;
+      gap: 0;
     }
     .jr-nums dd {
-      font-size: 20px;
+      font-size: 24px;
+      line-height: 30px;
     }
     .jr-nums dt {
       font-size: 13px;
+      line-height: 17px;
+    }
+    .jr-nums .mono {
+      display: none;
     }
     .jr-head p {
-      margin-top: 4px;
+      flex-wrap: wrap;
+      gap: 0 14px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      line-height: 20px;
     }
+    .jr-cap {
+      display: inline !important;
+    }
+    .jr-contrib {
+      display: none;
+    }
+
+    /* the day: its name and the arrows on one line, the summary, then the projects that moved, one per line */
     .jr-lead {
       grid-template-columns: minmax(0, 1fr);
-      row-gap: 10px;
-      margin-top: 18px;
+      row-gap: 8px;
+      margin-top: 22px;
     }
     .jr-nav {
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
+    }
+    .jr-nav h3 {
+      font-size: 18px;
     }
     .jr-nav div {
       gap: 8px;
@@ -1279,67 +1329,36 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       width: 40px;
       height: 40px;
     }
+    /* only the day shown takes room (stacked, the longest day left a hole under the shorter ones); while a finger
+       scrubs the strips, the script keeps them still under it */
+    .jr-stack article {
+      grid-area: auto;
+    }
+    .jr-stack article:not(.is-on) {
+      display: none;
+    }
     .jr-text {
       font-size: 17px;
-      line-height: 25px;
+      line-height: 26px;
     }
     .jr-split {
-      gap: 2px 18px;
+      gap: 2px 20px;
     }
     .jr-split li {
       flex-wrap: wrap;
       gap: 0 7px;
     }
-    /* a row: the name and total, what it is, then the strip across the full width */
-    .jr-tog {
-      grid-column: 3;
-      grid-row: 1;
-      align-self: start;
-      height: 22px;
+    /* the projects */
+    .jr-rows {
+      display: flex;
+      flex-direction: column;
+      margin-top: 14px;
     }
-    .jr-rowline {
-      grid-template-columns: minmax(0, 1fr) auto 28px;
-      height: auto;
-      padding: 10px 0 0;
-    }
-    .jr-rowline h3 {
-      height: auto;
-    }
-    .jr-who {
-      flex-wrap: wrap;
-      gap: 2px 9px;
-      padding-right: 12px !important;
-    }
-    .jr-who b {
-      flex: 1;
-      width: auto;
-    }
-    .jr-what {
-      order: 3;
-      flex: 0 0 100%;
-      gap: 4px;
-    }
-    .jr-line {
-      white-space: normal;
-      line-height: 19px;
-    }
-    .jr-meta {
-      grid-template-columns: 100px 80px auto;
-    }
-    .jr-strip {
-      grid-column: 1 / -1;
-      grid-row: 2;
-      height: 46px;
-      margin-top: 4px;
-    }
-    .jr-strip > span {
-      padding: 0 1px;
-    }
-    .jr-total {
-      grid-column: 2;
-      grid-row: 1;
-      align-self: start;
-      line-height: 22px;
+    /* the axis heads the charts: first, with its dates over the strips they label */
+    .jr-rows > .jr-axis {
+      order: -1;
+      height: 30px;
+      border-bottom: 1px solid var(--line);
     }
     .jr-axis {
       grid-template-columns: minmax(0, 1fr);
@@ -1347,18 +1366,128 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     .jr-axis > span {
       display: none !important;
     }
+    .jr-item {
+      scroll-margin-top: 16px;
+    }
+    /* a row: name, total and chevron on top, what it is, its stage and reception, then its strip.
+       The name's button spans the whole top so the row is one tap target */
+    .jr-rowline {
+      grid-template-columns: minmax(0, 1fr) auto 32px;
+      grid-template-rows: auto auto;
+      height: auto;
+      padding: 14px 0 0;
+    }
+    .jr-rowline h3 {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      height: auto;
+    }
+    .jr-who {
+      flex-wrap: wrap;
+      gap: 0 9px;
+      padding: 0 !important;
+      font-size: 16px;
+      line-height: 24px;
+    }
+    .jr-who b {
+      flex: 1;
+      width: auto;
+      padding-right: 104px;
+    }
+    .jr-what {
+      order: 3;
+      flex: 0 0 100%;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .jr-line {
+      white-space: normal;
+      font-size: 14px;
+      line-height: 20px;
+    }
+    /* stage and platforms on the left, stars and forks flush with the right edge */
+    .jr-meta {
+      grid-template-columns: 104px auto minmax(0, 1fr);
+    }
+    .jr-gh {
+      justify-self: end;
+    }
+    .jr-total {
+      grid-column: 2;
+      grid-row: 1;
+      align-self: start;
+      line-height: 24px;
+      pointer-events: none;
+    }
+    .jr-tog {
+      grid-column: 3;
+      grid-row: 1;
+      align-self: start;
+      height: 24px;
+      color: var(--text);
+    }
+    .jr-strip {
+      --plot: 34px;
+      grid-column: 1 / -1;
+      grid-row: 2;
+      height: 46px;
+      margin-top: 8px;
+    }
+    .jr-strip > span {
+      padding: 0 1px;
+    }
+    /* pressed: the whole row answers */
+    .jr-item:not(.is-open) .jr-rowline {
+      transition: background-color 0.15s;
+    }
+    .jr-item:not(.is-open) .jr-rowline:active {
+      background: color-mix(in srgb, var(--text) 4%, transparent);
+    }
+
+    /* a project, opened in place: one column, film first */
     .jr-view,
     .jr-view.has-film {
       grid-template-columns: minmax(0, 1fr);
-      row-gap: 16px;
-      padding-top: 10px;
+      row-gap: 18px;
+      padding: 16px 0 22px;
     }
     .jr-film {
       height: auto;
+      border-radius: 12px;
+    }
+    .jr-sub {
+      font-size: 18px;
+      line-height: 25px;
+    }
+    .jr-points {
+      gap: 8px;
+      margin-top: 12px;
+      font-size: 15px;
+      line-height: 22px;
+    }
+    .jr-points li::before {
+      top: 8px;
+    }
+    /* the ways to it: full-width buttons, thumb height */
+    .jr-acts {
+      display: block;
+    }
+    .jr-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .jr-links a {
+      justify-content: center;
+      height: 44px;
+      padding: 0 12px;
+      font-size: 15px;
+      min-width: 0;
+      white-space: nowrap;
     }
     .jr-profile {
-      gap: 18px 10px;
-      padding: 16px 0 0;
+      gap: 20px 12px;
+      padding: 18px 0 0;
       border-left: 0;
       border-top: 1px solid var(--line);
     }
@@ -1366,7 +1495,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       white-space: normal;
     }
     .jr-figs {
-      font-size: 12px;
+      font-size: 13px;
     }
     .jr-figs li {
       gap: 5px;
@@ -1378,6 +1507,563 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     }
     .jr-stagehead {
       flex-wrap: wrap;
+    }
+  }
+  /* phones: the panel becomes a sheet across the whole width, rising over the mountain */
+  @media (max-width: 599px) {
+    .jr .wrap {
+      padding-inline: 0;
+    }
+    .jr-title {
+      padding-inline: var(--gutter);
+    }
+    .jr-nums {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    /* the projects that moved that day: one per line, releases flush right */
+    .jr-split {
+      display: grid;
+      gap: 0;
+      margin-top: 14px;
+    }
+    .jr-split li {
+      flex-wrap: wrap;
+      gap: 0 8px;
+      min-height: 40px;
+      padding: 6px 0;
+      border-top: 1px solid var(--line);
+    }
+    .jr-split li > a:first-of-type {
+      font-weight: 500;
+    }
+    .jr-split .jr-rel {
+      margin-left: auto;
+    }
+    /* a link in the list takes the full line height to the touch */
+    .jr-split a {
+      position: relative;
+    }
+    .jr-split a::after {
+      content: "";
+      position: absolute;
+      inset: -10px -4px;
+    }
+
+    .jr-panel {
+      padding: 22px var(--gutter) 4px;
+      border-width: 1px 0 0;
+      border-radius: 22px 22px 0 0;
+      background: var(--bg);
+    }
+  }
+  /* ==== phones held upright: one screen, nothing scrolls. The mountain and the line on top; then the month in four
+     figures, the day (its summary in a fixed slot, the whole day unrolls over the list), and the six projects as
+     compact rows on the shared axis. A project opens as a sheet over everything (swipe down, back or ✕ to close). */
+  @media (max-width: 599px) and (min-height: 520px) {
+    .jr {
+      --rowh: 36px;
+      --plot: 20px;
+      --lines: 3;
+      --lh: 20px;
+      --name: 84px;
+      --fig: 34px;
+    }
+    .jr-title {
+      margin-bottom: 10px;
+      font-size: 21px;
+      line-height: 23px;
+    }
+    .jr-nav button {
+      width: 36px;
+      height: 36px;
+    }
+    .jr-panel {
+      padding: 14px var(--gutter) calc(6px + env(safe-area-inset-bottom));
+    }
+    /* the month: four figures in a row, where they come from under them */
+    .jr-nums {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0 10px;
+    }
+    .jr-nums dd {
+      font-size: 18px;
+      line-height: 22px;
+    }
+    .jr-nums dt {
+      font-size: 11px;
+      line-height: 14px;
+      white-space: nowrap;
+    }
+    .jr-head p {
+      justify-content: space-between;
+      margin-top: 6px;
+      padding-top: 0;
+      border-top: 0;
+      font-size: 11px;
+      line-height: 16px;
+    }
+    .jr-head p a,
+    .jr-upd {
+      display: none;
+    }
+    .jr-head p {
+      flex-wrap: nowrap;
+      white-space: nowrap;
+    }
+    /* the day */
+    .jr-lead {
+      position: relative;
+      row-gap: 2px;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid var(--line);
+    }
+    .jr-nav h3 {
+      font-size: 16px;
+    }
+    .jr-nav .jr-daymore {
+      display: grid !important;
+      place-items: center;
+      width: 32px;
+      height: 40px;
+      margin-right: auto;
+      border: 0;
+      border-radius: 8px;
+      color: var(--secondary);
+    }
+    .jr-daymore svg {
+      transition: transform 0.24s var(--out);
+    }
+    .jr-lead.is-full .jr-daymore {
+      color: var(--text);
+    }
+    .jr-lead.is-full .jr-daymore svg {
+      transform: rotate(180deg);
+    }
+    .jr-nav div {
+      gap: 4px;
+    }
+    /* a fixed slot: changing day moves nothing. The day is laid over it and clipped to it; unrolled, it covers the list */
+    .jr-stack {
+      position: relative;
+      height: calc(var(--lines) * var(--lh));
+      touch-action: pan-y;
+    }
+    .jr-stack article,
+    .jr-stack article:not(.is-on) {
+      display: block;
+      position: absolute;
+      inset: 0 0 auto;
+      z-index: 1;
+      padding-bottom: 14px;
+      background: var(--bg);
+      clip-path: inset(0 0 calc(100% - var(--lines) * var(--lh)) 0);
+      transition: opacity 0.14s linear, visibility 0s 0.14s, clip-path 0.24s var(--out);
+    }
+    .jr-stack article.is-on {
+      transition: opacity 0.14s linear, clip-path 0.24s var(--out);
+    }
+    .jr-lead.is-full .jr-stack article {
+      z-index: 4;
+      clip-path: inset(0 0 -1px 0);
+      border-bottom: 1px solid var(--line);
+    }
+    .jr-text {
+      font-size: 15px;
+      line-height: var(--lh);
+      letter-spacing: -0.01em;
+    }
+    .jr-text a {
+      text-underline-offset: 3px;
+    }
+    .jr-lead:not(.is-full) .jr-split {
+      visibility: hidden;
+    }
+    /* unrolled, the day is a layer: the list behind it steps back */
+    .jr-rows {
+      transition: opacity 0.24s linear;
+    }
+    .jr-lead.is-full + .jr-rows {
+      opacity: 0.25;
+    }
+    .jr-lead.is-full .jr-stack article {
+      box-shadow: 0 18px 24px -18px rgb(0 0 0 / 0.35);
+    }
+    /* cut mid-sentence: the last line fades out */
+    .jr-lead.is-long:not(.is-full) .jr-stack::after {
+      content: "";
+      position: absolute;
+      z-index: 2;
+      inset: auto 0 0 40%;
+      height: var(--lh);
+      background: linear-gradient(90deg, transparent, var(--bg) 70%);
+      pointer-events: none;
+    }
+    /* the projects: name and stage, the strip, the day's commits, a chevron. The whole row opens the project */
+    .jr-rows {
+      margin-top: 8px;
+    }
+    .jr-rows > .jr-axis,
+    .jr-axis {
+      grid-template-columns: var(--name) minmax(0, 1fr) var(--fig) 14px;
+      column-gap: 8px;
+      height: 24px;
+    }
+    .jr-axis > span:first-child {
+      display: flex !important;
+    }
+    .jr-axis > span:last-child {
+      display: block !important;
+      grid-column: 3 / 5;
+    }
+    .jr-rowline {
+      grid-template-columns: var(--name) minmax(0, 1fr) var(--fig) 14px;
+      grid-template-rows: var(--rowh);
+      column-gap: 8px;
+      padding: 0;
+    }
+    .jr-rowline h3 {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      height: 100%;
+    }
+    .jr-who {
+      display: grid;
+      grid-template-columns: 9px minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      align-content: center;
+      gap: 3px 8px;
+      height: 100%;
+    }
+    .jr-who > i {
+      grid-row: 1;
+    }
+    .jr-who b {
+      width: calc(var(--name) - 17px);
+      padding: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 15px;
+      line-height: 18px;
+    }
+    .jr-what {
+      grid-column: 2;
+      margin: 0;
+      transition: opacity 0.15s linear;
+    }
+    .jr-line,
+    .jr-kinds,
+    .jr-gh {
+      display: none !important;
+    }
+    .jr-meta {
+      display: block;
+      line-height: 6px;
+    }
+    .jr-meta em {
+      font-size: 0;
+    }
+    .jr-strip {
+      grid-column: 2;
+      grid-row: 1;
+      height: 100%;
+      margin: 0;
+      touch-action: none;
+    }
+    .jr-strip > span {
+      padding: 0;
+    }
+    .jr-strip span > i {
+      width: min(100% - 2px, 5px);
+      border-radius: 1.5px 1.5px 0 0;
+    }
+    .jr-strip u {
+      width: 3px;
+      height: 3px;
+      margin-left: -1.5px;
+    }
+    .jr-total {
+      grid-column: 3;
+      align-self: center;
+      line-height: var(--rowh);
+      color: var(--text);
+    }
+    .jr-tog {
+      grid-column: 4;
+      align-self: stretch;
+      height: auto;
+      color: var(--secondary);
+    }
+    .jr-chev {
+      transform: rotate(-90deg);
+    }
+    /* quiet that day: the row steps back, its strip stays */
+    .jr-item.is-quiet :is(.jr-who, .jr-total) {
+      opacity: 0.45;
+    }
+    .jr-item :is(.jr-who, .jr-total) {
+      transition: opacity 0.15s linear;
+    }
+
+    /* ---- a project: a sheet over the whole screen */
+    .jr-item.is-open .jr-rowline {
+      height: auto;
+    }
+    .jr-more,
+    .is-open .jr-more {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: var(--bg);
+      transform: translateY(100%);
+      visibility: hidden;
+      transition: transform 0.26s cubic-bezier(0.4, 0, 1, 1), visibility 0s 0.26s;
+    }
+    .is-open .jr-more {
+      transform: none;
+      visibility: visible;
+      transition: transform 0.38s var(--out);
+    }
+    .jr-rows.is-swap .jr-more {
+      transition: none;
+    }
+    .jr-more-in,
+    .is-open .jr-more-in {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+      visibility: inherit;
+    }
+    .jr-sheethead {
+      position: relative;
+      display: flex !important;
+      align-items: center;
+      gap: 4px;
+      flex: none;
+      padding: calc(14px + env(safe-area-inset-top)) 4px 6px var(--gutter);
+      border-bottom: 1px solid var(--line);
+      touch-action: none;
+    }
+    .jr-grab {
+      position: absolute;
+      top: calc(5px + env(safe-area-inset-top));
+      left: 50%;
+      width: 36px;
+      height: 4px;
+      margin-left: -18px;
+      border-radius: 2px;
+      background: color-mix(in srgb, var(--text) 18%, transparent);
+    }
+    .jr-chips2 {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      touch-action: pan-x;
+      -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+      mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+    }
+    .jr-chips2::-webkit-scrollbar {
+      display: none;
+    }
+    .jr-chips2 button {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 34px;
+      padding: 0 12px !important;
+      border: 1px solid var(--line) !important;
+      border-radius: 999px;
+      font-size: 14px !important;
+      color: var(--secondary) !important;
+    }
+    .jr-chips2 button:last-child {
+      margin-right: 20px;
+    }
+    .jr-chips2 button[aria-current="true"] {
+      border-color: var(--c) !important;
+      color: var(--text) !important;
+    }
+    .jr-chips2 i {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: var(--c);
+    }
+    .jr-x {
+      display: grid !important;
+      place-items: center;
+      flex: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+    }
+    .jr .jr-x:focus-visible {
+      outline-offset: -4px;
+    }
+    .jr-x:active {
+      background: color-mix(in srgb, var(--text) 8%, transparent);
+    }
+    /* the body scrolls inside the sheet, never the page */
+    .jr-view,
+    .jr-view.has-film,
+    .is-open .jr-view {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+      min-height: 0;
+      padding: 14px var(--gutter) calc(20px + env(safe-area-inset-bottom));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    .jr-sheettitle {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      column-gap: 12px;
+    }
+    /* the ways to it: two round icons beside the name */
+    .jr-sheetlinks {
+      display: flex;
+      gap: 8px;
+    }
+    .jr-sheetlinks a {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .jr-sheetlinks a:first-child {
+      border-color: var(--text);
+      background: var(--text);
+      color: var(--bg);
+    }
+    .jr-sheetlinks a:active {
+      opacity: 0.8;
+    }
+    .jr-sheetline {
+      grid-column: 1 / -1;
+    }
+    .jr-sheetname {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 23px;
+      line-height: 28px;
+      font-weight: 500;
+      letter-spacing: -0.025em;
+    }
+    .jr-sheetname i {
+      width: 11px;
+      height: 11px;
+      border-radius: 2.5px;
+      background: var(--c);
+    }
+    .jr-sheetline {
+      margin-top: 2px;
+      font-size: 15px;
+      line-height: 21px;
+      color: var(--secondary);
+    }
+    /* the film never takes more than a quarter of the screen: full width, a squarer one letterboxed in it */
+    .jr-film {
+      flex: none;
+      width: 100%;
+      height: min(25svh, 222px);
+      aspect-ratio: auto !important;
+      background: #0b0e11; /* letterbox like a player, in both themes */
+    }
+    .jr-film video {
+      object-fit: contain;
+    }
+    .jr-sub {
+      font-size: 16px;
+      line-height: 22px;
+    }
+    .jr-points {
+      gap: 6px;
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 20px;
+    }
+    .jr-points li::before {
+      top: 7px;
+    }
+    .jr-acts {
+      display: none;
+    }
+    .jr-profile {
+      gap: 14px 12px;
+      padding-top: 14px;
+    }
+    .jr-figs {
+      line-height: 19px;
+    }
+  }
+  /* taller screens: the room goes to the rows and the day */
+  @media (max-width: 599px) and (min-height: 620px) {
+    .jr {
+      --rowh: 43px;
+      --plot: 26px;
+      --lines: 3;
+      --lh: 21px;
+      --name: 92px;
+    }
+    .jr-title {
+      font-size: 24px;
+      line-height: 26px;
+    }
+    .jr-nums dd {
+      font-size: 20px;
+      line-height: 24px;
+    }
+    .jr-head p {
+      margin-top: 8px;
+    }
+    .jr-lead {
+      margin-top: 14px;
+      padding-top: 8px;
+    }
+    .jr-nav h3 {
+      font-size: 17px;
+    }
+  }
+  @media (max-width: 599px) and (min-height: 740px) {
+    .jr {
+      --rowh: 48px;
+      --plot: 30px;
+      --lines: 4;
+      --lh: 22px;
+    }
+    .jr-nav button {
+      width: 40px;
+      height: 40px;
+    }
+    .jr-text {
+      font-size: 16px;
+    }
+    .jr-who b {
+      font-size: 16px;
+    }
+  }
+  @media (max-width: 599px) and (min-height: 820px) {
+    .jr {
+      --rowh: 52px;
+      --plot: 32px;
+      --lines: 5;
     }
   }
 </style>
@@ -1403,7 +2089,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   // ---- days: across the strips. Pointing previews a day, choosing one keeps it.
   const title = root.querySelector('.jr-nav h3')!;
   const marks = [...root.querySelectorAll<HTMLElement>('.jr-mark')];
-  const [prev, next] = root.querySelectorAll<HTMLButtonElement>('.jr-nav button');
+  const [prev, next] = root.querySelectorAll<HTMLButtonElement>('.jr-nav [data-step]');
   const byIndex = new Map(arts.map((a) => [Number(a.dataset.i), a]));
   let kept = arts.findIndex((a) => a.classList.contains('is-on'));
   const totals = [...root.querySelectorAll<HTMLElement>('.jr-rowline')].map((r) => {
@@ -1412,9 +2098,16 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     const daily = r.querySelector<HTMLElement>('.jr-strip')!.dataset.daily!.split(',');
     return [el, num, daily] as const;
   });
-  const show = (n: number, keep: boolean, pointing = false) => {
+  const rows = root.querySelector<HTMLElement>('.jr-rows')!;
+  const narrow = matchMedia('(max-width: 899px)');
+  // phones held upright: one screen, the project as a sheet (see the styles)
+  const phone = matchMedia('(max-width: 599px) and (min-height: 520px)');
+  const lead = root.querySelector<HTMLElement>('.jr-lead')!;
+  const show = (n: number, keep: boolean, pointing = false, still = false) => {
     const art = arts[n];
     if (!art) return;
+    // narrow screens size the summary to its day: when the change comes from the strips, they must not move
+    const at = still && narrow.matches ? rows.getBoundingClientRect().top : null;
     if (keep) kept = n;
     for (const a of arts) {
       a.classList.toggle('is-on', a === art);
@@ -1434,8 +2127,10 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     }
     for (const e of ends) e.classList.toggle('is-off', e.dataset.last ? i > days - 7 : i < 6);
     // pointing at a day: each row's total gives way to that day's commits
-    const di = viewing || pointing ? Number(art.dataset.i) : -1; // also when the day pointed at is the chosen one
+    // on phones the rows always say the shown day's commits, and a project that did nothing that day steps back
+    const di = viewing || pointing || phone.matches ? Number(art.dataset.i) : -1; // also when the day pointed at is the chosen one
     for (const [el, num, daily] of totals) {
+      el.closest('.jr-item')!.classList.toggle('is-quiet', phone.matches && daily[di] === '0');
       const val = di < 0 ? el.dataset.total! : daily[di];
       num.textContent = val;
       el.classList.toggle('is-day', di >= 0);
@@ -1443,6 +2138,10 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     }
     prev.disabled = kept <= 0;
     next.disabled = kept >= arts.length - 1;
+    if (at !== null) scrollBy(0, rows.getBoundingClientRect().top - at);
+    // the summary cut by its slot: say so (a fade on the last line)
+    const text = art.querySelector<HTMLElement>('.jr-text, .jr-hl');
+    lead.classList.toggle('is-long', !!text && text.offsetHeight > (art.parentElement as HTMLElement).clientHeight + 1);
   };
   // the day under the pointer: the strips share one axis, so only x matters
   const dayAt = (e: PointerEvent | MouseEvent) => {
@@ -1452,16 +2151,25 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     const a = byIndex.get(Math.max(0, Math.min(days - 1, Math.floor(((e.clientX - r.left) / r.width) * days))));
     return a ? arts.indexOf(a) : -1;
   };
-  const rows = root.querySelector<HTMLElement>('.jr-rows')!;
+  // a finger: dragging along a strip scrubs through the days, a plain tap on it opens its project (the row is one target)
+  let scrubbed = false;
+  rows.addEventListener('pointerdown', () => (scrubbed = false));
   rows.addEventListener('pointermove', (e) => {
     const n = dayAt(e);
     if (e.pointerType === 'mouse') show(n < 0 ? kept : n, false, n >= 0);
-    else if (n >= 0 && n !== kept) show(n, true); // a finger dragged along a strip scrubs through the days
+    else if (n >= 0 && n !== kept) (show(n, true, false, true), (scrubbed = true));
   });
   rows.addEventListener('pointerleave', () => show(kept, false));
   rows.addEventListener('click', (e) => {
     const n = dayAt(e);
-    if (n >= 0) show(n, true, (e as PointerEvent).pointerType === 'mouse');
+    if (n < 0) return;
+    const pe = e as PointerEvent;
+    if (pe.pointerType === 'touch' || pe.pointerType === 'pen') {
+      if (scrubbed) return;
+      const id = (e.target as Element).closest<HTMLElement>('.jr-item')!.dataset.r!;
+      return set(id === open ? null : id, true);
+    }
+    show(n, true, pe.pointerType === 'mouse', true);
   });
   prev.addEventListener('click', () => show(kept - 1, true));
   next.addEventListener('click', () => show(kept + 1, true));
@@ -1472,6 +2180,46 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     show(kept + (k === 'ArrowLeft' ? -1 : 1), true);
   });
   show(kept, true);
+
+  // ---- phones: the whole day unrolls over the list (the chevron, or a tap on the summary); a swipe changes day
+  const more = root.querySelector<HTMLButtonElement>('.jr-daymore')!;
+  const full = (on: boolean) => {
+    lead.classList.toggle('is-full', on);
+    more.setAttribute('aria-expanded', String(on));
+  };
+  more.addEventListener('click', () => full(!lead.classList.contains('is-full')));
+  const stack = root.querySelector<HTMLElement>('.jr-stack')!;
+  let sx = 0, sy = 0;
+  stack.addEventListener('pointerdown', (e) => {
+    sx = e.clientX;
+    sy = e.clientY;
+    delete stack.dataset.swiped;
+  });
+  stack.addEventListener('pointerup', (e) => {
+    if (!phone.matches || e.pointerType === 'mouse') return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      const step = dx > 0 ? -1 : 1; // the finger pulls the earlier day in from the left
+      if (arts[kept + step]) {
+        show(kept + step, true);
+        const on = arts[kept];
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) on.animate([{ transform: `translateX(${-step * 14}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 200, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+      }
+      stack.dataset.swiped = '1';
+    }
+  });
+  stack.addEventListener('click', (e) => {
+    if (stack.dataset.swiped) return void delete stack.dataset.swiped;
+    if (!phone.matches || (e.target as Element).closest('a')) return;
+    full(!lead.classList.contains('is-full'));
+  });
+  // a tap anywhere else folds it back (and does nothing more)
+  document.addEventListener('click', (e) => {
+    if (!lead.classList.contains('is-full') || lead.contains(e.target as Node)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    full(false);
+  }, true);
 
   // ---- projects: a row's name, or a project named in a summary, opens it in place. One at a time.
   const its = [...root.querySelectorAll<HTMLElement>('.jr-item')];
@@ -1484,7 +2232,88 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     (window as unknown as { __tint: number[] | null }).__tint = color; // the scene mounts late: it reads this when it does
     document.dispatchEvent(new CustomEvent('px:tint', { detail: { color } }));
   };
-  const set = (id: string | null, reveal = false) => {
+  // ---- phones: the project as a sheet over the screen
+  let pushed = false;
+  const page = () => [document.querySelector('.top'), document.querySelector('.top-logo'), document.querySelector('.hero'), document.querySelector('.foot'), root.querySelector('.jr-title'), root.querySelector('.jr-head'), lead, root.querySelector('.jr-tabs'), rows.querySelector(':scope > .jr-axis')].filter(Boolean) as HTMLElement[];
+  const sheet = (id: string | null, prev: string | null, opts: { history?: boolean; instant?: boolean }) => {
+    // from one project to another, or a deep link: no slide, the sheet is simply there
+    if ((prev && id) || opts.instant) {
+      rows.classList.add('is-swap');
+      void rows.offsetHeight;
+      requestAnimationFrame(() => requestAnimationFrame(() => rows.classList.remove('is-swap')));
+    }
+    for (const el of page()) el.inert = !!id;
+    for (const it of its) {
+      const on = it.dataset.r === id;
+      it.inert = !!id && !on;
+      for (const el of it.querySelectorAll<HTMLElement>('.jr-rowline, .jr-axis-in')) el.inert = on;
+      const m = it.querySelector<HTMLElement>('.jr-more')!;
+      if (on) {
+        m.setAttribute('role', 'dialog');
+        m.setAttribute('aria-modal', 'true');
+        m.setAttribute('aria-labelledby', `jr-name-${id}`);
+        m.querySelector('.jr-view')!.scrollTop = 0;
+        m.querySelector('[aria-current="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' });
+        m.style.transform = '';
+      }
+    }
+    document.dispatchEvent(new CustomEvent('px:viewer', { detail: { open: !!id } }));
+    if (id) its.find((x) => x.dataset.r === id)!.querySelector<HTMLElement>('.jr-x')!.focus({ preventScroll: true });
+    else if (prev) its.find((x) => x.dataset.r === prev)!.querySelector<HTMLElement>('.jr-who')!.focus({ preventScroll: true });
+    if (opts.history) return;
+    if (id && !prev) {
+      history.pushState(null, '', `#${id}`);
+      pushed = true;
+    } else if (!id && pushed) {
+      pushed = false;
+      history.back(); // the hash empties; fromHash finds nothing open and stops there
+    } else history.replaceState(null, '', id ? `#${id}` : location.pathname + location.search);
+  };
+  // drag the sheet's head down to put it away
+  for (const it of its) {
+    const m = it.querySelector<HTMLElement>('.jr-more')!;
+    const head = it.querySelector<HTMLElement>('.jr-sheethead')!;
+    let y0 = -1, t0 = 0, dy = 0;
+    head.addEventListener('pointerdown', (e) => {
+      if (!phone.matches || e.pointerType === 'mouse' || (e.target as Element).closest('.jr-x')) return;
+      y0 = e.clientY;
+      t0 = e.timeStamp;
+      dy = 0;
+    });
+    head.addEventListener('pointermove', (e) => {
+      if (y0 < 0) return;
+      dy = Math.max(0, e.clientY - y0);
+      if (dy > 6) {
+        m.style.transition = 'none';
+        m.style.transform = `translateY(${dy}px)`;
+      }
+    });
+    const end = (e: PointerEvent) => {
+      if (y0 < 0) return;
+      y0 = -1;
+      m.style.transition = '';
+      if (dy > 96 || (dy > 24 && dy / (e.timeStamp - t0) > 0.5)) {
+        set(null); // the class transition carries on from where the finger left it
+        m.style.transform = '';
+      } else if (dy > 6) {
+        m.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 220, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+        m.style.transform = '';
+      }
+    };
+    head.addEventListener('pointerup', end);
+    head.addEventListener('pointercancel', end);
+  }
+  // one screen, unless the panel cannot fit it: then the page scrolls rather than hides anything
+  const main = document.querySelector<HTMLElement>('main.is-landing');
+  const fit = () => {
+    if (!main) return;
+    main.classList.remove('is-loose');
+    if (!phone.matches) return;
+    // the unrolled day hangs below its slot (clipped), so ask where the last block ends, not how far main scrolls
+    const end = Math.max(...[...main.children].map((c) => (c as HTMLElement).offsetTop + (c as HTMLElement).offsetHeight));
+    if (end > main.clientHeight + 1) main.classList.add('is-loose');
+  };
+  const set = (id: string | null, reveal = false, opts: { history?: boolean; instant?: boolean } = {}) => {
     // wide screens: no fold/unfold, see `.is-snap`. The row opened (or closed) glides to its new place.
     const prev = open;
     const snap = prev !== id && matchMedia('(min-width: 900px)').matches;
@@ -1527,9 +2356,11 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       }
     }
     tint(id);
-    history.replaceState(null, '', id ? `#${id}` : location.pathname + location.search);
+    if (phone.matches) sheet(id, prev, opts);
+    else if (!opts.history) history.replaceState(null, '', id ? `#${id}` : location.pathname + location.search);
     // opened from a summary: bring the row into view once it has its height
-    if (id && reveal) setTimeout(() => its.find((x) => x.dataset.r === id)!.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 440);
+    // on narrow screens the project starts at the top of the screen, whatever folded above it
+    if (id && reveal && !phone.matches) setTimeout(() => its.find((x) => x.dataset.r === id)!.scrollIntoView({ block: narrow.matches ? 'start' : 'nearest', behavior: 'smooth' }), 440);
   };
   root.addEventListener('click', (e) => {
     const el = e.target as Element;
@@ -1557,17 +2388,37 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       sound.hidden = true;
     }
   });
-  root.addEventListener('keydown', (e) => e.key === 'Escape' && open && set(null));
+  root.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (lead.classList.contains('is-full')) return full(false);
+    if (open) set(null);
+  });
   for (const it of its) {
     const who = it.querySelector<HTMLElement>('.jr-who')!;
     who.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && tint(it.dataset.r!));
     who.addEventListener('pointerleave', () => tint(open));
   }
   document.addEventListener('themechange', () => requestAnimationFrame(() => tint(open)));
-  const fromHash = () => {
+  // the address follows the open project; on phones the sheet is a step in history, so back closes it
+  const fromHash = (first = false) => {
     const wanted = location.hash.slice(1);
-    if (wanted !== open && its.some((x) => x.dataset.r === wanted)) set(wanted, true);
+    if (!wanted && open) {
+      pushed = false;
+      return set(null, false, { history: true });
+    }
+    if (wanted !== open && its.some((x) => x.dataset.r === wanted)) set(wanted, true, { history: true, instant: first });
   };
-  addEventListener('hashchange', fromHash);
-  fromHash();
+  addEventListener('hashchange', () => fromHash());
+  fromHash(true);
+  // turned sideways or resized out of the phone layout: put the sheet away cleanly
+  phone.addEventListener('change', () => {
+    for (const el of [...page(), ...its, ...root.querySelectorAll<HTMLElement>('.jr-rowline, .jr-axis-in')]) el.inert = false;
+    if (open) set(null);
+    full(false);
+    show(kept, true);
+    fit();
+  });
+  fit();
+  document.fonts?.ready.then(fit);
+  addEventListener('resize', fit, { passive: true });
 </script>

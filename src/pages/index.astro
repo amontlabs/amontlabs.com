@@ -51,4 +51,40 @@ import Base from "../layouts/Base.astro";
   .foot p i {
     font-style: italic;
   }
+  /* phones: the panel is a sheet down to the bottom; the last line sits on it, aligned with everything above */
+  @media (max-width: 599px) {
+    .foot {
+      justify-content: flex-start;
+      padding-top: 20px;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+      background: var(--bg);
+    }
+    .foot p {
+      text-align: left;
+      text-wrap: pretty;
+    }
+  }
+  /* phones held upright: exactly one screen. The mountain takes what the panel leaves; the last line only shows
+     where there is room for it. If the panel ever outgrows the screen, the script sets .is-loose and it scrolls. */
+  @media (max-width: 599px) and (min-height: 520px) {
+    .is-landing:not(.is-loose) {
+      height: 100svh;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .is-landing:not(.is-loose) :global(.hero) {
+      flex: 1 1 0;
+      min-height: 48px !important;
+    }
+    .is-landing:not(.is-loose) .foot {
+      display: none;
+    }
+  }
+  @media (max-width: 599px) and (min-height: 800px) {
+    .is-landing:not(.is-loose) .foot {
+      display: flex;
+      padding-top: 10px;
+      padding-bottom: calc(18px + env(safe-area-inset-bottom));
+    }
+  }
 </style>

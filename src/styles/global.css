@@ -466,13 +466,27 @@ html.theme-anim {
 .tsw-links :is(a, button):hover {
   background: color-mix(in srgb, var(--text) 9%, transparent);
 }
+/* phones: the controls belong to the top of the page, like the logo, and scroll away with it (a pill floating
+   over a one-column page covers what is under the thumb). Taller targets for a finger. */
+@media (max-width: 599px) {
+  .top {
+    position: absolute;
+  }
+  .ctl,
+  .ctl .tsw {
+    --h: 34px;
+  }
+  .ctl {
+    margin-top: calc(26px * 0.57 - var(--h) / 2 - 1px);
+  }
+}
 @media (max-width: 420px) {
   .tsw {
-    --w: 32px;
+    --w: 34px;
   }
 }
 @media (max-width: 370px) {
   .tsw {
-    --w: 29px;
+    --w: 30px;
   }
 }
