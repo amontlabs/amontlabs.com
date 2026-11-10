@@ -21,6 +21,7 @@
     "esbuild": true
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^1.4.0",
     "@biomejs/biome": "^2.5.14",
     "@fontsource/newsreader": "^5.3.0",
     "@types/three": "^0.186.0"

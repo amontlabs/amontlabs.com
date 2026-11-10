@@ -1,0 +1,590 @@
+---
+// Prototype A, "Programme": one stage that runs the films back to back, like a broadcast. The timeline under it is
+// the whole navigation: one segment per project, as long as its film. Nothing to click to understand the lab;
+// one tap to jump, one to turn the sound on. A single <video> element is reused for every film.
+import { clock, items, num } from "../../data/items";
+import { HOLD, ground } from "../../data/lab";
+import Icon from "../Icon.astro";
+import Facts from "./Facts.astro";
+
+const first = items[0];
+const prog = items.map((it) => ({
+  id: it.id,
+  name: it.name,
+  dur: it.film?.dur ?? HOLD,
+  ground: ground[it.id] ?? "",
+  film: it.film ? { prev: `/media/${it.film.id}.mp4`, full: it.film.full, audio: it.film.audio } : null,
+}));
+---
+
+<section class="block pg" aria-labelledby="pg-h" data-pg>
+  <div class="wrap">
+    <h2 id="pg-h" class="label mono dim">Products</h2>
+    <div class="pg-body">
+      <div class="pg-screen">
+        <div class="pg-stage" data-kind="film" style={`--ground: ${ground[first.id]}`}>
+          <img class="pg-poster" src={`/media/${first.id}-1280.webp`} srcset={`/media/${first.id}-640.webp 640w, /media/${first.id}-1280.webp 1280w`} sizes="(max-width: 899px) 100vw, 70vw" alt="" loading="lazy" decoding="async" />
+          <video muted playsinline disablepictureinpicture disableremoteplayback preload="none" aria-hidden="true"></video>
+          {items.filter((it) => !it.film).map((it) => (
+            <div class="pg-window" data-id={it.id}>
+              <p>{it.sub}</p>
+              <span class="mono dim">No film yet</span>
+            </div>
+          ))}
+          <button class="pg-hit" type="button" aria-label="Pause"></button>
+          <span class="pg-chip pg-state mono" aria-hidden="true"><b>▶</b> Play</span>
+          <div class="pg-ctl">
+            <button class="pg-chip pg-sound mono" type="button" aria-pressed="false">Sound off</button>
+            <button class="pg-chip pg-fs" type="button" aria-label="Fullscreen">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <ol class="pg-line mono" role="tablist" aria-label="Projects">
+          {items.map((it, i) => (
+            <>
+              {it.tier === "tool" && items[i - 1]?.tier !== "tool" && <li class="pg-tier dim" role="presentation">Tools</li>}
+              <li role="presentation" style={`--d: ${it.film?.dur ?? HOLD}`}>
+                <button class:list={["pg-seg", i === 0 && "is-on", it.tier === "tool" && "is-tool"]} type="button" role="tab" id={`pg-t-${it.id}`} aria-controls={`pg-p-${it.id}`} aria-selected={i === 0 ? "true" : "false"} tabindex={i === 0 ? 0 : -1}>
+                  <i aria-hidden="true"><b></b></i>
+                  <span class="pg-n" aria-hidden="true">{num(i)}</span>
+                  <span class="pg-name">{it.name}</span>
+                  {it.film && <span class="pg-d" aria-hidden="true">{clock(it.film.dur)}</span>}
+                </button>
+              </li>
+            </>
+          ))}
+        </ol>
+      </div>
+
+      <div class="pg-info">
+        {items.map((it, i) => (
+          <article class:list={["pg-pan", i === 0 && "is-on"]} id={`pg-p-${it.id}`} role="tabpanel" aria-labelledby={`pg-t-${it.id}`} inert={i !== 0}>
+            <p class="pg-kicker mono dim"><span>{num(i)}</span>{it.tier === "tool" ? "Released" : "In development"}</p>
+            <h3 class="pg-title">{it.name}</h3>
+            <p class="pg-lede">{it.line}</p>
+            {it.film && it.sub && <p class="pg-sub dim">{it.sub}</p>}
+            <div class="pg-facts"><Facts it={it} /></div>
+            <p class="px-links pg-links">{it.links.map((l) => <a class="px-link" href={l.href}><Icon name={l.kind} /><span>{l.label}</span></a>)}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </div>
+  <script type="application/json" id="pg-data" set:html={JSON.stringify(prog)} />
+</section>
+
+<style>
+  .pg :global(.label) {
+    margin-bottom: 24px;
+  }
+  .pg-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px 48px;
+  }
+  /* the stage is as large as the viewport allows while the timeline and the header stay on screen with it */
+  .pg-screen {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: calc((100svh - 232px) * 16 / 9);
+  }
+  .pg-info {
+    flex: 1 1 320px;
+    max-width: 400px;
+    display: grid;
+    position: relative;
+    isolation: isolate;
+  }
+  .pg-info::before,
+  .pg-line::before {
+    content: "";
+    position: absolute;
+    inset: -32px -40px;
+    z-index: -1;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--bg) 84%, transparent) 50%, transparent);
+    pointer-events: none;
+  }
+
+  /* ---- stage */
+  .pg-stage {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 4px;
+    background: var(--ground);
+    isolation: isolate;
+    z-index: 1; /* above the timeline's scrim */
+    transition: background-color 0.4s;
+    touch-action: pan-y;
+  }
+  /* a hairline edge, so the screen holds on a dark page */
+  .pg-stage[data-kind="film"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgb(247 248 245 / 0.07);
+    pointer-events: none;
+  }
+  .pg-stage[data-kind="window"] {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .pg-poster,
+  .pg-stage video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .pg-stage video {
+    opacity: 0;
+  }
+  .pg-stage.is-live video {
+    opacity: 1;
+    transition: opacity 0.3s;
+  }
+  .pg-stage[data-kind="window"] :is(.pg-poster, video, .pg-ctl) {
+    visibility: hidden;
+  }
+  .pg-window {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+    padding: 8%;
+  }
+  .pg-stage[data-kind="window"] .pg-window.is-on {
+    display: flex;
+  }
+  .pg-window p {
+    max-width: 22em;
+    font-size: clamp(20px, 2.6vw, 34px);
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    font-weight: 500;
+    text-wrap: balance;
+    position: relative;
+    isolation: isolate;
+  }
+  .pg-window p::before {
+    content: "";
+    position: absolute;
+    inset: -32px -48px;
+    z-index: -1;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--bg) 82%, transparent) 40%, transparent);
+  }
+  .pg-hit {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .pg-hit:focus-visible {
+    outline-offset: -4px;
+  }
+  /* chips over the film: solid, no backdrop-filter over video */
+  .pg-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 28px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(16 20 24 / 0.78);
+    color: #f7f8f5;
+    font-size: 12px;
+    line-height: 16px;
+    cursor: pointer;
+  }
+  .pg-chip::after {
+    content: "";
+    position: absolute;
+    inset: -8px -4px;
+  }
+  .pg-ctl {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    z-index: 2;
+    display: flex;
+    gap: 6px;
+  }
+  .pg-ctl .pg-chip {
+    position: relative;
+  }
+  .pg-sound[aria-pressed="true"] {
+    background: #f7f8f5;
+    color: #101418;
+  }
+  .pg-state {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .pg-state b {
+    font-weight: 400;
+    font-size: 9px;
+  }
+  .pg-stage.is-paused .pg-state {
+    opacity: 1;
+  }
+  .pg-stage[data-kind="window"] .pg-state {
+    background: color-mix(in srgb, var(--text) 9%, var(--bg));
+    color: var(--text);
+  }
+  .pg-stage:fullscreen {
+    border-radius: 0;
+  }
+
+  /* ---- timeline: one segment per project, as long as its film */
+  .pg-line {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    gap: 6px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .pg-line li {
+    flex: var(--d) 1 0;
+    min-width: max-content;
+  }
+  .pg-line .pg-tier {
+    flex: 0 0 auto;
+    padding: 20px 2px 0 10px;
+    font-size: 12px;
+    line-height: 20px;
+  }
+  .pg-seg {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 8px;
+    width: 100%;
+    padding: 10px 0 14px;
+    border: 0;
+    background: none;
+    color: var(--secondary);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .pg-seg i {
+    flex: 0 0 100%;
+    height: 2px;
+    margin-bottom: 8px;
+    border-radius: 1px;
+    background: color-mix(in srgb, var(--text) 14%, transparent);
+    overflow: hidden;
+    transition: background-color 0.2s;
+  }
+  .pg-seg b {
+    display: block;
+    height: 100%;
+    background: var(--fonte);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+  }
+  .pg-seg.is-done b {
+    transform: scaleX(1);
+    background: color-mix(in srgb, var(--text) 38%, transparent);
+  }
+  .pg-seg:hover,
+  .pg-seg.is-on {
+    color: var(--text);
+  }
+  .pg-seg:hover i {
+    background: color-mix(in srgb, var(--text) 26%, transparent);
+  }
+  .pg-n {
+    color: var(--secondary);
+    font-size: 12px;
+  }
+  .pg-seg.is-on .pg-n {
+    color: var(--link);
+  }
+  .pg-d {
+    margin-left: auto;
+    padding: 0 10px 0 4px;
+    font-size: 12px;
+    color: var(--secondary);
+  }
+
+  /* ---- the project on stage */
+  .pg-pan {
+    grid-area: 1 / 1;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  .pg-pan.is-on {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.4s 0.05s,
+      transform 0.5s 0.05s var(--ease);
+  }
+  .pg-kicker {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+  }
+  .pg-kicker span {
+    color: var(--link);
+  }
+  .pg-title {
+    margin-top: 8px;
+    font-size: clamp(32px, 3.2vw, 44px);
+    line-height: 1.05;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+  }
+  .pg-lede {
+    margin-top: 12px;
+    font-size: 20px;
+    line-height: 28px;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  .pg-sub {
+    margin-top: 8px;
+    font-size: 15px;
+    line-height: 24px;
+    text-wrap: pretty;
+  }
+  .pg-facts {
+    display: grid;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .pg-links {
+    margin-top: 20px;
+  }
+
+  @media (max-width: 899px) {
+    .pg-body {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .pg-screen {
+      flex: none;
+      max-width: none;
+    }
+    .pg-stage {
+      margin-inline: calc(var(--gutter) * -1);
+      border-radius: 0;
+    }
+    .pg-stage[data-kind="window"] {
+      box-shadow:
+        inset 0 1px 0 var(--line),
+        inset 0 -1px 0 var(--line);
+    }
+    .pg-window {
+      padding: 0 var(--gutter);
+    }
+    .pg-info {
+      flex: none;
+      max-width: none;
+    }
+    .pg-title {
+      font-size: 32px;
+    }
+    .pg-lede {
+      font-size: 18px;
+      line-height: 26px;
+    }
+  }
+  @media (max-width: 560px) {
+    .pg-n,
+    .pg-d {
+      display: none;
+    }
+    .pg-line {
+      gap: 4px;
+    }
+    .pg-line .pg-tier {
+      padding-left: 6px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pg-pan,
+    .pg-pan.is-on,
+    .pg-stage,
+    .pg-stage.is-live video {
+      transition: none;
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  // Event-driven only: no animation-frame loop. The timeline bar is a Web Animation synced to the video clock.
+  type P = { id: string; name: string; dur: number; ground: string; film: { prev: string; full: string; audio: boolean } | null };
+  const root = document.querySelector<HTMLElement>('[data-pg]')!;
+  const D: P[] = JSON.parse(document.getElementById('pg-data')!.textContent!);
+  const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
+  const stage = $('.pg-stage'), video = $<HTMLVideoElement>('video'), poster = $<HTMLImageElement>('.pg-poster');
+  const hit = $<HTMLButtonElement>('.pg-hit'), soundB = $<HTMLButtonElement>('.pg-sound');
+  const segs = [...root.querySelectorAll<HTMLButtonElement>('.pg-seg')];
+  const pans = [...root.querySelectorAll<HTMLElement>('.pg-pan')];
+  const wins = [...root.querySelectorAll<HTMLElement>('.pg-window')];
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const saveData = !!(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+  const SCALE = [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }];
+
+  let cur = 0, started = false, visible = false, held = reduced, sound = false;
+  let bar: Animation | null = null, token = 0;
+
+  // the full film where the stage is large enough to show it (and whenever the sound is on); the light preview otherwise
+  const big = () => !saveData && stage.clientWidth * Math.min(devicePixelRatio, 2) >= 1500;
+  const src = (d: P) => (sound || big() ? d.film!.full : d.film!.prev);
+
+  const sync = () => {
+    if (!bar || !D[cur].film) return;
+    if (Number.isFinite(video.duration) && video.duration) bar.effect!.updateTiming({ duration: video.duration * 1000 });
+    bar.currentTime = video.currentTime * 1000;
+    if (video.paused || video.seeking || video.readyState < 3) bar.pause(); else bar.play();
+  };
+  for (const ev of ['playing', 'pause', 'seeked', 'seeking', 'waiting', 'loadedmetadata']) video.addEventListener(ev, sync, { passive: true });
+  video.addEventListener('playing', () => stage.classList.add('is-live'), { passive: true });
+
+  function apply() {
+    if (!started) return;
+    const want = visible && !held && !document.hidden;
+    stage.classList.toggle('is-paused', held);
+    hit.setAttribute('aria-label', held ? 'Play' : 'Pause');
+    if (D[cur].film) {
+      if (!want) video.pause();
+      else if (video.paused) void video.play().catch(() => {
+        // unmuted playback refused without a fresh gesture: carry on muted
+        if (video.muted) return;
+        setSound(false, false);
+        void video.play().catch(() => {});
+      });
+    } else if (bar) {
+      if (want) bar.play(); else bar.pause();
+    }
+  }
+
+  function load(d: P, at: number) {
+    const t = ++token;
+    video.src = src(d);
+    video.muted = !sound;
+    if (at > 0) video.addEventListener('loadedmetadata', () => { if (t === token) video.currentTime = Math.min(at, video.duration - 0.1); }, { once: true });
+  }
+
+  function show(i: number, frac = 0) {
+    cur = (i + D.length) % D.length;
+    started = true;
+    const d = D[cur];
+    segs.forEach((s, k) => {
+      s.classList.toggle('is-on', k === cur);
+      s.classList.toggle('is-done', k < cur);
+      s.setAttribute('aria-selected', String(k === cur));
+      s.tabIndex = k === cur ? 0 : -1;
+    });
+    pans.forEach((p, k) => { p.classList.toggle('is-on', k === cur); p.inert = k !== cur; });
+    for (const w of wins) w.classList.toggle('is-on', w.dataset.id === d.id);
+    stage.dataset.kind = d.film ? 'film' : 'window';
+    stage.classList.remove('is-live');
+    if (d.ground) stage.style.setProperty('--ground', d.ground);
+    bar?.cancel();
+    bar = segs[cur].querySelector('b')!.animate(SCALE, { duration: d.dur * 1000, fill: 'both' });
+    bar.pause();
+    bar.currentTime = frac * d.dur * 1000;
+    if (d.film) {
+      poster.srcset = `/media/${d.id}-640.webp 640w, /media/${d.id}-1280.webp 1280w`;
+      poster.src = `/media/${d.id}-1280.webp`;
+      load(d, frac * d.dur);
+    } else {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      bar.onfinish = () => { if (!reduced) show(cur + 1); };
+    }
+    apply();
+    // warm the next film while this one plays
+    const nx = D[(cur + 1) % D.length];
+    if (nx.film && !saveData && !reduced) { const v = document.createElement('video'); v.muted = true; v.preload = 'metadata'; v.src = src(nx); }
+  }
+
+  video.addEventListener('ended', () => {
+    if (reduced) { held = true; apply(); } else show(cur + 1);
+  });
+
+  function setSound(on: boolean, swap = true) {
+    sound = on;
+    soundB.setAttribute('aria-pressed', String(on));
+    soundB.textContent = on ? 'Sound on' : 'Sound off';
+    const d = D[cur];
+    video.muted = !on;
+    if (on && swap && d.film && !video.src.endsWith(d.film.full)) load(d, video.currentTime);
+  }
+  soundB.addEventListener('click', () => { setSound(!sound); if (sound) held = false; apply(); });
+  hit.addEventListener('click', () => { held = !held; apply(); });
+
+  $('.pg-fs').addEventListener('click', () => {
+    const v = video as HTMLVideoElement & { webkitEnterFullscreen?: () => void };
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else if (stage.requestFullscreen) void stage.requestFullscreen();
+    else v.webkitEnterFullscreen?.();
+  });
+  // a film in fullscreen covers the scene: let it stop drawing (same event the viewer uses)
+  document.addEventListener('fullscreenchange', () => document.dispatchEvent(new CustomEvent('px:viewer', { detail: { open: !!document.fullscreenElement } })));
+
+  // timeline: a segment starts its film; a click inside the current one seeks to that point
+  segs.forEach((s, k) => {
+    s.addEventListener('click', (e) => {
+      held = false;
+      if (k === cur && D[k].film && e.detail > 0 && Number.isFinite(video.duration)) {
+        const r = s.getBoundingClientRect();
+        video.currentTime = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * video.duration;
+        apply();
+      } else show(k);
+    });
+    s.addEventListener('keydown', (e) => {
+      const to = e.key === 'ArrowRight' ? k + 1 : e.key === 'ArrowLeft' ? k - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? D.length - 1 : -1;
+      if (to < 0 && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      held = false;
+      show(to);
+      segs[cur].focus();
+    });
+  });
+
+  // swipe the stage to change project (vertical pans still scroll the page)
+  let sx = 0, sy = 0, swiped = false;
+  hit.addEventListener('pointerdown', (e) => { sx = e.clientX; sy = e.clientY; swiped = false; }, { passive: true });
+  hit.addEventListener('pointerup', (e) => {
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (e.pointerType !== 'mouse' && Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.5) { swiped = true; held = false; show(cur + (dx < 0 ? 1 : -1)); }
+  }, { passive: true });
+  hit.addEventListener('click', (e) => { if (swiped) { e.stopImmediatePropagation(); swiped = false; } }, { capture: true });
+
+  // nothing loads until the stage is near; it plays only while at least half of it is on screen
+  const near = new IntersectionObserver((es) => {
+    if (!es.some((e) => e.isIntersecting)) return;
+    near.disconnect();
+    show(0);
+  }, { rootMargin: '50% 0px' });
+  near.observe(stage);
+  new IntersectionObserver(([e]) => { visible = e.intersectionRatio >= 0.5; apply(); }, { threshold: [0, 0.5, 1] }).observe(stage);
+  document.addEventListener('visibilitychange', apply);
+</script>

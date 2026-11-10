@@ -1,0 +1,119 @@
+// The projects, in order of importance: wording, links and films. One source for every page that lists them.
+import data from "./projects.json";
+
+export type Film = { id: string; ratio: string; dur: number; audio: boolean; full: string };
+export type Item = {
+  id: string;
+  name: string;
+  line: string;
+  sub?: string;
+  links: { kind: "site" | "github"; label: string; href: string }[];
+  tags: string[]; // categories, from one shared vocabulary: Agents, Security, Dev tools, Computer use, Public goods
+  needs: string[]; // integrations it needs (filled tags): T3 Code, Claude Code
+  kind: "app" | "cli" | "web";
+  platforms: ("macos" | "linux" | "windows")[];
+  film?: Film;
+  tier: "product" | "tool";
+};
+
+export const items: Item[] = [
+  {
+    id: "silo",
+    name: "Silo",
+    line: "Computers for your agents.",
+    sub: "Run Linux sandboxes locally or remotely, with a desktop and computer use.",
+    links: [
+      { kind: "site", label: "silo.amontlabs.com", href: "https://silo.amontlabs.com" },
+      { kind: "github", label: "GitHub", href: "https://github.com/amontlabs/silo" },
+    ],
+    tags: ["Agents", "Security", "Computer use"],
+    needs: [],
+    kind: "app",
+    platforms: ["macos"],
+    film: { id: "silo", ratio: "16 / 9", dur: 33, audio: true, full: "/media/silo-full.mp4" },
+    tier: "product",
+  },
+  {
+    id: "fjord",
+    name: "Fjord",
+    line: "Connects your agents to everything they work with.",
+    sub: "Fjord connects your agents to everything they work with. Questions come to you; the rest stays out of your way.",
+    tags: ["Agents", "Dev tools"],
+    links: [{ kind: "github", label: "GitHub", href: "https://github.com/amontlabs/fjord" }],
+    needs: ["T3 Code"],
+    kind: "app",
+    platforms: ["macos"],
+    tier: "product",
+  },
+  {
+    id: "sic",
+    name: "Sic",
+    line: "Political debates, fact-checked live.",
+    sub: "Transcribes the debate, identifies who speaks, and checks factual claims against official sources, live or on replay. Built for the 2027 French presidential election.",
+    tags: ["Public goods"],
+    links: [
+      { kind: "site", label: "sic.observer", href: "https://sic.observer" },
+      { kind: "github", label: "GitHub", href: "https://github.com/amontlabs/sic" },
+    ],
+    needs: [],
+    kind: "web",
+    platforms: [],
+    film: { id: "sic", ratio: "4 / 3", dur: 24, audio: true, full: "/media/sic-full.mp4" },
+    tier: "product",
+  },
+  {
+    id: "lcu",
+    name: "LCU",
+    line: "Codex computer use, outside Codex.",
+    sub: "LCU brings the computer-use runtime of the Codex app to your own harness, without Codex authentication: desktop apps, and Chrome when enabled.",
+    links: [
+      { kind: "site", label: "lcu.amontlabs.com", href: "https://lcu.amontlabs.com" },
+      { kind: "github", label: "GitHub", href: "https://github.com/amontlabs/lcu" },
+    ],
+    tags: ["Agents", "Computer use"],
+    needs: [],
+    kind: "cli",
+    platforms: ["macos", "linux", "windows"],
+    film: { id: "lcu", ratio: "16 / 9", dur: 30, audio: true, full: "/media/lcu-full.mp4" },
+    tier: "tool",
+  },
+  {
+    id: "lastdrop",
+    name: "lastdrop",
+    line: "Any model as a subagent in Claude Code.",
+    sub: "Use any model as a built-in subagent in Claude Code, with a subscription or API key, and spread usage across your accounts.",
+    links: [
+      { kind: "site", label: "lastdrop.amontlabs.com", href: "https://lastdrop.amontlabs.com" },
+      { kind: "github", label: "GitHub", href: "https://github.com/amontlabs/lastdrop" },
+    ],
+    tags: ["Agents", "Dev tools"],
+    needs: ["Claude Code", "T3 Code"],
+    kind: "app",
+    platforms: ["macos"],
+    film: { id: "lastdrop", ratio: "16 / 9", dur: 37, audio: true, full: "/media/lastdrop-full.mp4" },
+    tier: "tool",
+  },
+];
+
+export const num = (i: number) => String(i + 1).padStart(2, "0");
+export const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+
+// release, stars and forks, synced hourly from GitHub (scripts/update-projects-data.mjs)
+export type Stats = { version: string | null; releasedAt: string | null; stars: number; forks: number };
+export const stats = (id: string) => (data as unknown as Record<string, Stats>)[id];
+const year = new Date().getFullYear();
+export const day = (iso: string) => {
+  const d = new Date(iso);
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    ...(d.getFullYear() !== year && { year: "numeric" }),
+    timeZone: "Europe/Paris",
+  }).format(d);
+};
+export const count = (n: number) =>
+  n >= 1000 ? `${(Math.round(n / 100) / 10).toFixed(1).replace(/\.0$/, "")}k` : String(n);
+export const KIND = { app: "App", cli: "Command-line tool", web: "Website" } as const;
+export const OS = { macos: "macOS", linux: "Linux", windows: "Windows" } as const;
+export const runsOn = (it: Item) =>
+  [KIND[it.kind], it.platforms.map((p) => OS[p]).join(", ")].filter(Boolean).join(" for ");

@@ -1,0 +1,604 @@
+---
+// Prototype D, "Upstream": the films stand in space along the river, receding toward the source. Scrolling travels
+// upstream: each film comes to the reader, plays when it arrives, and passes behind as the next one approaches.
+// The camera is one CSS scroll-driven animation (compositor only, native scroll, no scroll handler); where that is
+// unsupported, or under reduced motion, the same markup is a plain column.
+import { type Item, items, num } from "../../data/items";
+import { ground } from "../../data/lab";
+import Icon from "../Icon.astro";
+import Facts from "./Facts.astro";
+
+// stops along the river: one per product, then the tools together
+const products = items.filter((x) => x.tier === "product");
+const tools = items.filter((x) => x.tier === "tool");
+const stops: Item[][] = [...products.map((p) => [p]), tools];
+const K = stops.length;
+
+// the journey, in svh of scroll: hold at each stop, travel between two
+const HOLD = 26, TRAVEL = 62, S = K * HOLD + (K - 1) * TRAVEL;
+const D = 1000; // px between two stops, in depth
+// the path the stops follow, in units of the film's width (x) and height (y): it climbs, swinging like the river
+const PATH = [[0, 0], [0.5, -0.8], [-0.45, -1.55], [0.3, -2.25], [-0.2, -2.9]];
+const FOG = [1, 0.72, 0.46, 0.28, 0.16];
+const pct = (v: number) => `${((v / S) * 100).toFixed(3)}%`;
+const at = (k: number) => k * (HOLD + TRAVEL);
+const cam = (k: number) => `translate3d(calc(var(--W) * var(--sx) * ${-PATH[k][0]}), calc(var(--H) * var(--sy) * ${-PATH[k][1]}), ${k * D}px)`;
+
+let css = "@keyframes up-cam{";
+for (let k = 0; k < K; k++) css += `${pct(at(k))}{transform:${cam(k)}}${pct(at(k) + HOLD)}{transform:${cam(k)};animation-timing-function:cubic-bezier(.5,0,.2,1)}`;
+css += "}";
+for (let i = 0; i < K; i++) {
+  // each stop: out of the fog as it nears, whole when it arrives, gone just after it passes the reader
+  css += `@keyframes up-fog-${i}{`;
+  for (let k = 0; k < K; k++) {
+    const o = i < k ? 0 : FOG[i - k];
+    const v = i < k ? "hidden" : "visible";
+    css += `${pct(at(k))}{opacity:${o};visibility:${v}}${pct(at(k) + HOLD)}{opacity:${o};visibility:${v}}`;
+    if (k === i && i < K - 1) css += `${pct(at(k) + HOLD + TRAVEL * 0.32)}{opacity:0;visibility:visible}`;
+  }
+  css += `}@keyframes up-cap-${i}{`;
+  const a = at(i), pts: [number, number][] = [[a - TRAVEL * 0.22, 0], [a, 1], [a + HOLD, 1], [a + HOLD + TRAVEL * 0.12, 0]];
+  if (i === 0) pts.splice(0, 1);
+  if (i === K - 1) pts.pop();
+  if (pts[0][0] > 0) css += "0%{opacity:0}";
+  for (const [p, o] of pts) css += `${pct(p)}{opacity:${o}}`;
+  if (pts[pts.length - 1][0] < S) css += "100%{opacity:0}";
+  css += "}";
+}
+---
+
+<section class="block up" aria-labelledby="up-h" data-up style={`--S: ${S}; --K: ${K}`}>
+  {/* where each stop begins and ends in the scroll: an observer reads these, nothing listens to scroll */}
+  {stops.map((_, k) => <i class="up-mark" data-k={k} data-at={at(k)} style={`top: ${k === 0 ? 0 : at(k) - TRAVEL / 2}svh; height: ${k === 0 ? HOLD + TRAVEL / 2 : k === K - 1 ? HOLD + TRAVEL / 2 + 100 : HOLD + TRAVEL}svh`} aria-hidden="true" />)}
+  <div class="up-pin">
+    <div class="wrap up-top"><h2 id="up-h" class="label mono dim">Products</h2></div>
+    <div class="up-world">
+      {stops.map((group, k) => (
+        <div class:list={["up-stop", group.length > 1 && "is-pair", k === 0 && "is-cur"]} data-k={k} style={`--x: ${PATH[k][0]}; --y: ${PATH[k][1]}; --z: ${-k * D}px; animation-name: up-fog-${k}`}>
+          {group.length > 1 && <p class="up-tier mono dim">Tools</p>}
+          <div class="up-items">
+            {group.map((it) => (
+              <article class="up-item" id={`up-${it.id}`} aria-labelledby={`up-n-${it.id}`} style={`--ground: ${ground[it.id] ?? "transparent"}; --r: ${it.film?.ratio ?? "16 / 9"}`}>
+                {it.film ? (
+                  <div class="up-film" data-prev={`/media/${it.film.id}.mp4`} data-full={it.film.full}>
+                    <img src={`/media/${it.film.id}-1280.webp`} srcset={`/media/${it.film.id}-640.webp 640w, /media/${it.film.id}-1280.webp 1280w`} sizes="(max-width: 899px) 100vw, 70vw" alt="" loading="lazy" decoding="async" />
+                    <video muted loop playsinline disablepictureinpicture disableremoteplayback preload="none" aria-hidden="true"></video>
+                    <button class="up-hit" type="button" aria-label="Pause"></button>
+                    <span class="up-chip up-state mono" aria-hidden="true"><b>▶</b> Play</span>
+                    <div class="up-ctl">
+                      <button class="up-chip up-sound mono" type="button" aria-pressed="false">Sound off</button>
+                      <button class="up-chip up-fs" type="button" aria-label="Fullscreen">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                      </button>
+                    </div>
+                    <span class="up-bar" aria-hidden="true"><i></i></span>
+                  </div>
+                ) : (
+                  <div class="up-film is-window">
+                    <p>{it.sub}</p>
+                    <span class="mono dim">No film yet</span>
+                  </div>
+                )}
+                <div class="up-cap" style={`animation-name: up-cap-${k}`}>
+                  <div class="up-say">
+                    <header class="up-head">
+                      <span class="mono up-num">{num(items.indexOf(it))}</span>
+                      <h3 class="up-name" id={`up-n-${it.id}`}>{it.name}</h3>
+                      <span class="mono dim up-status">{it.tier === "tool" ? "Released" : "In development"}</span>
+                    </header>
+                    <p class="up-line">{it.line}</p>
+                    {it.film && it.sub && <p class="up-sub dim">{it.sub}</p>}
+                  </div>
+                  <div class="up-meta">
+                    <Facts it={it} />
+                    <p class="px-links">{it.links.map((l) => <a class="px-link" href={l.href}><Icon name={l.kind} /><span>{l.label}</span></a>)}</p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+          <button class="up-go" type="button" data-k={k} aria-label={`Go to ${group.map((g) => g.name).join(" and ")}`}></button>
+        </div>
+      ))}
+    </div>
+    {/* how far upstream: one mark per stop */}
+    <nav class="up-rail mono" aria-label="Projects">
+      {stops.map((group, k) => (
+        <button type="button" data-k={k} class:list={[k === 0 && "is-on"]} aria-current={k === 0 ? "true" : undefined}>
+          <span>{group.length > 1 ? "Tools" : group[0].name}</span><i aria-hidden="true"></i>
+        </button>
+      ))}
+    </nav>
+  </div>
+  <style set:html={css}></style>
+</section>
+
+<style>
+  /* ---- flat: the base, and the whole design without scroll-driven animations or under reduced motion */
+  .up {
+    --W: min(1000px, 100vw - 2 * var(--gutter));
+    --H: calc(var(--W) * 9 / 16);
+    position: relative;
+  }
+  .up :global(.label) {
+    margin-bottom: 24px;
+  }
+  .up-mark,
+  .up-go,
+  .up-rail {
+    display: none;
+  }
+  .up-stop {
+    width: var(--W);
+    margin: 0 auto 72px;
+  }
+  .up-tier {
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+  .up-items {
+    display: grid;
+    gap: 40px var(--gutter);
+  }
+  .up-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding-bottom: 6px;
+  }
+  .up-num {
+    font-size: 12px;
+    color: var(--link);
+  }
+  .up-name {
+    font-size: clamp(26px, calc(var(--W) * 0.04), 36px);
+    line-height: 1.1;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+  }
+  .up-status {
+    font-size: 12px;
+  }
+  .up-film {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 6px;
+    background: var(--ground);
+    box-shadow:
+      0 0 0 1px rgb(247 248 245 / 0.08),
+      0 40px 80px -40px rgb(0 0 0 / 0.55);
+  }
+  .up-film > img,
+  .up-film video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .up-film video {
+    opacity: 0;
+  }
+  .up-film.is-live video {
+    opacity: 1;
+    transition: opacity 0.3s;
+  }
+  /* Fjord: no film. An open frame onto the river, with its sentence */
+  .up-film.is-window {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+    padding: 8%;
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
+  }
+  .up-film.is-window p {
+    max-width: 20em;
+    font-size: clamp(20px, calc(var(--W) * 0.036), 36px);
+    line-height: 1.18;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  .up-hit {
+    position: absolute;
+    inset: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .up-hit:focus-visible {
+    outline-offset: -4px;
+  }
+  .up-chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 28px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(16 20 24 / 0.78);
+    color: #f7f8f5;
+    font-size: 12px;
+    line-height: 16px;
+    cursor: pointer;
+  }
+  .up-chip::after {
+    content: "";
+    position: absolute;
+    inset: -8px -3px;
+  }
+  .up-sound[aria-pressed="true"] {
+    background: #f7f8f5;
+    color: #101418;
+  }
+  .up-ctl {
+    position: absolute;
+    right: 10px;
+    bottom: 12px;
+    display: flex;
+    gap: 6px;
+  }
+  .up-state {
+    position: absolute;
+    left: 10px;
+    bottom: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .up-state b {
+    font-weight: 400;
+    font-size: 9px;
+  }
+  .up-film.is-paused .up-state {
+    opacity: 1;
+  }
+  .up-bar {
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 2px;
+    pointer-events: none;
+  }
+  .up-bar i {
+    display: block;
+    height: 100%;
+    background: var(--fonte);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+  }
+  .up-cap {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 16px var(--gutter);
+    padding-top: 20px;
+    position: relative;
+    isolation: isolate;
+  }
+  .up-cap::before {
+    content: "";
+    position: absolute;
+    inset: -20px -40px -36px;
+    z-index: -1;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--bg) 86%, transparent) 55%, transparent);
+    pointer-events: none;
+  }
+  .up-line {
+    font-size: 19px;
+    line-height: 26px;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  .up-sub {
+    margin-top: 8px;
+    max-width: 36em;
+    font-size: 15px;
+    line-height: 23px;
+    text-wrap: pretty;
+  }
+  .up-meta {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    justify-items: start;
+  }
+  .up-meta :global(.px-links) {
+    margin-top: 6px;
+  }
+  /* the tools: together, lighter */
+  .is-pair .up-items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .is-pair .up-name {
+    font-size: 24px;
+  }
+  .is-pair .up-cap {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 14px;
+  }
+  .is-pair .up-line {
+    font-size: 17px;
+    line-height: 24px;
+  }
+  .is-pair .up-sub {
+    display: none;
+  }
+  @media (max-width: 899px) {
+    .up-cap {
+      grid-template-columns: minmax(0, 1fr);
+      padding-top: 16px;
+    }
+    .up-sub {
+      font-size: 14px;
+      line-height: 21px;
+    }
+    .is-pair .up-items {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 20px;
+    }
+    .is-pair .up-film {
+      aspect-ratio: 16 / 9;
+    }
+    .is-pair .up-meta :global(.lf-tags),
+    .is-pair .up-meta :global(.px-tags) {
+      display: none;
+    }
+  }
+
+  /* ---- in space: the journey upstream */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .up {
+        /* the film as large as the viewport allows with its caption under it */
+        --W: min(960px, 100vw - 2 * var(--gutter) - 96px, (100svh - 440px) * 16 / 9);
+        --sx: 1;
+        --sy: 1;
+        height: calc(100svh + var(--S) * 1svh);
+        padding-top: 0;
+        view-timeline: --up block;
+      }
+      .up-mark {
+        display: block;
+        position: absolute;
+        left: 0;
+        width: 1px;
+        pointer-events: none;
+      }
+      .up-pin {
+        position: sticky;
+        top: 0;
+        height: 100svh;
+        overflow: clip;
+        perspective: 1100px;
+        perspective-origin: 50% 34%;
+      }
+      /* the rail names the stops here; the label stays for assistive tech */
+      .up-top {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+      }
+      .up-world {
+        position: absolute;
+        inset: 0;
+        transform-style: preserve-3d;
+        animation: up-cam linear both;
+        animation-timeline: --up;
+        animation-range: contain 0% contain 100%;
+        will-change: transform;
+      }
+      .up-stop {
+        position: absolute;
+        left: 50%;
+        top: clamp(168px, 23svh, 232px);
+        margin: 0 0 0 calc(var(--W) / -2);
+        transform: translate3d(calc(var(--W) * var(--sx) * var(--x)), calc(var(--H) * var(--sy) * var(--y)), var(--z));
+        animation: linear both;
+        animation-timeline: --up;
+        animation-range: contain 0% contain 100%;
+      }
+      .up-cap {
+        animation: linear both;
+        animation-timeline: --up;
+        animation-range: contain 0% contain 100%;
+      }
+      /* a stop still ahead is one target: pressing it travels there */
+      .up-go {
+        display: block;
+        position: absolute;
+        inset: 0;
+        padding: 0;
+        border: 0;
+        background: none;
+        cursor: pointer;
+      }
+      .up-stop.is-cur .up-go {
+        display: none;
+      }
+      .up-stop:not(.is-cur) .up-cap {
+        pointer-events: none;
+      }
+      .up-rail {
+        position: absolute;
+        right: max(var(--gutter), (100vw - var(--max)) / 2 + var(--gutter));
+        top: 50%;
+        transform: translateY(-50%);
+        display: grid;
+        justify-items: end;
+        font-size: 12px;
+        line-height: 16px;
+      }
+      .up-rail button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 28px;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--secondary);
+        font: inherit;
+        cursor: pointer;
+      }
+      .up-rail span {
+        opacity: 0;
+        transform: translateX(4px);
+        transition:
+          opacity 0.25s,
+          transform 0.25s var(--ease);
+      }
+      .up-rail i {
+        width: 12px;
+        height: 1px;
+        background: currentColor;
+        transition:
+          width 0.3s var(--ease),
+          background-color 0.2s;
+      }
+      .up-rail button.is-on {
+        color: var(--text);
+      }
+      .up-rail button.is-on i {
+        width: 24px;
+        background: var(--fonte);
+      }
+      .up-rail:hover span,
+      .up-rail button.is-on span,
+      .up-rail button:focus-visible span {
+        opacity: 1;
+        transform: none;
+      }
+      @media (max-width: 1199px) {
+        .up-rail {
+          right: 6px;
+        }
+        .up-rail span {
+          display: none;
+        }
+      }
+      @media (max-width: 899px) {
+        .up {
+          --W: min(100vw - 2 * var(--gutter) - 12px, (100svh - 470px) * 16 / 9);
+          --sx: 0.42;
+          --sy: 1.15;
+        }
+        .up-stop.is-pair {
+          --W: min(100vw - 2 * var(--gutter) - 12px, (100svh - 560px) * 8 / 9);
+          left: 50%;
+        }
+        .up-pin {
+          perspective-origin: 50% 26%;
+        }
+        .up-stop {
+          top: clamp(190px, 27svh, 260px);
+        }
+        .up-stop.is-pair {
+          top: clamp(120px, 15svh, 150px);
+        }
+      }
+    }
+  }
+</style>
+
+<script>
+  // Event-driven only: observers and media events. The motion itself is CSS on the compositor.
+  const root = document.querySelector<HTMLElement>('[data-up]')!;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const spatial = !reduced && CSS.supports('animation-timeline: view()');
+  const saveData = !!(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+  const SCALE = [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }];
+
+  type Film = { el: HTMLElement; v: HTMLVideoElement; stop: number; ratio: number; bar: Animation | null };
+  const stops = [...root.querySelectorAll<HTMLElement>('.up-stop')];
+  const films: Film[] = stops.flatMap((s, k) => [...s.querySelectorAll<HTMLElement>('.up-film[data-prev]')].map((el) => ({ el, v: el.querySelector('video')!, stop: k, ratio: 0, bar: null })));
+  const rail = [...root.querySelectorAll<HTMLButtonElement>('.up-rail button')];
+  let cur = 0, inView = false, held = reduced, sound: Film | null = null;
+
+  const big = (f: Film) => !saveData && f.el.clientWidth * Math.min(devicePixelRatio, 2) >= 1500;
+  const src = (f: Film) => (sound === f || big(f) ? f.el.dataset.full! : f.el.dataset.prev!);
+
+  function apply() {
+    for (const f of films) {
+      const here = spatial ? inView && f.stop === cur : f.ratio >= 0.55;
+      const want = here && !held && !document.hidden;
+      f.el.classList.toggle('is-paused', here && held);
+      f.el.querySelector('.up-hit')!.setAttribute('aria-label', held ? 'Play' : 'Pause');
+      if (!want) { if (!f.v.paused) f.v.pause(); continue; }
+      if (!f.v.getAttribute('src')) { f.v.src = src(f); f.v.muted = sound !== f; }
+      if (f.v.paused) void f.v.play().catch(() => { if (!f.v.muted) { setSound(null); void f.v.play().catch(() => {}); } });
+    }
+  }
+  // one film has the sound at a time; the preview has no sound track, so that film moves to its full version
+  function setSound(f: Film | null) {
+    sound = f;
+    for (const g of films) {
+      const on = g === f, b = g.el.querySelector<HTMLButtonElement>('.up-sound')!;
+      b.setAttribute('aria-pressed', String(on));
+      b.textContent = on ? 'Sound on' : 'Sound off';
+      g.v.muted = !on;
+      if (on && !g.v.src.endsWith(g.el.dataset.full!)) {
+        const t = g.v.currentTime;
+        g.v.src = g.el.dataset.full!;
+        g.v.addEventListener('loadedmetadata', () => { g.v.currentTime = t; }, { once: true });
+      }
+    }
+  }
+  function setCur(k: number) {
+    if (k === cur) return;
+    cur = k;
+    stops.forEach((s, i) => s.classList.toggle('is-cur', i === k));
+    rail.forEach((b, i) => { b.classList.toggle('is-on', i === k); if (i === k) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
+    if (sound && sound.stop !== k) setSound(null);
+    held = false;
+    apply();
+  }
+
+  for (const f of films) {
+    const sync = () => {
+      if (!Number.isFinite(f.v.duration) || !f.v.duration) return;
+      f.bar ??= f.el.querySelector('.up-bar i')!.animate(SCALE, { duration: f.v.duration * 1000, iterations: Infinity });
+      f.bar.currentTime = f.v.currentTime * 1000;
+      if (f.v.paused || f.v.seeking || f.v.readyState < 3) f.bar.pause(); else f.bar.play();
+    };
+    for (const ev of ['playing', 'pause', 'seeked', 'seeking', 'waiting', 'loadedmetadata']) f.v.addEventListener(ev, sync, { passive: true });
+    f.v.addEventListener('playing', () => f.el.classList.add('is-live'), { passive: true });
+    f.el.querySelector('.up-hit')!.addEventListener('click', () => { held = !held; apply(); });
+    f.el.querySelector('.up-sound')!.addEventListener('click', () => { setSound(sound === f ? null : f); held = false; apply(); });
+    f.el.querySelector('.up-fs')!.addEventListener('click', () => {
+      const w = f.v as HTMLVideoElement & { webkitEnterFullscreen?: () => void };
+      if (document.fullscreenElement) void document.exitFullscreen();
+      else if (f.el.requestFullscreen) void f.el.requestFullscreen();
+      else w.webkitEnterFullscreen?.();
+    });
+  }
+
+  if (spatial) {
+    // which stop the reader has reached: the mark crossing the top of the viewport
+    const marks = [...root.querySelectorAll<HTMLElement>('.up-mark')];
+    const line = new IntersectionObserver((es) => {
+      for (const e of es) if (e.isIntersecting) setCur(Number((e.target as HTMLElement).dataset.k));
+    }, { rootMargin: '0px 0px -100% 0px' });
+    for (const m of marks) line.observe(m);
+    new IntersectionObserver(([e]) => { inView = e.intersectionRatio >= 0.5; apply(); }, { threshold: [0, 0.5, 1] }).observe(root.querySelector('.up-pin')!);
+    // travel to a stop: a little way into its hold (positions are in svh of scroll; the section is 100 + S of them tall)
+    const S = Number(root.style.getPropertyValue('--S'));
+    const go = (k: number) => {
+      const unit = root.offsetHeight / (100 + S);
+      scrollTo({ top: root.getBoundingClientRect().top + scrollY + (Number(marks[k].dataset.at) + 6) * unit, behavior: 'smooth' });
+    };
+    for (const b of [...rail, ...root.querySelectorAll<HTMLButtonElement>('.up-go')]) b.addEventListener('click', () => go(Number(b.dataset.k)));
+  } else {
+    const by = new Map(films.map((f) => [f.el as Element, f]));
+    const seen = new IntersectionObserver((es) => { for (const e of es) by.get(e.target)!.ratio = e.intersectionRatio; apply(); }, { threshold: [0, 0.55, 1] });
+    for (const f of films) seen.observe(f.el);
+  }
+  document.addEventListener('visibilitychange', apply);
+  document.addEventListener('fullscreenchange', () => document.dispatchEvent(new CustomEvent('px:viewer', { detail: { open: !!document.fullscreenElement } })));
+</script>

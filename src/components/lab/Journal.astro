@@ -1,0 +1,571 @@
+---
+// Prototype F, "Activity": what is happening in github.com/amontlabs, as one panel.
+//   one chart   a bar per day over 30 days, stacked by project (one colour per project, the legend names them)
+//   one reader  the summary of one day, with the projects that moved and what was released. The chart drives it:
+//               pointing at a bar previews that day, a click (or tap, or the arrow keys) keeps it.
+// Every day's entry is in the page and stacked in one grid cell, so switching days is instant and never moves the layout.
+// Data: src/data/activity.json (scripts/update-activity-data.mjs). Same-origin and static: the page asks GitHub nothing.
+import activity from "../../data/activity.json";
+
+type Entry = { day: string; text?: string; repos: { repo: string; n: number; merged: number }[]; releases: { repo: string; to: string; from: string | null; n: number; url: string }[]; highlights: { repo: string; text: string; url: string }[] };
+const A = activity as unknown as { days: string[]; repos: Record<string, { name: string; daily: number[]; commits: number }>; totals: { commits: number; merged: number; releases: number }; journal: Entry[]; updatedAt: string };
+const nf = new Intl.NumberFormat("en-GB");
+const dfmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+const label = (d: string) => dfmt.format(new Date(`${d}T12:00:00Z`));
+const gh = (repo: string) => `https://github.com/amontlabs/${repo}`;
+
+// colour follows the project, never its rank; the stack keeps this order. A repository not listed here is grey.
+const ORDER = ["silo", "fjord", "sic", "lcu", "lastdrop", "hartlib"];
+const ids = Object.keys(A.repos).sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
+const color = (id: string) => (ORDER.includes(id) ? `var(--c${ORDER.indexOf(id) + 1})` : "var(--c0)");
+const name = (id: string) => A.repos[id]?.name ?? id;
+
+const total = A.days.map((_, i) => ids.reduce((s, id) => s + A.repos[id].daily[i], 0));
+// a burst day would flatten every other bar: the scale stops at twice the typical busy day. A day well past it
+// still stands out: its bar breaks at the top of the scale, continues above it and carries its count
+const busy = total.filter((n) => n > 0).sort((a, b) => a - b);
+const peak = Math.max(1, Math.min(busy.at(-1) ?? 1, (busy[Math.floor(busy.length * 0.75)] ?? 1) * 2));
+const top = Math.max(...total);
+const burst = (n: number) => n > peak * 1.25;
+const over = (n: number) => (burst(n) ? (n - peak) / (top - peak) : 0);
+// neighbouring bursts would print their counts over each other: the tallest of a run carries the count
+const labelled = (i: number) => {
+  if (!burst(total[i])) return false;
+  let a = i, b = i;
+  while (a > 0 && burst(total[a - 1])) a--;
+  while (b < total.length - 1 && burst(total[b + 1])) b++;
+  return total[i] === Math.max(...total.slice(a, b + 1));
+};
+const entry = (d: string) => A.journal.find((e) => e.day === d);
+const first = A.journal[0]?.day;
+
+// a project named in a summary is a link to it
+const names = ids.map((id) => ({ id, name: name(id) })).sort((a, b) => b.name.length - a.name.length);
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const re = new RegExp(`\\b(${names.map((n) => esc(n.name)).join("|")})\\b`, "g");
+const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((n) => n.name === t)?.id }));
+---
+
+<section class="block jr" aria-labelledby="jr-h" data-jr data-synced={A.updatedAt}>
+  <div class="wrap">
+    <div class="jr-panel">
+      <header class="jr-head">
+        <h2 id="jr-h">Activity</h2>
+        <p class="mono dim"><a href="https://github.com/amontlabs">github.com/amontlabs</a><span>Last 30 days</span><span>Updated <time datetime={A.updatedAt}>{new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).format(new Date(A.updatedAt))}</time></span></p>
+      </header>
+
+      <div class="jr-row">
+        <dl class="jr-nums">
+          <div><dd>{nf.format(A.totals.commits)}</dd><dt>Commits</dt></div>
+          <div><dd>{nf.format(A.totals.merged)}</dd><dt>Pull requests merged</dt></div>
+          <div><dd>{nf.format(A.totals.releases)}</dd><dt>Releases</dt></div>
+        </dl>
+
+        <figure class="jr-fig">
+          <ol class="jr-days" aria-label="Commits per day by project, last 30 days. Choose a day to read its summary.">
+            {A.days.map((d, i) => (
+              <li class:list={[burst(total[i]) && "is-over"]} style={`--v: ${Math.min(1, total[i] / peak)}; --o: ${over(total[i]).toFixed(3)}`}>
+                <button type="button" data-day={d} disabled={!entry(d)} tabindex={d === first ? 0 : -1} aria-pressed={d === first ? "true" : "false"} aria-label={`${label(d)}: ${nf.format(total[i])} commits`}>
+                  {labelled(i) && <span class="jr-burst mono" aria-hidden="true">{nf.format(total[i])}</span>}
+                  <span class="jr-bar" aria-hidden="true">
+                    {ids.filter((id) => A.repos[id].daily[i] > 0).map((id) => <i data-r={id} style={`flex-grow: ${A.repos[id].daily[i]}; background: ${color(id)}`}></i>)}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ol>
+          <p class="jr-axis mono dim" aria-hidden="true"><span>{label(A.days[0]).replace(/^\w+ /, "")}</span><span>Commits per day</span><span data-last={A.days.at(-1)}>{label(A.days.at(-1)!).replace(/^\w+ /, "")}</span></p>
+          <ul class="jr-legend">
+            {[...ids].sort((a, b) => A.repos[b].commits - A.repos[a].commits).map((id) => (
+              <li><a href={gh(id)} data-r={id}><i style={`background: ${color(id)}`} aria-hidden="true"></i>{name(id)}<span class="mono dim">{nf.format(A.repos[id].commits)}</span></a></li>
+            ))}
+          </ul>
+        </figure>
+      </div>
+
+      <div class="jr-row jr-reader">
+        <div class="jr-nav">
+          <h3 aria-live="polite">{first && label(first)}</h3>
+          <div>
+            <button type="button" data-step="-1" aria-label="Earlier day"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
+            <button type="button" data-step="1" aria-label="Later day"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
+          </div>
+        </div>
+        <div class="jr-stack">
+          {A.journal.map((e) => (
+            <article data-day={e.day} data-label={label(e.day)} class:list={[e.day === first && "is-on"]} inert={e.day !== first}>
+              {e.text ? (
+                <p class="jr-text">{parts(e.text).map((p) => (p.id ? <a href={gh(p.id)} style={`--c: ${color(p.id)}`}>{p.t}</a> : p.t))}</p>
+              ) : (
+                <ul class="jr-hl">{e.highlights.map((h) => <li><a href={h.url}><b>{name(h.repo)}</b> {h.text}</a></li>)}</ul>
+              )}
+              <ul class="jr-split">
+                {e.repos.map((r) => (
+                  <li>
+                    <i style={`background: ${color(r.repo)}`} aria-hidden="true"></i>
+                    <a href={gh(r.repo)}>{name(r.repo)}</a>
+                    {r.n > 0 && <a class="mono dim" href={`${gh(r.repo)}/commits?since=${e.day}&until=${e.day}`}>{nf.format(r.n)} {r.n === 1 ? "commit" : "commits"}</a>}
+                    {e.releases.filter((x) => x.repo === r.repo).map((x) => <a class="jr-rel mono" href={x.url}><span class="dim">Released</span> {x.from ? `${x.from} → ` : ""}{x.to}</a>)}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* one colour per project (validated for colour-blind separation in this stacking order, light and dark) */
+  .jr {
+    --c0: #8a8f94;
+    --c1: #0f9ac3;
+    --c2: #eb6834;
+    --c3: #6250d6;
+    --c4: #eda100;
+    --c5: #e87ba4;
+    --c6: #008300;
+  }
+  :global(:root[data-theme="dark"]) .jr {
+    --c2: #d95926;
+    --c3: #9085e9;
+    --c4: #c98500;
+    --c5: #d55181;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme="light"])) .jr {
+      --c2: #d95926;
+      --c3: #9085e9;
+      --c4: #c98500;
+      --c5: #d55181;
+    }
+  }
+  /* one panel: a solid ground over the river, so the section reads as a single object */
+  .jr-panel {
+    padding: 22px 32px 20px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--bg) 93%, transparent);
+  }
+  .jr-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+  .jr-head h2 {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .jr-head p {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 20px;
+    font-size: 12px;
+  }
+  .jr-head a:hover {
+    color: var(--link);
+  }
+  /* the same two columns all the way down: figures on the left, the chart and the text on the right */
+  .jr-row {
+    display: grid;
+    grid-template-columns: 216px minmax(0, 1fr);
+    column-gap: 40px;
+  }
+
+  /* ---- how much */
+  .jr-nums {
+    display: grid;
+    align-content: space-between;
+    gap: 8px;
+    margin: 0;
+    padding-bottom: 2px;
+  }
+  .jr-nums dd {
+    font-size: 40px;
+    line-height: 40px;
+    font-weight: 500;
+    letter-spacing: -0.045em;
+    font-variant-numeric: tabular-nums;
+  }
+  .jr-nums dt {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--secondary);
+  }
+
+  /* ---- when and where: one bar per day, stacked by project. A column is a button as wide as its slot. */
+  .jr-days {
+    --plot: 88px;
+    display: flex;
+    height: calc(var(--plot) + 40px);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    touch-action: pan-y;
+  }
+  .jr-days li {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .jr button {
+    appearance: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+  }
+  .jr-days button {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    height: 100%;
+    padding: 0 4px 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    outline-offset: -1px;
+  }
+  .jr button:focus-visible {
+    outline: 2px solid var(--link);
+  }
+  .jr-days button:disabled {
+    cursor: default;
+  }
+  /* the baseline, and under the chosen day a mark in the ink colour */
+  .jr-days button::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 2px;
+    height: 1px;
+    background: var(--line);
+  }
+  .jr-days button[aria-pressed="true"]::after {
+    inset: auto 4px 0;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--text);
+  }
+  .jr-days button:not(:disabled):is(:hover, .is-view, [aria-pressed="true"]) {
+    background: color-mix(in srgb, var(--text) 7%, transparent);
+  }
+  .jr-bar {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 1px;
+    width: 100%;
+    height: max(3px, calc(var(--v) * var(--plot)));
+    border-radius: 3px 3px 0 0;
+    overflow: hidden;
+  }
+  .jr-bar i {
+    flex: 1 0 0;
+    min-height: 1px;
+    transition: opacity 0.12s;
+  }
+  .jr-days.has-solo .jr-bar i:not(.is-solo) {
+    opacity: 0.14;
+  }
+  /* off the scale: the bar breaks where the scale ends and goes on above it, with its count */
+  .jr-days li.is-over .jr-bar {
+    height: calc(var(--plot) + 10px + var(--o) * 12px);
+    -webkit-mask-image: linear-gradient(to top, #000 var(--plot), transparent var(--plot), transparent calc(var(--plot) + 3px), #000 calc(var(--plot) + 3px));
+    mask-image: linear-gradient(to top, #000 var(--plot), transparent var(--plot), transparent calc(var(--plot) + 3px), #000 calc(var(--plot) + 3px));
+  }
+  .jr-burst {
+    position: absolute;
+    left: 50%;
+    bottom: calc(var(--plot) + 18px + var(--o) * 12px);
+    transform: translateX(-50%);
+    font-size: 10px;
+    line-height: 12px;
+    color: var(--secondary);
+  }
+  .jr-axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 11px;
+  }
+  .jr-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 20px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+    line-height: 22px;
+  }
+  .jr-legend a {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .jr-legend i,
+  .jr-split i {
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+  }
+  .jr-legend .mono {
+    font-size: 12px;
+  }
+  .jr-legend a:hover {
+    color: var(--link);
+  }
+
+  /* ---- what: the chosen day */
+  .jr-reader {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .jr-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .jr-nav h3 {
+    font-size: 17px;
+    line-height: 25px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .jr-nav div {
+    display: flex;
+    gap: 6px;
+  }
+  .jr-nav button {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .jr-nav button:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--text) 45%, transparent);
+  }
+  .jr-nav button:disabled {
+    color: var(--secondary);
+    opacity: 0.45;
+    cursor: default;
+  }
+  /* every day in one cell: the cell is as tall as the longest, so choosing a day moves nothing */
+  .jr-stack {
+    display: grid;
+  }
+  .jr-stack article {
+    grid-area: 1 / 1;
+    visibility: hidden;
+  }
+  .jr-stack article.is-on {
+    visibility: visible;
+  }
+  .jr-text {
+    max-width: 62ch;
+    font-size: 19px;
+    line-height: 28px;
+    letter-spacing: -0.012em;
+    text-wrap: pretty;
+  }
+  .jr-text a {
+    text-decoration: underline;
+    text-decoration-color: var(--c);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+  .jr-text a:hover {
+    color: var(--link);
+  }
+  .jr-hl {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 16px;
+    line-height: 25px;
+  }
+  .jr-hl b {
+    font-weight: 500;
+  }
+  .jr-split {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 28px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+    line-height: 22px;
+  }
+  .jr-split li {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .jr-split .mono {
+    font-size: 12px;
+  }
+  .jr-split a:hover {
+    color: var(--link);
+  }
+  .jr-rel {
+    padding: 0 7px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    line-height: 20px;
+  }
+
+  @media (max-width: 899px) {
+    .jr-panel {
+      padding: 18px 16px 16px;
+      border-radius: 12px;
+    }
+    .jr-head {
+      flex-wrap: wrap;
+      gap: 2px 16px;
+    }
+    .jr-row {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: 18px;
+    }
+    .jr-nums {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 12px;
+      align-content: start;
+    }
+    .jr-nums dd {
+      font-size: clamp(28px, 8.4vw, 40px);
+      line-height: 1;
+    }
+    .jr-nums dt {
+      font-size: 12px;
+      line-height: 16px;
+      margin-top: 4px;
+    }
+    .jr-days {
+      --plot: 72px;
+    }
+    .jr-days button {
+      padding-inline: 1px;
+    }
+    .jr-days button[aria-pressed="true"]::after {
+      inset-inline: 0;
+    }
+    .jr-nav button {
+      width: 40px;
+      height: 40px;
+    }
+    /* the reader ends the panel here, so a short day may simply end it sooner */
+    .jr-stack article:not(.is-on) {
+      display: none;
+    }
+    .jr-nav {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .jr-nav div {
+      gap: 8px;
+    }
+    .jr-reader {
+      margin-top: 16px;
+      padding-top: 14px;
+      row-gap: 12px;
+    }
+    .jr-text {
+      font-size: 17px;
+      line-height: 25px;
+    }
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-jr]')!;
+  // The data is as old as the last sync; say so in the reader's own time, and name the days from their side of midnight.
+  const t = root.querySelector('time')!;
+  const mins = Math.max(0, Math.round((Date.now() - new Date(root.dataset.synced!).getTime()) / 60000));
+  t.textContent = mins < 1 ? 'just now' : mins < 60 ? `${mins} min ago` : mins < 1440 ? `${Math.round(mins / 60)} h ago` : `${Math.round(mins / 1440)} d ago`;
+  const paris = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const today = paris.format(new Date()), yesterday = paris.format(new Date(Date.now() - 864e5));
+  const arts = [...root.querySelectorAll<HTMLElement>('.jr-stack article')];
+  const last = root.querySelector<HTMLElement>('[data-last]')!;
+  if (last.dataset.last === today) last.textContent = 'Today';
+  for (const a of arts) {
+    if (a.dataset.day === today) a.dataset.label = 'Today, so far';
+    else if (a.dataset.day === yesterday) a.dataset.label = 'Yesterday';
+  }
+
+  // The chart drives the reader: pointing at a day previews it, choosing one keeps it.
+  const chart = root.querySelector<HTMLElement>('.jr-days')!;
+  const btns = [...chart.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')]; // oldest first
+  const title = root.querySelector('.jr-nav h3')!;
+  const [prev, next] = root.querySelectorAll<HTMLButtonElement>('.jr-nav button');
+  let kept = arts.find((a) => a.classList.contains('is-on'))?.dataset.day;
+  const show = (day: string | undefined, keep: boolean) => {
+    if (!day) return;
+    if (keep) kept = day;
+    for (const a of arts) {
+      const on = a.dataset.day === day;
+      a.classList.toggle('is-on', on);
+      a.inert = !on;
+      if (on) title.textContent = a.dataset.label!;
+    }
+    for (const b of btns) {
+      b.setAttribute('aria-pressed', String(b.dataset.day === kept));
+      b.tabIndex = b.dataset.day === kept ? 0 : -1;
+      b.classList.toggle('is-view', b.dataset.day === day && day !== kept);
+    }
+    const i = btns.findIndex((b) => b.dataset.day === kept);
+    prev.disabled = i <= 0;
+    next.disabled = i >= btns.length - 1;
+  };
+  const step = (by: number) => {
+    const b = btns[btns.findIndex((x) => x.dataset.day === kept) + by];
+    if (b) show(b.dataset.day, true);
+    return b;
+  };
+  const at = (e: Event) => (e.target as Element).closest<HTMLButtonElement>('button:not(:disabled)');
+  chart.addEventListener('pointerover', (e) => e.pointerType === 'mouse' && at(e) && show(at(e)!.dataset.day, false));
+  chart.addEventListener('pointerleave', () => show(kept, false));
+  chart.addEventListener('click', (e) => at(e) && show(at(e)!.dataset.day, true));
+  // a finger dragged along the chart scrubs through the days
+  chart.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'mouse') return;
+    const b = document.elementFromPoint(e.clientX, chart.getBoundingClientRect().bottom - 8)?.closest<HTMLButtonElement>('.jr-days button:not(:disabled)');
+    if (b && b.dataset.day !== kept) show(b.dataset.day, true);
+  });
+  chart.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    step(e.key === 'ArrowLeft' ? -1 : 1)?.focus();
+  });
+  prev.addEventListener('click', () => step(-1));
+  next.addEventListener('click', () => step(1));
+  show(kept, true);
+
+  // pointing at a project in the legend leaves only its share of each bar
+  const segs = [...chart.querySelectorAll<HTMLElement>('.jr-bar i')];
+  for (const a of root.querySelectorAll<HTMLElement>('.jr-legend a')) {
+    const solo = (on: boolean) => {
+      chart.classList.toggle('has-solo', on);
+      for (const s of segs) s.classList.toggle('is-solo', on && s.dataset.r === a.dataset.r);
+    };
+    a.addEventListener('pointerenter', () => solo(true));
+    a.addEventListener('pointerleave', () => solo(false));
+    a.addEventListener('focus', () => solo(true));
+    a.addEventListener('blur', () => solo(false));
+  }
+</script>

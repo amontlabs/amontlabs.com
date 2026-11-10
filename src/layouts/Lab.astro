@@ -1,0 +1,91 @@
+---
+// A showcase prototype in the real page: same header, hero, scene and final frame; only the projects section changes.
+import Header from "../components/Header.astro";
+import Hero from "../components/Hero.astro";
+import Base from "./Base.astro";
+
+interface Props {
+  id: "activity" | "agent" | "upstream" | "programme" | "storyboard" | "lines";
+  /** the first section belongs to the first screen: the hero only keeps its line */
+  landing?: boolean;
+}
+const { id, landing = false } = Astro.props;
+const all = [
+  { id: "activity", name: "Activity" },
+  { id: "agent", name: "Agent" },
+  { id: "upstream", name: "Upstream" },
+  { id: "programme", name: "Programme" },
+  { id: "storyboard", name: "Storyboard" },
+  { id: "lines", name: "Lines" },
+];
+---
+
+<Base title={`Amont Labs · ${all.find((x) => x.id === id)!.name}`} canonical={`https://amontlabs.com/lab/${id}`} robots="noindex">
+  <Header />
+  <main class:list={[landing && "is-landing"]}>
+    <Hero />
+    <slot />
+    <section class="finale" aria-labelledby="about">
+      <div class="wrap grid">
+        <h2 id="about" class="sr-only">About Amont</h2>
+        <p class="def">Amont, <i>n. m.</i> The upstream side of a river, toward its source. From <i>à mont</i>, “toward the mountain”.</p>
+      </div>
+      <div class="wrap legal-wrap"><a class="legal-link mono" href="/legal">Legal</a></div>
+    </section>
+  </main>
+  {/* prototype switcher: review aid only, not part of any design */}
+  <nav class="lab-nav mono" aria-label="Prototypes">
+    {all.map((x, i) => <a href={`/lab/${x.id}`} aria-current={x.id === id ? "page" : undefined}><b>{"FEDABC"[i]}</b><span>{x.name}</span></a>)}
+    <a href="/"><span>Current</span></a>
+  </nav>
+</Base>
+
+<style>
+  .is-landing :global(.hero) {
+    min-height: clamp(190px, 25svh, 280px);
+  }
+  .is-landing :global(.hero-text) {
+    padding-bottom: 0;
+  }
+  .is-landing :global(.hero + section.block) {
+    padding-top: 28px;
+  }
+  .lab-nav {
+    position: fixed;
+    left: 50%;
+    bottom: 12px;
+    z-index: 20;
+    transform: translateX(-50%);
+    display: flex;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--bg);
+    font-size: 12px;
+    line-height: 16px;
+    white-space: nowrap;
+  }
+  .lab-nav a {
+    display: flex;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    color: var(--secondary);
+  }
+  .lab-nav a[aria-current] {
+    background: color-mix(in srgb, var(--text) 9%, transparent);
+    color: var(--text);
+  }
+  .lab-nav b {
+    font-weight: 400;
+    color: var(--link);
+  }
+  @media (max-width: 480px) {
+    .lab-nav a:not([aria-current]) span {
+      display: none;
+    }
+    .lab-nav a:not([aria-current]):last-child span {
+      display: inline;
+    }
+  }
+</style>

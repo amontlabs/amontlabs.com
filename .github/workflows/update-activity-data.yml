@@ -1,0 +1,35 @@
+name: Update activity data
+on:
+  schedule:
+    - cron: "12 */6 * * *"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [silo-release, release]
+permissions:
+  contents: write
+concurrency:
+  group: update-activity-data
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # the summaries are written through the Claude Code CLI on a Claude subscription:
+      # CLAUDE_CODE_OAUTH_TOKEN comes from `claude setup-token`
+      - run: npm install -g @anthropic-ai/claude-code
+      - run: node scripts/update-activity-data.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      - name: Commit
+        run: |
+          git add src/data/activity.json src/data/activity-summaries.json
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: update activity data"
+          git pull --rebase origin main
+          git push origin HEAD:main
