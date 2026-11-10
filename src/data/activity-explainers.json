@@ -9,21 +9,21 @@
   ]
  },
  "silo": {
-  "hash": "9ae9002f6779adf5b17b3b50fd8bbf509469b34d",
-  "lead": "Silo gives each AI agent its own Linux or macOS virtual machine, for apps that run agents on your Mac.",
+  "hash": "13631efa8a4be8c5e6ea1e5d388cb1042967f9a8",
+  "lead": "Silo is an engine for apps that run AI agents, giving each agent its own walled-off virtual machine.",
   "points": [
-   "Lets agents use credentials without being able to read them",
-   "Limits GitHub access to repositories you pick, read-only by default",
-   "Saves checkpoints so you can restore or copy a computer"
+   "Lets agents use your API keys without being able to read them",
+   "Grants GitHub access per repository, read-only by default",
+   "Saves checkpoints to roll a machine back or copy it"
   ]
  },
  "lcu": {
-  "hash": "ffbd50f2d965e684f3262570d585476ce28e8276",
-  "lead": "LCU lets AI agents in tools like Claude Code or Pi control your desktop apps, using Codex's own engine.",
+  "hash": "847325cd7f3dd39ae268d4d8cbf6b65313262fda",
+  "lead": "LCU lets AI agents outside the Codex app use Codex's computer control to work your desktop apps.",
   "points": [
-   "Reads and controls Chrome tabs, with approval for each site",
-   "Asks you to approve each app before the agent can touch it",
-   "Manages the list of always-allowed apps from the terminal with Touch ID"
+   "Read windows, click, type and take screenshots in desktop apps",
+   "Approve or deny each app the first time an agent tries to use it",
+   "Read and control Chrome tabs through the official extension"
   ]
  },
  "fjord": {
@@ -45,12 +45,12 @@
   ]
  },
  "lastdrop": {
-  "hash": "8c83b875da444ca4370a83a7ba816171a21dcdc5",
-  "lead": "lastdrop lets Claude Code call any model as its own subagent, for people with several AI accounts.",
+  "hash": "8d36e961299aed90b4d5a48a284e515ea44fbbc3",
+  "lead": "lastdrop lets Claude Code call any model as its own subagent and spreads the work across your accounts.",
   "points": [
-   "Switches to the next model when one is out of quota or can't start",
-   "Runs Claude's subagents on your other Claude accounts",
-   "Shows usage left and reset times for each account in the menu bar"
+   "Switches to the next model when one runs out of quota or can't start",
+   "Checks every command an agent runs instead of asking you to approve it",
+   "Shows usage left on each account and when it resets"
   ]
  }
 }

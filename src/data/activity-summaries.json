@@ -1,118 +1,118 @@
 {
- "2026-11-09": {
-  "hash": "cda8801e5d482cebc29893f40f7170dee7bff554",
-  "text": "Silo's container computers gained a desktop, checkpoints, a terminal and export. lastdrop now starts each T3 Code thread on the Claude account with the most usage left."
- },
- "2026-11-08": {
-  "hash": "147afdc2f5b5195c6c21bc4052202513bb18f5f1",
-  "text": "Silo can now run GitHub Actions jobs, each on a fresh agent computer. On Linux, it can also run agent computers in containers, marked as less isolated than a virtual machine."
- },
- "2026-11-07": {
-  "hash": "5261e041e74d76953247421756b743c5a2cdf585",
-  "text": "Silo can now set up any Mac or Linux machine to host agent computers for another device. lastdrop now runs T3 Code's background tasks on your other accounts."
- },
- "2026-11-06": {
-  "hash": "0e8ad1774a3a6974bd54c5269f8834aa8b9e0eb3",
-  "text": "Silo can now run its engine on a Linux machine and run commands or use the screen of agent computers on another device. Its app gained screens to review changes waiting for approval."
- },
- "2026-11-05": {
-  "hash": "040d2df1b2d0c2e497d7af788c9e0db72e5bbc88",
-  "text": "Silo can now copy an agent's computer, let you review what changed in the copy, keep those changes in the original, and undo that, all from the command line or from an AI agent."
- },
- "2026-11-04": {
-  "hash": "b6807a3da92752934490499e8e9305449ff33dc3",
-  "text": "Fjord learned to send each message to the right Claude Code project or thread on claude.ai, or to offer to create a new one. Silo released version 0.12.0."
- },
- "2026-11-03": {
-  "hash": "74b90abd2391ad967c3735a99997367f9374e070",
-  "text": "Silo added tests in which a hijacked agent tries to break out of its computer, and moved its Linux and macOS computers to a different tool for letting agents use the screen."
- },
- "2026-11-02": {
-  "hash": "2681a45ef65a3922b7fb169d68a44b5aac86a66c",
-  "text": "LCU fixed its Windows build failing at the very end when a temporary folder could not be deleted because another program was still holding a file in it."
- },
- "2026-11-01": {
-  "hash": "fbe89f7c32ae03b20c5be548199a3a0867e81060",
-  "text": "LCU installed again on Windows with the latest ChatGPT app builds, and lastdrop fixed agents failing when its agent list got full."
- },
- "2026-10-31": {
-  "hash": "a6cd5fc8dc982e9a14d370bd46e7b1c767e60626",
-  "text": "lastdrop got a website and a launch video, and now listed each agent's fallback models and let usage limits be set for accounts on every provider."
- },
- "2026-10-30": {
-  "hash": "db8e9c1447ac4b10c4e43b39aebbfb106e54bea2",
-  "text": "lastdrop gained a stats view of usage by day, project, account and model, agents that fall back to the next model when one can't start, and updates installed from inside the app."
- },
- "2026-10-29": {
-  "hash": "9ff634e8fb7901bf9efad16838ae7a4ba295e687",
-  "text": "lastdrop got a new name and design, and its agents on Codex, Z.ai and OpenRouter now ran on whichever of several accounts had the most usage left."
- },
- "2026-10-28": {
-  "hash": "233215a7f95af202f57bbca3f8973ea544cad3b0",
-  "text": "lastdrop had its first release, and helper agents that hit an account's limit now carried on from another. LCU stopped showing an error in Claude Code after every turn when not connected."
- },
- "2026-10-27": {
-  "hash": "b62a6084fa6e6ed7237e97ad9677b05c70146433",
-  "text": "lastdrop now ran Claude's helper agents on other Claude accounts with usage left, instead of a window per account, and let users add their own agents on other models, such as Codex or OpenRouter."
- },
- "2026-10-26": {
-  "hash": "bd6022577ef38f461bb2312a48b8998c4f5a4a48",
-  "text": "lastdrop now gave each Claude account its own Claude app window, and showed in the menu bar the usage each account had left and which one new sessions should use."
- },
- "2026-10-25": {
-  "hash": "83510fbcf656ef620a2db8127c21da85319bd7bd",
-  "text": "Fjord's Router now shows its answer as it is written, and a click on where it plans to send a message offers other places. LCU was fixed for Claude Code helper agents working as a team."
- },
- "2026-10-24": {
-  "hash": "048314b5bf840775f3823bf65c590eb18d9122ca",
-  "text": "LCU can now be used, experimentally, in Junie, which runs the approval command itself when an app needs permission. On Windows, it now installs with the current ChatGPT app, including from another drive."
- },
- "2026-10-23": {
-  "hash": "90e561d1b9c3d37768487deda1c15329cdadb1f6",
-  "text": "Fjord moved every message onto one path, through another Claude Code chat, whether the target was running or asleep. LCU's update notices now went to the person only, not the agent."
- },
  "2026-10-22": {
   "hash": "01d011412510e960611179b175d7830fe9f3cfc1",
   "text": "Fjord can now wake a Claude Code chat that the Claude app isn't running, so a message sent to it still goes through. Retrying a failed send now resends it as it was."
- },
- "2026-10-21": {
-  "hash": "78eaa16e28a3493cd16a2c806bb24251378204af",
-  "text": "LCU can now be used, experimentally, in DeepSeek Harness. Fjord's Router now shows under each chat what it is about overall and what its latest turn did."
- },
- "2026-10-20": {
-  "hash": "1f1f982d16ad5f5dfc74a5639c6d01a28d4f801a",
-  "text": "LCU fixed approvals for using a new app in the Claude app, which could hang for about 30 minutes. Fjord's Router now asks before splitting a message that speaks to several chats in turn."
- },
- "2026-10-19": {
-  "hash": "e8bb5f78a5db7c4e5c39a67eaa652189fa5ed5ac",
-  "text": "Fjord learned to split one message into parts for several Claude Code chats and send each where it belongs. LCU's computer use stopped breaking when the ChatGPT app updated itself."
- },
- "2026-10-18": {
-  "hash": "6785de207999a94dc6cb078f438dcd4d7ba72f9b",
-  "text": "Silo's engine can now be published as its own download, and a prebuilt copy can be re-signed and built into another app. Checks on who signed it were also tightened."
- },
- "2026-10-16": {
-  "hash": "7132598b9103361f9e5c2bf17cef13b637588722",
-  "text": "Fjord's window no longer closes when Esc is pressed. Highlights in its brief can now be marked read, archived or opened with the same keyboard shortcuts as the inbox."
  },
  "2026-10-15": {
   "hash": "1d67e0b257f336c35fb7ceaf6214e3bdaadd8caf",
   "text": "Fjord learned to interrupt a running Claude Code session with a new message in one step. Silo stopped leaving imported Macs half set up when an account token could not be restored."
  },
- "2026-10-14": {
-  "hash": "b2af281ac9f4cca2a8744d753239889979fd4521",
-  "text": "Silo gained control of computers on another device. Fjord gained a ⌘K search over sessions, inbox and settings, and can mute projects or stop a Claude Code session when asked in plain words."
+ "2026-10-12": {
+  "hash": "dff9103186b753bd98c7d3a1ed3b7951bd649e84",
+  "text": "Fjord's Router gained search, and can now cancel or edit a message after it was sent to a coding session. LCU stopped dropping accented letters, Korean and emoji when typing on macOS, in a fix an outside contributor reported and wrote."
  },
  "2026-10-13": {
-  "hash": "6eec1990cd75d1d4ae7b02da677c9f41589a8d3e",
-  "text": "Fjord Computer was renamed Fjord. Its window now opens and closes without first taking a picture of itself, and its idle CPU use fell from about 10% to 0.5%."
+  "hash": "261e9e6c23150caebd46d673719e9e33bc63b7e9",
+  "text": "Fjord, formerly Fjord Computer, gained a beta Canvas view in its Router: each project becomes a frame you can move, resize, pan and zoom, and a sent message flies to the session it went to. Its window also opened and closed more quickly."
  },
- "2026-10-12": {
-  "hash": "e1d77a55b9b9aa76e7c65ae0e2976851694a47ce",
-  "text": "Fjord gained search and can now cancel, or edit and resend, messages sent to Claude Code sessions. LCU stopped dropping accented letters, Korean and emoji when typing on macOS."
+ "2026-10-14": {
+  "hash": "81b8730112a24dd15798acf9f972e40d046af777",
+  "text": "Silo's app now runs its computers through a separate background engine that can keep running after the app quits. Fjord gained a ⌘K palette that finds inbox items, sessions and settings. LCU now asks for app approvals with a card the Claude app flags as needing input."
+ },
+ "2026-10-16": {
+  "hash": "aa25decb07926a1de0bc7fab6596c842b463ef56",
+  "text": "In Fjord, highlighted items in the Router's brief now respond to the inbox's keyboard shortcuts, and the brief's past versions moved to a resizable side panel that stays as left between launches. Pressing Esc also stopped closing the window."
+ },
+ "2026-10-18": {
+  "hash": "0e32f5f9f7830b924bfd25702ac052b145a4a54b",
+  "text": "Silo's engine was set up to ship as its own download that other apps can re-sign and bundle. The engine now reads which signature it must carry from its own package instead of having it built in, and refuses to start without it."
+ },
+ "2026-10-19": {
+  "hash": "4bc98e0e6aaa9097d6164d140c50450ec0d84087",
+  "text": "Fjord's Router learned to split a message meant for several places, showing each place's part as you type and sending each part there. LCU stopped breaking computer use when the ChatGPT app updated itself, which had left it failing until restarted."
+ },
+ "2026-10-20": {
+  "hash": "1df5f7d9f7381b6a2ec357d4b73f7aa75df61204",
+  "text": "LCU fixed approvals in the Claude app, where answering the card for a new app could leave computer use waiting about 30 minutes, mostly in auto permission mode. Fjord's Router now checks more messages for parts meant for different sessions."
+ },
+ "2026-10-21": {
+  "hash": "c4e94947ea543bb9403809ae4ecff18ce37bb58c",
+  "text": "LCU added experimental support for DeepSeek Harness and stopped growing Hermes's prompt by about 3 KB every turn. In Fjord, each session in the Router now shows a line on what it is about overall and one on what its latest turn did."
+ },
+ "2026-10-23": {
+  "hash": "55c4612bc11ae01d33ee5e2c0ed46ba6da910d99",
+  "text": "Fjord now sends every message one way, through another session the Claude app runs, whether the target session is running or asleep. LCU's update notices now go only to the person, not into the agent's model, where they read as prompt injection."
+ },
+ "2026-10-24": {
+  "hash": "88d4f6a58b1e78021e5ea6b652694812456473b3",
+  "text": "LCU added experimental support for Junie, where a new app is allowed once the person confirms with Touch ID or their password, until revoked. On Windows, LCU now installs with the current ChatGPT app, including when it sits on another drive."
+ },
+ "2026-10-25": {
+  "hash": "b9b4d4df447e2e624a5411a433f1aaf79e98d712",
+  "text": "Fjord's Router now shows its answer as it is written, in a small box above where you type, which opens to show its thinking and the tools it used. LCU fixed computer use for teammates in Claude Code agent teams, where every call had failed."
+ },
+ "2026-10-26": {
+  "hash": "6120138b4f3ed32159e72234a6fe1b245f838066",
+  "text": "lastdrop began as a menu bar app that shows how much usage is left on Claude, Codex, Antigravity, Z.ai and OpenRouter accounts. It also learned to open a separate Claude app window for each Claude account, and to show the limit resets each account can still use."
+ },
+ "2026-10-27": {
+  "hash": "0eda17c164306b4dda83115e0c281ecef92ac732",
+  "text": "lastdrop switched to running Claude Code's subagents on other Claude accounts that still have room, instead of opening a Claude window per account. It also let people set up their own agents on Codex, Antigravity, Z.ai or OpenRouter models, which Claude calls like its own."
+ },
+ "2026-10-28": {
+  "hash": "304bc9ce8b81c5014ba5b500dc8e17e9faa3a3e8",
+  "text": "LCU stopped Claude Code from showing an error at the end of every turn when LCU wasn't connected. In lastdrop, a subagent that hits an account's usage limit now continues on another account with room instead of reporting the limit."
+ },
+ "2026-10-29": {
+  "hash": "faa788bda095a53b65d10d4f7e07183bc92cc8fe",
+  "text": "lastdrop now takes several accounts for every provider and runs agents on Codex, Z.ai and OpenRouter on the one with the most usage left. LCU's Claude Code setup stopped saving a path tied to one machine, so a skills folder kept in a repository stays the same on every machine."
+ },
+ "2026-10-30": {
+  "hash": "b2e90a874ea073adc4cb738071d64ffd9f837ce4",
+  "text": "lastdrop added a Stats tab with token use and what it would cost at API prices, by day, project, account and model. An agent can now have backup models that run if the first can't start, and the app now updates itself."
+ },
+ "2026-10-31": {
+  "hash": "0d052c5319b8a2eb08b53fbde0837bd43631a6ec",
+  "text": "lastdrop got a website and a launch video. Its settings now list each agent's fallback models, and the session and week limits for accounts now apply to Codex, Z.ai and OpenRouter too. LCU began making narrated videos for its merged changes and larger releases."
+ },
+ "2026-11-01": {
+  "hash": "9582006924cfb57236d9e55a178287de01ed8f6d",
+  "text": "LCU fixed its Windows installer, which had stopped working with the newest ChatGPT app builds. lastdrop stopped its agents from all failing once their progress pane filled up, and now marks the account its subagents actually run on."
+ },
+ "2026-11-02": {
+  "hash": "d1f7b7b744aa9fbf95da6867615e4c371f19d547",
+  "text": "LCU fixed building its Windows version, which failed at the very end when Windows briefly held on to a temporary file and it could not be deleted."
+ },
+ "2026-11-03": {
+  "hash": "7bba45241d539ff6f29550af08373ef64de9650b",
+  "text": "Silo, which runs each AI agent in its own virtual machine, now lets agents use the machine's desktop through Cua Driver instead of the ChatGPT app and LCU. It also added repeatable tests in which an agent tries to escape its machine or misuse its credentials."
+ },
+ "2026-11-04": {
+  "hash": "a1817922e5aeaeb9c745c79803e9d98b5c816fc3",
+  "text": "Silo released 0.12.0, which can run macOS computers as well as Linux ones and can keep them running after the app quits. Fjord's Router now sends each message to a Claude Code project or thread on claude.ai, and can offer to create a new project first."
+ },
+ "2026-11-05": {
+  "hash": "98352a1b9ea56e12476bd039714c67eaf1d9fb64",
+  "text": "Silo got a command-line tool, also usable by agents, to copy a computer and start the copy without its credentials or scheduled jobs. It can then show what changed in the copy, keep those changes in the original, and undo that."
+ },
+ "2026-11-06": {
+  "hash": "041a525af0ec819a0c40d50acc013127e52e8332",
+  "text": "Silo's engine can now run on a Linux machine as a background service, and its command-line tool can run commands and use desktops on computers hosted on another device. The app got screens to review an agent's changes in a copy before keeping them."
+ },
+ "2026-11-07": {
+  "hash": "d9f1154a3fb31a7695d2d639e3164eec0e17cdee",
+  "text": "Silo can now set up any Mac or Linux machine to host computers for another device, which adds it by address. A copy now starts from a computer as it is now, and a computer can run without a desktop. lastdrop now runs T3 Code's background tasks on its added models."
+ },
+ "2026-11-08": {
+  "hash": "872918db53b3dcbef940e36b78d7b58687b565b3",
+  "text": "Silo can now run GitHub Actions jobs, each in a fresh computer deleted after a successful job. On Linux it can also run computers as containers, an opt-in, less isolated option, and a whole computer can be shared as a file, even from another device."
+ },
+ "2026-11-09": {
+  "hash": "0ef4f9f647f14334e1484e5b391e564474ad830f",
+  "text": "Silo's container computers got the same desktop, computer use, checkpoints, copies, terminal and export to a file as its virtual machines. lastdrop now starts each T3 Code thread on the Claude account with the most usage left, and moves it on when that account runs out."
  },
  "2026-11-10": {
-  "hash": "2da42e691af68a5b7526b153f6f5e93fa4697ad3",
-  "text": "LCU kept computer use working in Claude Code on newer ChatGPT app builds. Silo fixed its exports so they never carry a computer's memory, and kept imported containers off the network."
+  "hash": "5ecbd6872d6847a06aa9f701d47c0f8e5c15035a",
+  "text": "Silo fixed exports so they never include a computer's memory, and an imported container computer now stays cut off from the network. LCU released 0.13.6, which got computer use in Claude Code working again with the newest ChatGPT app builds."
  }
 }

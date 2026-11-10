@@ -25,13 +25,20 @@ const all = [
   <main class:list={[landing && "is-landing"]}>
     <Hero />
     <slot />
+    {landing ? (
+      <footer class="lab-foot wrap">
+        <p>Amont, <i>n. m.</i> The upstream side of a river, toward its source. From <i>à mont</i>, “toward the mountain”.</p>
+        <a class="mono" href="/legal">Legal</a>
+      </footer>
+    ) : (
     <section class="finale" aria-labelledby="about">
-      <div class="wrap grid">
-        <h2 id="about" class="sr-only">About Amont</h2>
-        <p class="def">Amont, <i>n. m.</i> The upstream side of a river, toward its source. From <i>à mont</i>, “toward the mountain”.</p>
-      </div>
-      <div class="wrap legal-wrap"><a class="legal-link mono" href="/legal">Legal</a></div>
-    </section>
+        <div class="wrap grid">
+          <h2 id="about" class="sr-only">About Amont</h2>
+          <p class="def">Amont, <i>n. m.</i> The upstream side of a river, toward its source. From <i>à mont</i>, “toward the mountain”.</p>
+        </div>
+        <div class="wrap legal-wrap"><a class="legal-link mono" href="/legal">Legal</a></div>
+      </section>
+    )}
   </main>
   {/* prototype switcher: review aid only, not part of any design */}
   <nav class="lab-nav mono" aria-label="Prototypes">
@@ -41,15 +48,40 @@ const all = [
 </Base>
 
 <style>
+  /* one screen: the mountain takes whatever height the panel and the last line leave */
+  .is-landing {
+    display: flex;
+    flex-direction: column;
+    min-height: 100svh;
+  }
   .is-landing :global(.hero) {
-    min-height: clamp(84px, 10svh, 160px);
+    flex: 1 0 auto;
+    min-height: 132px !important;
+  }
+  .is-landing :global(section.block) {
+    padding-top: 0 !important;
   }
   /* on this page the line sits just above the panel (Journal.astro), not in the hero */
+  /* one screen: the panel, then the definition as a quiet last line */
+  .lab-foot {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    padding-top: 12px;
+    padding-bottom: 14px;
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--secondary);
+  }
+  .lab-foot a {
+    font-size: 11px;
+  }
+  .lab-foot a:hover {
+    color: var(--link);
+  }
   .is-landing :global(.hero-text) {
     display: none;
-  }
-  .is-landing :global(.hero + section.block) {
-    padding-top: 18px;
   }
   .lab-nav {
     position: fixed;

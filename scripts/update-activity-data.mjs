@@ -16,8 +16,8 @@
 //   summaries  kept in src/data/activity-summaries.json with a hash of what they were written from. A day is sent
 //              to the model once, and again only if its commits, pull requests or releases changed: in practice
 //              the current day on each run, and each day one last time after it ends.
-// What the model is given for a day: every active project's description and the start of its README, the last
-// three summaries, and per project the merged pull requests (title and description), the commit messages and the
+// What the model is given for a day: every active project's description and README, the previous ten
+// summaries, and per project the merged pull requests (title and description), the commit messages and the
 // release notes. `--dry=<file>` writes those requests to a file without calling the model, to read or to size them.
 // Days are Europe/Paris days. Always exits 0; a repo the API could not reach keeps its previous data.
 import { spawnSync } from "node:child_process";
@@ -41,8 +41,13 @@ const VIA = process.env.ANTHROPIC_API_KEY
     : null;
 const DAYS = 30,
   LOG_DAYS = 30;
-// per project and day, the model reads at most this many commit messages (the rest are counted, and it is told so)
-const MAX_COMMITS = 120;
+// What the model reads is not trimmed for size: these ceilings are only there so that an accident (a generated
+// file pasted into a commit message, a release note with a full changelog) cannot swamp a request.
+const MAX_COMMITS = 600; // commit messages per project and day; the rest are counted, and it is told so
+const MAX = { pull: 20000, commit: 8000, release: 20000, readme: 30000 }; // characters
+const PREVIOUS = 10; // earlier summaries it is shown, for continuity
+const AIM = 280, // characters the summary is asked to stay within
+  LIMIT = 360; // past this it is asked to shorten what it wrote
 const headers = { Accept: "application/vnd.github+json", "User-Agent": "amontlabs.com" };
 if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
 
@@ -227,12 +232,12 @@ for (const d of [...logDays].reverse()) {
         commits_total: p.n,
         pull_requests_merged: p.pulls
           .sort((a, b) => quiet(a) - quiet(b))
-          .map((x) => ({ title: x.title, description: cut(x.body, 1500) })),
+          .map((x) => ({ title: x.title, description: cut(x.body, MAX.pull) })),
         commits: p.commits
           .slice(0, MAX_COMMITS)
-          .map((m) => ({ subject: tidy(first(m)), body: cut(rest(m), 400) || undefined })),
+          .map((m) => ({ subject: tidy(first(m)), body: cut(rest(m), MAX.commit) || undefined })),
         commits_not_shown: Math.max(0, p.commits.length - MAX_COMMITS) || undefined,
-        releases: p.releases.map((x) => ({ version: x.tag_name, notes: cut(x.body, 800) })),
+        releases: p.releases.map((x) => ({ version: x.tag_name, notes: cut(x.body, MAX.release) })),
       })),
   );
 }
@@ -245,11 +250,11 @@ journal.sort((a, b) => (a.day < b.day ? 1 : -1));
 // ---- summaries: one per day, written once and again only when the day's content changed
 const SYSTEM = `You write the daily activity journal on amontlabs.com, the site of Amont Labs, a small lab building what AI agents need to do real work. Visitors who have never seen these repositories read the journal to learn what the lab is working on and how much is happening. They are technical, but they do not know the projects' internals.
 
-You receive one day of work as JSON: for each project that moved, what the project is (its description and the start of its README), its merged pull requests with their descriptions, its commit messages, and any releases with their notes. You also receive the previous days' summaries, so that you can say when work continues or lands rather than repeat yourself. If "day_is_over" is false, the day is still going and you are describing it so far.
+You receive one day of work as JSON: for each project that moved, what the project is (its description and its README), its merged pull requests with their descriptions, its commit messages, and any releases with their notes. You also receive the previous days' summaries, so that you can say when work continues or lands rather than repeat yourself. If "day_is_over" is false, the day is still going and you are describing it so far.
 
 Write the summary of that day for a reader who knows nothing about these projects:
 
-- Be concise and very simple: one or two short sentences, at most 200 characters in total. Plain text, no markdown, no lists.
+- Be concise and very simple: one to three short sentences, at most ${AIM} characters in total. Shorter is better when the day was small. Plain text, no markdown, no lists.
 - Use everyday words. Say what a project can now do or what was fixed, the way you would tell a friend who does not work on it. No internal names, phase codes, file names or jargon; if a term would need explaining, say the plain thing instead. Use the README to understand the project's vocabulary, then leave that vocabulary out.
 - Pick the one or two things that matter most that day and leave the rest out. A project with only housekeeping (formatting, CI, dependency bumps, release chores, review follow-ups) can be left out entirely.
 - Name each project you mention by its "name", written exactly that way.
@@ -276,14 +281,14 @@ const request = async (d, m) => ({
   previous_summaries: Object.entries({ ...cache, ...summaries })
     .filter(([k]) => k < d)
     .sort((a, b) => (a[0] < b[0] ? 1 : -1))
-    .slice(0, 3)
+    .slice(0, PREVIOUS)
     .map(([k, v]) => ({ day: k, text: v.text })),
   projects: await Promise.all(
     m.map(async (x) => ({
       repository: x.repository,
       name: x.name,
       description: about[x.repository],
-      readme_start: cut(await readme(x.repository), 2500),
+      readme: cut(await readme(x.repository), MAX.readme),
     })),
   ),
   activity: m,
@@ -291,7 +296,7 @@ const request = async (d, m) => ({
 // One model call, returning its text. The API through the SDK, or a Claude subscription through the Claude Code
 // CLI used as a plain call (no tools, only this system prompt).
 let client;
-const ask = async (system, input, max) => {
+const ask = async (system, input) => {
   let text;
   if (VIA === "claude-code") {
     const run = spawnSync(
@@ -324,7 +329,18 @@ const ask = async (system, input, max) => {
     if (res.stop_reason !== "end_turn") throw new Error(`stopped: ${res.stop_reason}`);
     text = JSON.parse(res.content.find((b) => b.type === "text").text).text.trim();
   }
-  if (!text || text.length > max) throw new Error(`unusable text (${text.length} characters)`);
+  if (!text) throw new Error("empty answer");
+  return text;
+};
+// A text within `max` characters: one that runs over is sent back to be shortened (twice at most), not thrown away.
+const askWithin = async (system, input, max) => {
+  let text = await ask(system, input);
+  for (let k = 0; k < 2 && text.length > max; k++)
+    text = await ask(
+      `${system}\n\nYour last answer to this same request was ${text.length} characters, over the limit of ${max}:\n\n${text}\n\nWrite it again within the limit, keeping what matters most.`,
+      input,
+    );
+  if (text.length > max) throw new Error(`still ${text.length} characters after two rewrites`);
   return text;
 };
 if (DRY) {
@@ -337,7 +353,7 @@ if (DRY) {
   for (const [d, m] of pending) {
     try {
       if (!VIA) throw new Error("no model credentials");
-      summaries[d] = { hash: hash(m), text: await ask(SYSTEM, await request(d, m), 300) };
+      summaries[d] = { hash: hash(m), text: await askWithin(SYSTEM, await request(d, m), LIMIT) };
       console.log(`${d} summarised`);
     } catch (e) {
       if (VIA) console.error(`${d} not summarised:`, e.message);
@@ -365,11 +381,11 @@ const explainers = {};
 for (const name of Object.keys(repos)) {
   try {
     if (failed.has(name)) throw new Error("repository not read");
-    const src = { name: NAMES[name] ?? name, description: about[name], readme: cut(await readme(name), 9000) };
+    const src = { name: NAMES[name] ?? name, description: about[name], readme: cut(await readme(name), MAX.readme) };
     const h = hash({ format: 2, ...src });
     if (explCache[name]?.hash === h) explainers[name] = explCache[name];
     else if (VIA && !DRY) {
-      const out = JSON.parse((await ask(EXPLAIN, src, 700)).replace(/^```(?:json)?\s*|\s*```$/g, ""));
+      const out = JSON.parse((await ask(EXPLAIN, src)).replace(/^```(?:json)?\s*|\s*```$/g, ""));
       const points = Array.isArray(out.points) ? out.points.map((x) => String(x).trim().replace(/\.$/, "")) : [];
       if (typeof out.lead !== "string" || out.lead.length > 150 || points.length !== 3 || points.some((x) => !x || x.length > 95))
         throw new Error("unusable explanation");
@@ -392,7 +408,8 @@ const next = {
   journal,
 };
 const strip = ({ updatedAt, ...rest }) => rest;
-if (JSON.stringify(strip(prev)) === JSON.stringify(next)) console.log("activity unchanged");
+if (DRY) console.log("dry run: nothing written");
+else if (JSON.stringify(strip(prev)) === JSON.stringify(next)) console.log("activity unchanged");
 else {
   writeFileSync(FILE, `${JSON.stringify({ ...next, updatedAt: now.toISOString() })}\n`);
   console.log("activity updated", next.totals, `${journal.length} days in the journal`);
