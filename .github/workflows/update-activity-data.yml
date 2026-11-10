@@ -1,7 +1,7 @@
 name: Update activity data
 on:
   schedule:
-    - cron: "12 */6 * * *"
+    - cron: "15 */6 * * *"
   workflow_dispatch:
   repository_dispatch:
     types: [silo-release, release]

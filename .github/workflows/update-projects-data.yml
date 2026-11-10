@@ -1,7 +1,7 @@
 name: Update project data
 on:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "5 */2 * * *"
   workflow_dispatch:
   repository_dispatch:
     types: [silo-release, release]
