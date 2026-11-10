@@ -32,13 +32,17 @@ const NAMES = { silo: "Silo", fjord: "Fjord", sic: "Sic", lcu: "LCU", lastdrop: 
 const FILE = new URL("../src/data/activity.json", import.meta.url);
 const SUMMARIES = new URL("../src/data/activity-summaries.json", import.meta.url);
 const EXPLAINERS = new URL("../src/data/activity-explainers.json", import.meta.url);
-const MODEL = process.env.ACTIVITY_MODEL ?? "claude-opus-5-5";
+const VIA = process.env.OPENROUTER_API_KEY
+  ? "openrouter"
+  : process.env.ANTHROPIC_API_KEY
+    ? "api"
+    : process.env.CLAUDE_CODE_OAUTH_TOKEN || process.env.ACTIVITY_VIA === "claude-code"
+      ? "claude-code"
+      : null;
+const MODEL =
+  process.env.ACTIVITY_MODEL ??
+  (VIA === "openrouter" ? "anthropic/claude-sonnet-5.5" : "claude-sonnet-5-5");
 const DRY = process.argv.find((a) => a.startsWith("--dry="))?.slice(6);
-const VIA = process.env.ANTHROPIC_API_KEY
-  ? "api"
-  : process.env.CLAUDE_CODE_OAUTH_TOKEN || process.env.ACTIVITY_VIA === "claude-code"
-    ? "claude-code"
-    : null;
 const DAYS = 30,
   LOG_DAYS = 30;
 // What the model reads is not trimmed for size: these ceilings are only there so that an accident (a generated
@@ -78,7 +82,7 @@ const get = async (path) => {
 const first = (m) => m.split("\n")[0].trim();
 const rest = (m) => m.split("\n").slice(1).join("\n").trim();
 const cut = (s, n) => (s && s.length > n ? `${s.slice(0, n)} […]` : (s ?? ""));
-const noise = (s) => /^(merge\b|chore(\(.*\))?:|ci(\(.*\))?:|docs\(release\)|bump\b)/i.test(s);
+const noise = (s) => /^(merge\b|chore(\(.*\))?:|ci(\(.*\))?:|build(\(.*\))?:|docs\(release\)|bump\b)/i.test(s);
 const tidy = (s) => s.replace(/\s*\(#\d+\)$/, "");
 const bot = (login) => !login || /\[bot\]$/.test(login);
 const read = (url) => {
@@ -232,10 +236,17 @@ for (const d of [...logDays].reverse()) {
         commits_total: p.n,
         pull_requests_merged: p.pulls
           .sort((a, b) => quiet(a) - quiet(b))
-          .map((x) => ({ title: x.title, description: cut(x.body, MAX.pull) })),
-        commits: p.commits
-          .slice(0, MAX_COMMITS)
-          .map((m) => ({ subject: tidy(first(m)), body: cut(rest(m), MAX.commit) || undefined })),
+          .map((x) => ({ title: x.title, description: quiet(x) ? undefined : cut(x.body, MAX.pull) || undefined })),
+        commits: (() => {
+          const prTitles = new Set(p.pulls.map((x) => tidy(first(x.title)).toLowerCase()));
+          return p.commits
+            .slice(0, MAX_COMMITS)
+            .map((m) => {
+              const subject = tidy(first(m));
+              const isDupe = prTitles.has(subject.toLowerCase());
+              return { subject, body: isDupe ? undefined : cut(rest(m), MAX.commit) || undefined };
+            });
+        })(),
         commits_not_shown: Math.max(0, p.commits.length - MAX_COMMITS) || undefined,
         releases: p.releases.map((x) => ({ version: x.tag_name, notes: cut(x.body, MAX.release) })),
       })),
@@ -269,7 +280,14 @@ const readmes = {};
 const readme = async (repo) => {
   if (!(repo in readmes)) {
     const r = await fetch(api(`${repo}/readme`), { headers: { ...headers, Accept: "application/vnd.github.raw+json" } });
-    readmes[repo] = r.ok ? await r.text() : "";
+    if (r.ok) {
+      const full = await r.text();
+      // Keep overview and architecture up to installation/developer sections
+      const intro = full.split(/\n##+ (?:Install|Develop|Build from source|Development|Help and license)\b/i)[0];
+      readmes[repo] = cut(intro, 8000);
+    } else {
+      readmes[repo] = "";
+    }
   }
   return readmes[repo];
 };
@@ -298,7 +316,55 @@ const request = async (d, m) => ({
 let client;
 const ask = async (system, input) => {
   let text;
-  if (VIA === "claude-code") {
+  if (VIA === "openrouter") {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://amontlabs.com",
+        "X-Title": "Amont Labs Activity",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: "system", content: `${system}\n\nReply with JSON only: {"text": "..."}` },
+          { role: "user", content: JSON.stringify(input) },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "response",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: { text: { type: "string" } },
+              required: ["text"],
+              additionalProperties: false,
+            },
+          },
+        },
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`OpenRouter ${res.status}: ${err.slice(0, 300)}`);
+    }
+    const data = await res.json();
+    const content = data.choices?.[0]?.message?.content?.trim();
+    if (!content) throw new Error("empty answer from OpenRouter");
+    try {
+      text = JSON.parse(content).text?.trim() ?? content;
+    } catch {
+      text = content.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+      if (text.startsWith("{")) {
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed.text) text = parsed.text.trim();
+        } catch {}
+      }
+    }
+  } else if (VIA === "claude-code") {
     const run = spawnSync(
       "claude",
       ["-p", "--model", MODEL, "--system-prompt", `${system}\n\nReply with the text and nothing else.`, "--tools", "", "--output-format", "json", "--no-session-persistence", "--strict-mcp-config", "--disable-slash-commands"],
