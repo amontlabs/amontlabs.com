@@ -501,6 +501,8 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     align-items: center;
     gap: 6px;
     visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s linear;
   }
   .jr-tabs button {
     display: inline-flex;
@@ -547,6 +549,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     }
     .jr-rows.has-open .jr-tabs > div {
       visibility: visible;
+      opacity: 1;
     }
     .jr-rows.has-open .jr-item:not(.is-open) {
       border-bottom-width: 0;
@@ -798,7 +801,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     .jr-item.is-open .jr-axis-in {
       display: grid;
       height: 22px;
-      margin-bottom: 8px;
+      margin-bottom: 5px;
     }
     /* nothing above the tabs but space */
     .jr-rows.has-open {
@@ -877,20 +880,26 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     transform: none;
     transition: opacity 0.3s linear 0.08s, transform 0.42s var(--out);
   }
-  /* from one open project to another: the panel keeps its size and place, nothing folds or unfolds, only the
-     content crossfades (the old one goes at once, the new one fades in where it stands) */
+  /* opening, closing or switching on wide screens: the panel is the same size in every state (six rows plus the
+     axis = tabs plus one open project), so nothing folds or unfolds. The layout changes at once; the row that
+     stays on screen glides from where it was to where it lands (script), and the rest fades in around it */
   @media (min-width: 900px) {
-    .jr-rows.is-swap .jr-tabs,
-    .jr-rows.is-swap .jr-rowline,
-    .jr-rows.is-swap .jr-more,
-    .jr-rows.is-swap .jr-more-in,
-    .jr-rows.is-swap .jr-chev,
-    .jr-rows.is-swap .jr-item:not(.is-open) .jr-view {
+    .jr-rows.is-snap .jr-tabs,
+    .jr-rows.is-snap .jr-more,
+    .jr-rows.is-snap .jr-more-in,
+    .jr-rows.is-snap .jr-item:not(.is-open) .jr-view {
       transition: none;
     }
-    .jr-rows.is-swap .is-open .jr-view {
+    .jr-rows.is-snap .jr-rowline {
+      transition: opacity 0.24s linear 0.12s;
+    }
+    .jr-rows.is-snap .is-open .jr-view {
       transform: none;
-      transition: opacity 0.22s linear;
+      transition: opacity 0.26s linear 0.1s;
+    }
+    /* the gliding row starts where it was, at its new height: keep it inside the panel so the page never grows */
+    .jr-rows.is-gliding {
+      overflow: clip;
     }
   }
   /* with a film: the film on the left, everything about the project on the right */
@@ -1475,10 +1484,14 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     document.dispatchEvent(new CustomEvent('px:tint', { detail: { color } }));
   };
   const set = (id: string | null, reveal = false) => {
-    // switching straight from one project to another: no fold/unfold, see `.is-swap`
-    const swap = !!open && !!id && open !== id;
+    // wide screens: no fold/unfold, see `.is-snap`. The row opened (or closed) glides to its new place.
+    const prev = open;
+    const snap = prev !== id && matchMedia('(min-width: 900px)').matches;
+    const glide = snap && !(prev && id) && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const anchor = glide ? its.find((x) => x.dataset.r === (id ?? prev)) : undefined;
+    const from = anchor?.getBoundingClientRect().top ?? 0;
     open = id;
-    if (swap) rows.classList.add('is-swap');
+    if (snap) rows.classList.add('is-snap');
     rows.classList.toggle('has-open', !!id);
     for (const tab of root.querySelectorAll<HTMLElement>('[data-tab]')) tab.setAttribute('aria-pressed', String(tab.dataset.tab === id));
     for (const it of its) {
@@ -1501,10 +1514,16 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
         }
       }
     }
-    if (swap) {
+    if (snap) {
       // commit the new layout with transitions off, then hand transitions back (running fades keep going)
       void rows.offsetHeight;
-      requestAnimationFrame(() => rows.classList.remove('is-swap'));
+      requestAnimationFrame(() => rows.classList.remove('is-snap'));
+      const dy = anchor ? from - anchor.getBoundingClientRect().top : 0;
+      if (anchor && Math.abs(dy) > 0.5) {
+        rows.classList.add('is-gliding');
+        const g = anchor.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 380, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+        g.onfinish = g.oncancel = () => rows.classList.remove('is-gliding');
+      }
     }
     tint(id);
     history.replaceState(null, '', id ? `#${id}` : location.pathname + location.search);
