@@ -7,9 +7,9 @@
 // a row's name opens that project in place (film, what it is, where to get it, what was said about it lately).
 // Every day's entry is in the page and stacked in one grid cell, so switching days moves nothing.
 // Data: src/data/activity.json (scripts/update-activity-data.mjs). Same-origin and static: the page asks GitHub nothing.
-import activity from "../../data/activity.json";
-import Icon from "../Icon.astro";
-import { clock, count, items, KIND, OS, others, STAGES } from "../../data/items";
+import activity from "../data/activity.json";
+import Icon from "./Icon.astro";
+import { clock, count, items, KIND, OS, others, STAGES } from "../data/items";
 
 type Entry = { day: string; text?: string; repos: { repo: string; n: number; merged: number }[]; releases: { repo: string; to: string; from: string | null; n: number; url: string }[]; highlights: { repo: string; text: string; url: string }[] };
 type Repo = { name: string; about: string; explain?: { lead: string; points: string[] }; stars: number; forks: number; license: string | null; created: string | null; languages: { name: string; share: number }[]; latest: { tag: string; at: string; url: string } | null; weeks: { w: string; n: number }[]; shipped: string[]; daily: number[]; commits: number; merged: number; releases: number };
