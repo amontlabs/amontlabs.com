@@ -164,10 +164,10 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
                     <div class="jr-about">
                       <p class="jr-sub">{pitch?.lead ?? it?.sub ?? line}</p>
                       {pitch && <ul class="jr-points">{pitch.points.map((x) => <li>{x}</li>)}</ul>}
+                      {it && it.needs.length > 0 && <p class="jr-needs mono dim"><Icon name="link" size={12} />Works with {it.needs.join(", ")}</p>}
                     </div>
                     <div class="jr-acts">
                       <p class="jr-links">{links.map((l) => <a href={l.href}><Icon name={l.kind === "github" ? "github" : "site"} size={14} />{l.label}</a>)}</p>
-                      {it && it.needs.length > 0 && <p class="jr-needs mono dim"><Icon name="link" size={12} />Works with {it.needs.join(", ")}</p>}
                     </div>
                     <div class="jr-profile">
                       {stage && (
@@ -768,13 +768,13 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
      the six rows of the default view share that same height */
   @media (min-width: 900px) {
     .jr-view {
-      min-height: 282px;
+      min-height: 254px;
     }
     .jr-rows:not(.has-open) .jr-rowline {
-      height: 62px;
+      height: 57px;
     }
     .jr-rows:not(.has-open) .jr-strip {
-      --plot: 40px;
+      --plot: 38px;
     }
   }
   /* the axis belongs under the chart: with a project open, its own copy shows right below its strip */
@@ -942,7 +942,8 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     gap: 8px;
   }
   .jr-needs {
-    display: inline-flex;
+    margin-top: 12px;
+    display: flex;
     align-items: center;
     gap: 6px;
     font-size: 11px;
