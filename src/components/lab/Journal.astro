@@ -764,6 +764,19 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     height: 26px;
     font-size: 11px;
   }
+  /* one size for the panel whatever it shows: every opened project takes the room the longest one needs, and
+     the six rows of the default view share that same height */
+  @media (min-width: 900px) {
+    .jr-view {
+      min-height: 280px;
+    }
+    .jr-rows:not(.has-open) .jr-rowline {
+      height: 62px;
+    }
+    .jr-rows:not(.has-open) .jr-strip {
+      --plot: 40px;
+    }
+  }
   /* the axis belongs under the chart: with a project open, its own copy shows right below its strip */
   .jr-axis-in {
     display: none;
@@ -861,7 +874,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   .jr-film {
     position: relative;
     align-self: start;
-    height: 188px;
+    height: 196px;
     border: 1px solid var(--line);
     border-radius: 10px;
     overflow: hidden;
