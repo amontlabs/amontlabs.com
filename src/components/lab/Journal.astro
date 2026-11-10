@@ -164,10 +164,10 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
                     <div class="jr-about">
                       <p class="jr-sub">{pitch?.lead ?? it?.sub ?? line}</p>
                       {pitch && <ul class="jr-points">{pitch.points.map((x) => <li>{x}</li>)}</ul>}
-                      <div class="jr-acts">
-                        <p class="jr-links">{links.map((l) => <a href={l.href}><Icon name={l.kind === "github" ? "github" : "site"} size={14} />{l.label}</a>)}</p>
-                        {it && it.needs.length > 0 && <p class="jr-needs mono dim"><Icon name="link" size={12} />Works with {it.needs.join(", ")}</p>}
-                      </div>
+                    </div>
+                    <div class="jr-acts">
+                      <p class="jr-links">{links.map((l) => <a href={l.href}><Icon name={l.kind === "github" ? "github" : "site"} size={14} />{l.label}</a>)}</p>
+                      {it && it.needs.length > 0 && <p class="jr-needs mono dim"><Icon name="link" size={12} />Works with {it.needs.join(", ")}</p>}
                     </div>
                     <div class="jr-profile">
                       {stage && (
@@ -768,7 +768,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
      the six rows of the default view share that same height */
   @media (min-width: 900px) {
     .jr-view {
-      min-height: 280px;
+      min-height: 282px;
     }
     .jr-rows:not(.has-open) .jr-rowline {
       height: 62px;
@@ -954,8 +954,41 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    align-content: start;
     gap: 8px 14px;
-    margin-top: 14px;
+  }
+  /* with a film: the film and the way to the project on the left, what it is in the middle, its figures on the right */
+  @media (min-width: 900px) {
+    .jr-view.has-film {
+      grid-template-rows: auto 1fr;
+      row-gap: 14px;
+    }
+    .jr-view.has-film .jr-film {
+      grid-area: 1 / 1;
+    }
+    /* as wide as the film, never wider: it must not widen the column */
+    .jr-view.has-film .jr-acts {
+      grid-area: 2 / 1;
+      width: 0;
+      min-width: 100%;
+    }
+    .jr-view.has-film .jr-about {
+      grid-area: 1 / 2 / -1 / 2;
+    }
+    .jr-view.has-film .jr-profile {
+      grid-area: 1 / 3 / -1 / 3;
+    }
+    .jr-view:not(.has-film) {
+      grid-template-rows: auto 1fr;
+      row-gap: 16px;
+    }
+    .jr-view:not(.has-film) .jr-profile {
+      grid-area: 1 / 2 / -1 / 2;
+    }
+    /* the figures take the full height: their sections spread over it */
+    .jr-profile {
+      align-content: space-between !important;
+    }
   }
   .jr-links a {
     display: inline-flex;
