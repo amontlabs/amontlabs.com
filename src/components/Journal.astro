@@ -13,7 +13,7 @@ import { clock, count, items, KIND, OS, others, STAGES } from "../data/items";
 
 type Entry = { day: string; text?: string; repos: { repo: string; n: number; merged: number }[]; releases: { repo: string; to: string; from: string | null; n: number; url: string }[]; highlights: { repo: string; text: string; url: string }[] };
 type Repo = { name: string; about: string; explain?: { lead: string; points: string[] }; stars: number; forks: number; license: string | null; created: string | null; languages: { name: string; share: number }[]; latest: { tag: string; at: string; url: string } | null; weeks: { w: string; n: number }[]; shipped: string[]; daily: number[]; commits: number; merged: number; releases: number };
-const A = activity as unknown as { days: string[]; repos: Record<string, Repo>; totals: { commits: number; merged: number; releases: number }; journal: Entry[]; updatedAt: string };
+const A = activity as unknown as { days: string[]; repos: Record<string, Repo>; totals: { commits: number; merged: number; outside?: number; issues?: number; releases: number }; journal: Entry[]; updatedAt: string };
 const nf = new Intl.NumberFormat("en-GB");
 const dfmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 const label = (d: string) => dfmt.format(new Date(`${d}T12:00:00Z`));
@@ -56,7 +56,8 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
         <h2 id="jr-h" class="sr-only">Activity</h2>
         <dl class="jr-nums">
           <div><dd>{nf.format(A.totals.commits)}</dd><dt>commits</dt></div>
-          <div><dd>{nf.format(A.totals.merged)}</dd><dt>pull requests merged</dt></div>
+          <div><dd>{nf.format(A.totals.merged)}</dd><dt>PRs merged{A.totals.outside ? ` · ${nf.format(A.totals.outside)} from contributors` : ""}</dt></div>
+          <div><dd>{nf.format(A.totals.issues ?? 0)}</dd><dt>issues closed</dt></div>
           <div><dd>{nf.format(A.totals.releases)}</dd><dt>releases</dt></div>
           <div class="mono dim"><dt>in the last 30 days</dt></div>
         </dl>

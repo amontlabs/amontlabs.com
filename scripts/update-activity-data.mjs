@@ -116,17 +116,24 @@ const repos = {},
   book = new Map(logDays.map((d) => [d, new Map()]));
 let commitsAll = 0,
   releasesAll = 0,
-  mergedAll = 0;
+  mergedAll = 0,
+  outsideAll = 0,
+  issuesAll = 0;
 const failed = new Set();
 for (const { name, description, ...gh } of list) {
   try {
-    const [commits, pulls, releases] = await Promise.all([
+    const [commits, pulls, releases, closed] = await Promise.all([
       get(`${name}/commits?since=${since}`),
       get(`${name}/pulls?state=closed&sort=updated&direction=desc`),
       get(`${name}/releases`),
+      get(`${name}/issues?state=closed&since=${since}`),
     ]);
     const daily = days.map(() => 0);
     const merged = pulls.filter((p) => p.merged_at && days.includes(dayOf(p.merged_at)));
+    // pull requests from people outside the organisation (not its owner or members, not bots)
+    const outside = merged.filter((p) => !bot(p.user?.login) && !["OWNER", "MEMBER"].includes(p.author_association));
+    // the issues endpoint lists pull requests too
+    const issues = closed.filter((i) => !i.pull_request && i.closed_at && days.includes(dayOf(i.closed_at)));
     const rels = releases.filter(
       (r) => !r.draft && !r.prerelease && /^v\d/.test(r.tag_name) && days.includes(dayOf(r.published_at)),
     );
@@ -152,7 +159,7 @@ for (const { name, description, ...gh } of list) {
     }
     for (const r of rels) page(dayOf(r.published_at))?.releases.push(r);
     const total = daily.reduce((a, b) => a + b, 0);
-    if (!total && !merged.length && !rels.length) continue;
+    if (!total && !merged.length && !rels.length && !issues.length) continue;
     const langs = await fetch(api(`${name}/languages`), { headers }).then((r) => (r.ok ? r.json() : {}));
     const bytes = Object.values(langs).reduce((a, b) => a + b, 0);
     // the project's whole life, week by week (GitHub keeps the last 52; it answers 202 while it computes them)
@@ -192,10 +199,14 @@ for (const { name, description, ...gh } of list) {
       commits: total,
       week: daily.slice(-7).reduce((a, b) => a + b, 0),
       merged: merged.length,
+      outside: outside.length,
+      issues: issues.length,
       releases: rels.length,
     };
     commitsAll += total;
     mergedAll += merged.length;
+    outsideAll += outside.length;
+    issuesAll += issues.length;
     releasesAll += rels.length;
   } catch (e) {
     console.error(`${name} not updated:`, e.message);
@@ -530,11 +541,11 @@ if (!DRY && JSON.stringify(explainers) !== JSON.stringify(explCache))
 const next = {
   days,
   repos,
-  totals: { commits: commitsAll, merged: mergedAll, releases: releasesAll, people: people.size },
+  totals: { commits: commitsAll, merged: mergedAll, outside: outsideAll, issues: issuesAll, releases: releasesAll, people: people.size },
   journal,
 };
 const strip = ({ updatedAt, ...rest }) => rest;
-if (DRY) console.log("dry run: nothing written");
+if (DRY) console.log("dry run: nothing written", next.totals);
 else if (JSON.stringify(strip(prev)) === JSON.stringify(next)) console.log("activity unchanged");
 else {
   writeFileSync(FILE, `${JSON.stringify({ ...next, updatedAt: now.toISOString() })}\n`);
