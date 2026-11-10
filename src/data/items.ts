@@ -83,9 +83,9 @@ export const items: Item[] = [
     pitch: {
       lead: "Fjord sits between your T3 Code agents and GitHub, and brings you only what you need to know or decide.",
       points: [
-        "Type once: the Router delivers your message to the right session, and brings back every question and plan that needs you",
+        "Type once: the Router delivers your message to the right thread, and brings back every question and plan that needs you",
         "Sort your GitHub inbox and CI by rules you write as sentences",
-        "Hand a failing check to the session that can fix it",
+        "Hand a failing check to the thread that can fix it",
       ],
     },
   },
@@ -158,9 +158,8 @@ export const items: Item[] = [
     pitch: {
       lead: "lastdrop turns any AI subscription into a native subagent for Claude Code and T3 Code.",
       points: [
-        "Any subscription or API key becomes an agent Claude calls like its own",
+        "Any subscription or API key becomes an agent Claude calls like its own, with its model, effort and fallbacks",
         "Balances the work across your accounts, on the one with the most usage left",
-        "Describe each agent once: when to use it, its model and effort, with fallbacks",
         "Adds auto mode where it is missing (Z.ai, Antigravity, OpenRouter): a judge checks every command",
       ],
     },
