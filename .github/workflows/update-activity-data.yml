@@ -17,10 +17,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # Summaries: Claude subscription 1 -> Claude subscription 2 -> OpenRouter -> Anthropic API
-      - name: Install Claude Code (for Claude subscriptions)
-        if: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN_1 != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN_2 != '' }}
-        run: npm install -g @anthropic-ai/claude-code
+      - name: Install Claude Code
+        run: |
+          if [ -n "$TOKEN_1" ] || [ -n "$TOKEN_2" ] || [ -n "$TOKEN" ]; then
+            npm install -g @anthropic-ai/claude-code
+          else
+            echo "No Claude subscription tokens set; skipping Claude Code install"
+          fi
+        env:
+          TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          TOKEN_1: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_1 }}
+          TOKEN_2: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_2 }}
       - run: node scripts/update-activity-data.mjs
         env:
           GITHUB_TOKEN: ${{ github.token }}
