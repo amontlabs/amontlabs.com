@@ -10,11 +10,11 @@
  },
  "silo": {
   "hash": "13631efa8a4be8c5e6ea1e5d388cb1042967f9a8",
-  "lead": "Silo gives your AI agents their own isolated computers to do real work, with a desktop and computer use.",
+  "lead": "Silo gives your AI agents their own isolated computers that you can branch, diff and fold back like a Git repo.",
   "points": [
-   "Runs each agent in its own sandbox so they can build, install tools and execute code without touching your host",
-   "Watch agents work live on a real desktop, or let them drive browsers and graphical apps via computer use",
-   "Save instant checkpoints to roll an agent back when things break, or fork machines to work in parallel"
+   "Run each agent in its own machine with a terminal, desktop and computer use, away from your host",
+   "Fork a machine at any checkpoint to explore in parallel, let an agent run wild or share with a teammate",
+   "Review the state diff of any fork and fold the changes you want back into your main machine"
   ]
  },
  "lcu": {
