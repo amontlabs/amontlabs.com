@@ -132,7 +132,6 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
                         <span aria-label={`${R.forks} forks`}><Icon name="fork" size={11} />{count(R.forks)}</span></span>
                       </span>
                     </span>
-                    <svg class="jr-chev" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
                   </button>
                 </h3>
                 <div class="jr-strip" aria-hidden="true" data-daily={R.daily.join(",")}>
@@ -144,6 +143,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
                   ))}
                 </div>
                 <span class="jr-total mono dim" data-total={nf.format(R.commits)} aria-label={`${nf.format(R.commits)} commits in the last 30 days`}>{nf.format(R.commits)}</span>
+                <button type="button" class="jr-tog" data-open={id} tabindex="-1" aria-hidden="true"><svg class="jr-chev" viewBox="0 0 16 16" width="16" height="16"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
               </div>
               <div class="jr-more" id={`jr-more-${id}`} role="region" aria-label={R.name}>
                 <div class="jr-more-in">
@@ -238,8 +238,8 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     --c4: #eda100;
     --c5: #e87ba4;
     --c6: #008300;
-    --who: 500px; /* the identity column; the strips take the rest */
-    --tot: 52px;
+    --who: 480px; /* the identity column; the strips take the rest */
+    --tot: 48px;
     --out: cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   :global(:root[data-theme="dark"]) .jr {
@@ -275,8 +275,6 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   .jr-title {
     position: relative;
     isolation: isolate;
-    width: fit-content;
-    max-width: 100%;
     margin: 0 0 20px;
     font-size: clamp(27px, 3.1vw, 46px);
     line-height: 1.08;
@@ -284,13 +282,20 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     letter-spacing: -0.035em;
     text-wrap: balance;
   }
-  /* the page colour, feathered, so the mountain never fights the line */
+  /* the mountain thins out into the page colour behind the line, like its foot in mist: one band across the
+     whole window, anchored to the line itself */
+  .jr {
+    overflow-x: clip;
+  }
   .jr-title::before {
     content: "";
     position: absolute;
-    inset: -34px -72px;
     z-index: -1;
-    background: radial-gradient(closest-side, color-mix(in srgb, var(--bg) 84%, transparent) 40%, transparent);
+    top: -120px;
+    bottom: -34px;
+    left: calc(50% - 50vw);
+    width: 100vw;
+    background: linear-gradient(transparent, color-mix(in srgb, var(--bg) 92%, transparent) 62%, color-mix(in srgb, var(--bg) 92%, transparent) 84%, transparent);
     pointer-events: none;
   }
   /* one panel: a solid ground over the river, so the section reads as a single object */
@@ -478,7 +483,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   }
   .jr-rowline {
     display: grid;
-    grid-template-columns: var(--who) minmax(0, 1fr) var(--tot);
+    grid-template-columns: var(--who) minmax(0, 1fr) var(--tot) 32px;
     align-items: center;
     height: 50px;
     transition: height 0.36s var(--out), opacity 0.2s linear;
@@ -640,27 +645,34 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     color: var(--secondary);
     transition: color 0.15s;
   }
-  .jr-who .jr-chev {
-    flex: none;
+  .jr-tog {
+    display: grid;
+    place-items: center end;
+    height: 100%;
     color: var(--secondary);
-    transition: transform 0.3s var(--out), color 0.15s;
+    transition: color 0.15s;
   }
-  .jr-who:hover .jr-line,
-  .jr-who:hover .jr-chev,
-  .is-open .jr-who .jr-chev {
+  .jr-chev {
+    transition: transform 0.3s var(--out);
+  }
+  .jr-who:hover .jr-line {
     color: var(--text);
   }
-  .is-open .jr-who .jr-chev {
+  .jr-tog:hover,
+  .jr-rowline:has(.jr-who:hover) .jr-tog,
+  .is-open .jr-tog {
+    color: var(--text);
+  }
+  .is-open .jr-chev {
     transform: rotate(180deg);
   }
   /* the strip: thirty slots on the axis every row shares */
   .jr-strip {
-    --plot: 34px;
+    --plot: 32px;
     position: relative;
     display: flex;
     align-items: flex-end;
     height: 100%;
-    padding-bottom: 9px;
     cursor: crosshair;
     touch-action: pan-y;
   }
@@ -671,34 +683,34 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     height: var(--plot);
     display: flex;
     align-items: flex-end;
-    padding: 0 2px;
+    justify-content: center;
   }
+  /* every bar the same width whatever the window, standing on the row's line */
   .jr-strip span > i {
     display: block;
-    width: 100%;
-    height: max(2px, calc(var(--v) * var(--plot)));
-    border-radius: 2px 2px 0 0;
+    width: min(100% - 3px, 14px);
+    height: max(3px, calc(var(--v) * var(--plot)));
+    border-radius: 2.5px 2.5px 0 0;
     background: var(--c);
     transform-origin: 50% 100%;
   }
   .jr-strip span.is-over > i {
-    -webkit-mask-image: linear-gradient(#000 4px, transparent 4px, transparent 6px, #000 6px);
-    mask-image: linear-gradient(#000 4px, transparent 4px, transparent 6px, #000 6px);
+    -webkit-mask-image: linear-gradient(#000 5px, transparent 5px, transparent 7px, #000 7px);
+    mask-image: linear-gradient(#000 5px, transparent 5px, transparent 7px, #000 7px);
   }
-  /* a release: a small ring above that day's bar */
+  /* a release: a small dot above that day's bar */
   .jr-strip u,
   .jr-key {
-    width: 5px;
-    height: 5px;
-    border: 1.5px solid var(--text);
+    width: 4px;
+    height: 4px;
     border-radius: 50%;
-    box-sizing: content-box;
+    background: var(--text);
   }
   .jr-strip u {
     position: absolute;
     left: 50%;
-    bottom: calc(max(2px, var(--v) * var(--plot)) + 2px);
-    margin-left: -4px;
+    bottom: calc(max(3px, var(--v) * var(--plot)) + 3px);
+    margin-left: -2px;
   }
   /* the chosen day and the day pointed at: one column through every row */
   .jr-strip::before,
@@ -709,7 +721,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     bottom: 0;
     left: calc(var(--sel) / var(--days) * 100%);
     width: calc(100% / var(--days));
-    background: color-mix(in srgb, var(--text) 9%, transparent);
+    background: color-mix(in srgb, var(--text) 7%, transparent);
     pointer-events: none;
   }
   .jr-strip::after {
@@ -746,7 +758,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   }
   .jr-axis {
     display: grid;
-    grid-template-columns: var(--who) minmax(0, 1fr) var(--tot);
+    grid-template-columns: var(--who) minmax(0, 1fr) var(--tot) 32px;
     align-items: center;
     height: 26px;
     font-size: 11px;
@@ -1177,8 +1189,14 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       gap: 0 7px;
     }
     /* a row: the name and total, what it is, then the strip across the full width */
+    .jr-tog {
+      grid-column: 3;
+      grid-row: 1;
+      align-self: start;
+      height: 22px;
+    }
     .jr-rowline {
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) auto 28px;
       height: auto;
       padding: 10px 0 0;
     }
@@ -1204,7 +1222,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       line-height: 19px;
     }
     .jr-meta {
-      grid-template-columns: 112px 96px auto;
+      grid-template-columns: 100px 80px auto;
     }
     .jr-strip {
       grid-column: 1 / -1;
@@ -1390,7 +1408,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     const o = el.closest<HTMLElement>('[data-open]');
     if (o) {
       e.preventDefault();
-      const row = o.classList.contains('jr-who');
+      const row = o.classList.contains('jr-who') || o.classList.contains('jr-tog');
       set(row && o.dataset.open === open ? null : o.dataset.open!, true);
       return;
     }
