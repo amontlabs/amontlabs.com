@@ -877,6 +877,22 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     transform: none;
     transition: opacity 0.3s linear 0.08s, transform 0.42s var(--out);
   }
+  /* from one open project to another: the panel keeps its size and place, nothing folds or unfolds, only the
+     content crossfades (the old one goes at once, the new one fades in where it stands) */
+  @media (min-width: 900px) {
+    .jr-rows.is-swap .jr-tabs,
+    .jr-rows.is-swap .jr-rowline,
+    .jr-rows.is-swap .jr-more,
+    .jr-rows.is-swap .jr-more-in,
+    .jr-rows.is-swap .jr-chev,
+    .jr-rows.is-swap .jr-item:not(.is-open) .jr-view {
+      transition: none;
+    }
+    .jr-rows.is-swap .is-open .jr-view {
+      transform: none;
+      transition: opacity 0.22s linear;
+    }
+  }
   /* with a film: the film on the left, everything about the project on the right */
   .jr-view.has-film {
     grid-template-columns: auto minmax(0, 1fr) 372px;
@@ -1459,7 +1475,10 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     document.dispatchEvent(new CustomEvent('px:tint', { detail: { color } }));
   };
   const set = (id: string | null, reveal = false) => {
+    // switching straight from one project to another: no fold/unfold, see `.is-swap`
+    const swap = !!open && !!id && open !== id;
     open = id;
+    if (swap) rows.classList.add('is-swap');
     rows.classList.toggle('has-open', !!id);
     for (const tab of root.querySelectorAll<HTMLElement>('[data-tab]')) tab.setAttribute('aria-pressed', String(tab.dataset.tab === id));
     for (const it of its) {
@@ -1481,6 +1500,11 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
           it.querySelector<HTMLElement>('.jr-sound')!.hidden = false;
         }
       }
+    }
+    if (swap) {
+      // commit the new layout with transitions off, then hand transitions back (running fades keep going)
+      void rows.offsetHeight;
+      requestAnimationFrame(() => rows.classList.remove('is-swap'));
     }
     tint(id);
     history.replaceState(null, '', id ? `#${id}` : location.pathname + location.search);
