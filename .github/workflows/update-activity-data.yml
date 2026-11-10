@@ -17,16 +17,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # the summaries are written through OpenRouter, the Anthropic API, or Claude Code CLI
-      - name: Install Claude Code (fallback if using Claude Code OAuth token)
-        if: ${{ secrets.OPENROUTER_API_KEY == '' && secrets.ANTHROPIC_API_KEY == '' && secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+      # Summaries: Claude subscription 1 -> Claude subscription 2 -> OpenRouter -> Anthropic API
+      - name: Install Claude Code (for Claude subscriptions)
+        if: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN_1 != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN_2 != '' }}
         run: npm install -g @anthropic-ai/claude-code
       - run: node scripts/update-activity-data.mjs
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN_1: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_1 }}
+          CLAUDE_CODE_OAUTH_TOKEN_2: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_2 }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
       - name: Commit
         run: |
           git add src/data/activity.json src/data/activity-summaries.json src/data/activity-explainers.json

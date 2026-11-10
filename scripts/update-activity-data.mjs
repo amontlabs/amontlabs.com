@@ -32,16 +32,21 @@ const NAMES = { silo: "Silo", fjord: "Fjord", sic: "Sic", lcu: "LCU", lastdrop: 
 const FILE = new URL("../src/data/activity.json", import.meta.url);
 const SUMMARIES = new URL("../src/data/activity-summaries.json", import.meta.url);
 const EXPLAINERS = new URL("../src/data/activity-explainers.json", import.meta.url);
-const VIA = process.env.OPENROUTER_API_KEY
-  ? "openrouter"
-  : process.env.ANTHROPIC_API_KEY
-    ? "api"
-    : process.env.CLAUDE_CODE_OAUTH_TOKEN || process.env.ACTIVITY_VIA === "claude-code"
-      ? "claude-code"
-      : null;
-const MODEL =
-  process.env.ACTIVITY_MODEL ??
-  (VIA === "openrouter" ? "anthropic/claude-sonnet-5.5" : "claude-sonnet-5-5");
+// Provider chain: Claude subscription 1 -> Claude subscription 2 -> OpenRouter -> Anthropic API
+const getProviders = () => {
+  const list = [];
+  const token1 = process.env.CLAUDE_CODE_OAUTH_TOKEN_1 || process.env.CLAUDE_CODE_OAUTH_TOKEN;
+  if (token1) list.push({ kind: "claude-code", id: "claude-subscription-1", token: token1 });
+  const token2 = process.env.CLAUDE_CODE_OAUTH_TOKEN_2;
+  if (token2 && token2 !== token1) list.push({ kind: "claude-code", id: "claude-subscription-2", token: token2 });
+  if (process.env.OPENROUTER_API_KEY) list.push({ kind: "openrouter", id: "openrouter", key: process.env.OPENROUTER_API_KEY });
+  if (process.env.ANTHROPIC_API_KEY) list.push({ kind: "api", id: "anthropic-api", key: process.env.ANTHROPIC_API_KEY });
+  return list;
+};
+
+const providers = getProviders();
+const VIA = providers.length > 0;
+const MODEL = process.env.ACTIVITY_MODEL ?? "claude-opus-5-5";
 const DRY = process.argv.find((a) => a.startsWith("--dry="))?.slice(6);
 const DAYS = 30,
   LOG_DAYS = 30;
@@ -312,91 +317,143 @@ const request = async (d, m) => ({
   activity: m,
 });
 // One model call, returning its text. The API through the SDK, or a Claude subscription through the Claude Code
-// CLI used as a plain call (no tools, only this system prompt).
-let client;
-const ask = async (system, input) => {
-  let text;
-  if (VIA === "openrouter") {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://amontlabs.com",
-        "X-Title": "Amont Labs Activity",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: "system", content: `${system}\n\nReply with JSON only: {"text": "..."}` },
-          { role: "user", content: JSON.stringify(input) },
-        ],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "response",
-            strict: true,
-            schema: {
-              type: "object",
-              properties: { text: { type: "string" } },
-              required: ["text"],
-              additionalProperties: false,
-            },
+const askClaudeCode = (system, input, token) => {
+  const claudeModel = MODEL.replace(/^anthropic\//, "").replace(/\.5\.5$/, "-5-5");
+  const run = spawnSync(
+    "claude",
+    [
+      "-p",
+      "--model",
+      claudeModel,
+      "--system-prompt",
+      `${system}\n\nReply with the text and nothing else.`,
+      "--tools",
+      "",
+      "--output-format",
+      "json",
+      "--no-session-persistence",
+      "--strict-mcp-config",
+      "--disable-slash-commands",
+    ],
+    {
+      input: JSON.stringify(input),
+      encoding: "utf8",
+      timeout: 300000,
+      maxBuffer: 1 << 24,
+      cwd: tmpdir(),
+      env: { ...process.env, CLAUDE_CODE_OAUTH_TOKEN: token },
+    },
+  );
+  if (run.status !== 0) {
+    throw new Error(run.stderr?.trim().slice(0, 300) || run.error?.message || `exit ${run.status}`);
+  }
+  const res = JSON.parse(run.stdout);
+  if (res.is_error) throw new Error(String(res.result).slice(0, 200));
+  const text = String(res.result ?? "").trim();
+  if (!text) throw new Error("empty answer");
+  return text;
+};
+
+const askOpenRouter = async (system, input, apiKey) => {
+  const orModel = MODEL.includes("/") ? MODEL : `anthropic/${MODEL.replace(/-5-5$/, ".5.5")}`;
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://amontlabs.com",
+      "X-Title": "Amont Labs Activity",
+    },
+    body: JSON.stringify({
+      model: orModel,
+      messages: [
+        { role: "system", content: `${system}\n\nReply with JSON only: {"text": "..."}` },
+        { role: "user", content: JSON.stringify(input) },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "response",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: { text: { type: "string" } },
+            required: ["text"],
+            additionalProperties: false,
           },
         },
-      }),
-    });
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`OpenRouter ${res.status}: ${err.slice(0, 300)}`);
-    }
-    const data = await res.json();
-    const content = data.choices?.[0]?.message?.content?.trim();
-    if (!content) throw new Error("empty answer from OpenRouter");
-    try {
-      text = JSON.parse(content).text?.trim() ?? content;
-    } catch {
-      text = content.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
-      if (text.startsWith("{")) {
-        try {
-          const parsed = JSON.parse(text);
-          if (parsed.text) text = parsed.text.trim();
-        } catch {}
-      }
-    }
-  } else if (VIA === "claude-code") {
-    const run = spawnSync(
-      "claude",
-      ["-p", "--model", MODEL, "--system-prompt", `${system}\n\nReply with the text and nothing else.`, "--tools", "", "--output-format", "json", "--no-session-persistence", "--strict-mcp-config", "--disable-slash-commands"],
-      { input: JSON.stringify(input), encoding: "utf8", timeout: 300000, maxBuffer: 1 << 24, cwd: tmpdir() },
-    );
-    if (run.status !== 0) throw new Error(run.stderr?.trim().slice(0, 300) || run.error?.message || `exit ${run.status}`);
-    const res = JSON.parse(run.stdout);
-    if (res.is_error) throw new Error(String(res.result).slice(0, 200));
-    text = String(res.result ?? "").trim();
-  } else {
-    client ??= new (await import("@anthropic-ai/sdk")).default();
-    const res = await client.beta.messages.create({
-      model: MODEL,
-      max_tokens: 16000,
-      // a policy decline (a security-themed commit, say) is answered by the fallback model instead
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      output_config: {
-        effort: "medium",
-        format: {
-          type: "json_schema",
-          schema: { type: "object", properties: { text: { type: "string" } }, required: ["text"], additionalProperties: false },
-        },
       },
-      system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: JSON.stringify(input) }],
-    });
-    if (res.stop_reason !== "end_turn") throw new Error(`stopped: ${res.stop_reason}`);
-    text = JSON.parse(res.content.find((b) => b.type === "text").text).text.trim();
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`OpenRouter ${res.status}: ${err.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  const content = data.choices?.[0]?.message?.content?.trim();
+  if (!content) throw new Error("empty answer from OpenRouter");
+  let text;
+  try {
+    text = JSON.parse(content).text?.trim() ?? content;
+  } catch {
+    text = content.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+    if (text.startsWith("{")) {
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.text) text = parsed.text.trim();
+      } catch {}
+    }
   }
   if (!text) throw new Error("empty answer");
   return text;
+};
+
+let client;
+const askAnthropicApi = async (system, input, apiKey) => {
+  const anthropicModel = MODEL.replace(/^anthropic\//, "").replace(/\.5\.5$/, "-5-5");
+  client ??= new (await import("@anthropic-ai/sdk")).default({ apiKey });
+  const res = await client.beta.messages.create({
+    model: anthropicModel,
+    max_tokens: 16000,
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    output_config: {
+      effort: "medium",
+      format: {
+        type: "json_schema",
+        schema: { type: "object", properties: { text: { type: "string" } }, required: ["text"], additionalProperties: false },
+      },
+    },
+    system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+    messages: [{ role: "user", content: JSON.stringify(input) }],
+  });
+  if (res.stop_reason !== "end_turn") throw new Error(`stopped: ${res.stop_reason}`);
+  const text = JSON.parse(res.content.find((b) => b.type === "text").text).text.trim();
+  if (!text) throw new Error("empty answer");
+  return text;
+};
+
+const ask = async (system, input) => {
+  const activeProviders = getProviders();
+  if (!activeProviders.length) throw new Error("no model credentials available");
+  let lastError;
+  for (const p of activeProviders) {
+    try {
+      if (p.kind === "claude-code") {
+        return askClaudeCode(system, input, p.token);
+      }
+      if (p.kind === "openrouter") {
+        return await askOpenRouter(system, input, p.key);
+      }
+      if (p.kind === "api") {
+        return await askAnthropicApi(system, input, p.key);
+      }
+    } catch (e) {
+      console.warn(`[${p.id}] failed: ${e.message}; trying next provider in chain...`);
+      lastError = e;
+    }
+  }
+  throw lastError ?? new Error("all providers failed");
 };
 // A text within `max` characters: one that runs over is sent back to be shortened (twice at most), not thrown away.
 const askWithin = async (system, input, max) => {
