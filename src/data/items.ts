@@ -60,11 +60,11 @@ export const items: Item[] = [
     tier: "product",
     stage: "WIP",
     pitch: {
-      lead: "Silo is an engine for apps that run AI agents, giving each agent its own walled-off virtual machine.",
+      lead: "Silo gives your AI agents their own isolated computers to do real work, with a desktop and computer use.",
       points: [
-        "Lets agents use your API keys without being able to read them",
-        "Grants GitHub access per repository, read-only by default",
-        "Saves checkpoints to roll a machine back or copy it",
+        "Runs each agent in its own sandbox so they can build, install tools and execute code without touching your host",
+        "Watch agents work live on a real desktop, or let them drive browsers and graphical apps via computer use",
+        "Save instant checkpoints to roll an agent back when things break, or fork machines to work in parallel",
       ],
     },
   },
