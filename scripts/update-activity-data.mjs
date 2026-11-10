@@ -376,6 +376,9 @@ Explain the project to a visitor who has never heard of it and will give it five
 - Use only what the README and description say. Never add a feature, a platform, a number or a promise that is not in them: the text is published without review.
 - Do not mention installation, versions, licences, platforms or that it is open source; those are shown next to your text.
 - Present tense.`;
+// Never on a normal sync: the site's projects carry a hand-written pitch (src/data/items.ts). `--explain` writes
+// one for a repository that has none yet, as a first draft to settle by hand.
+const EXPLAIN_NOW = process.argv.includes("--explain");
 const explCache = read(EXPLAINERS);
 const explainers = {};
 for (const name of Object.keys(repos)) {
@@ -384,7 +387,7 @@ for (const name of Object.keys(repos)) {
     const src = { name: NAMES[name] ?? name, description: about[name], readme: cut(await readme(name), MAX.readme) };
     const h = hash({ format: 2, ...src });
     if (explCache[name]?.hash === h) explainers[name] = explCache[name];
-    else if (VIA && !DRY) {
+    else if (VIA && !DRY && EXPLAIN_NOW && !explCache[name]) {
       const out = JSON.parse((await ask(EXPLAIN, src)).replace(/^```(?:json)?\s*|\s*```$/g, ""));
       const points = Array.isArray(out.points) ? out.points.map((x) => String(x).trim().replace(/\.$/, "")) : [];
       if (typeof out.lead !== "string" || out.lead.length > 150 || points.length !== 3 || points.some((x) => !x || x.length > 95))
@@ -393,7 +396,7 @@ for (const name of Object.keys(repos)) {
       console.log(`${name} explained`);
     } else throw new Error("not written");
   } catch (e) {
-    if (VIA && !DRY && e.message !== "repository not read") console.error(`${name} not explained:`, e.message);
+    if (VIA && !DRY && EXPLAIN_NOW && e.message !== "repository not read") console.error(`${name} not explained:`, e.message);
     if (explCache[name]) explainers[name] = explCache[name];
   }
   if (explainers[name]?.lead) repos[name].explain = { lead: explainers[name].lead, points: explainers[name].points };

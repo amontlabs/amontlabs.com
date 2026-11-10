@@ -6,10 +6,26 @@ export type Film = { id: string; ratio: string; dur: number; audio: boolean; ful
 export const STAGES = ["Prototype", "WIP", "Alpha", "Released"] as const;
 export type Stage = (typeof STAGES)[number];
 // repositories that are not among the site's projects but show in the activity
-export const others: Record<string, { stage: Stage; kind: "app" | "cli" | "web"; platforms: ("macos" | "linux" | "windows")[]; line?: string }> = {
-  // line: the first clause of its GitHub description, short enough for one row
-  hartlib: { stage: "Prototype", kind: "web", platforms: [], line: "One research chat across everything you subscribe to." },
+export const others: Record<string, { stage: Stage; kind: "app" | "cli" | "web"; platforms: ("macos" | "linux" | "windows")[]; line?: string; pitch?: Pitch }> = {
+  hartlib: {
+    stage: "Prototype",
+    kind: "web",
+    platforms: [],
+    // the first clause of its GitHub description, short enough for one row
+    line: "One research chat across everything you subscribe to.",
+    pitch: {
+      lead: "Hartlib is one research chat over everything you subscribe to, for people who read professional briefings.",
+      points: [
+        "Answers plain-language questions with each claim linked to its page",
+        "Explains every answer with visuals shaped to how you understand best",
+        "Reads dense briefings, letters and official records for you",
+      ],
+    },
+  },
 };
+// What a project is, for someone who has never heard of it: one sentence, then what it does. Hand-written and
+// settled with the lab: the activity sync never rewrites it.
+export type Pitch = { lead: string; points: string[] };
 export type Item = {
   id: string;
   name: string;
@@ -23,6 +39,7 @@ export type Item = {
   film?: Film;
   tier: "product" | "tool";
   stage: Stage; // how far along it is, one ladder for every project
+  pitch: Pitch;
 };
 
 export const items: Item[] = [
@@ -42,6 +59,14 @@ export const items: Item[] = [
     film: { id: "silo", ratio: "16 / 9", dur: 33, audio: true, full: "/media/silo-full.mp4" },
     tier: "product",
     stage: "WIP",
+    pitch: {
+      lead: "Silo is an engine for apps that run AI agents, giving each agent its own walled-off virtual machine.",
+      points: [
+        "Lets agents use your API keys without being able to read them",
+        "Grants GitHub access per repository, read-only by default",
+        "Saves checkpoints to roll a machine back or copy it",
+      ],
+    },
   },
   {
     id: "fjord",
@@ -55,6 +80,14 @@ export const items: Item[] = [
     platforms: ["macos"],
     tier: "product",
     stage: "WIP",
+    pitch: {
+      lead: "Fjord sits between your T3 Code agents and GitHub, and brings you only what you need to know or decide.",
+      points: [
+        "Type once: the Router delivers your message to the right session, and brings back every question and plan that needs you",
+        "Sort your GitHub inbox and CI by rules you write as sentences",
+        "Hand a failing check to the session that can fix it",
+      ],
+    },
   },
   {
     id: "sic",
@@ -72,6 +105,14 @@ export const items: Item[] = [
     film: { id: "sic", ratio: "4 / 3", dur: 24, audio: true, full: "/media/sic-full.mp4" },
     tier: "product",
     stage: "Prototype",
+    pitch: {
+      lead: "Sic checks the facts in French political debates against official sources, live or on replay.",
+      points: [
+        "Watches the debate, identifies each speaker and what they claim",
+        "Picks out checkable claims and skips opinions and promises",
+        "Gives no verdict without a cited source and a precise link",
+      ],
+    },
   },
   {
     id: "lcu",
@@ -89,6 +130,14 @@ export const items: Item[] = [
     film: { id: "lcu", ratio: "16 / 9", dur: 30, audio: true, full: "/media/lcu-full.mp4" },
     tier: "tool",
     stage: "Released",
+    pitch: {
+      lead: "LCU gives any AI agent the computer use built into Codex, without the Codex app or its sign-in.",
+      points: [
+        "Read windows, click, type and take screenshots in desktop apps",
+        "Approve or deny each app the first time an agent tries to use it",
+        "Read and control Chrome tabs through the official extension",
+      ],
+    },
   },
   {
     id: "lastdrop",
@@ -106,6 +155,15 @@ export const items: Item[] = [
     film: { id: "lastdrop", ratio: "16 / 9", dur: 37, audio: true, full: "/media/lastdrop-full.mp4" },
     tier: "tool",
     stage: "Released",
+    pitch: {
+      lead: "lastdrop turns any AI subscription into a native subagent for Claude Code and T3 Code.",
+      points: [
+        "Any subscription or API key becomes an agent Claude calls like its own",
+        "Balances the work across your accounts, on the one with the most usage left",
+        "Describe each agent once: when to use it, its model and effort, with fallbacks",
+        "Adds auto mode where it is missing (Z.ai, Antigravity, OpenRouter): a judge checks every command",
+      ],
+    },
   },
 ];
 

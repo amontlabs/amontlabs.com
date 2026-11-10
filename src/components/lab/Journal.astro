@@ -109,6 +109,8 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
           const step = stage ? STAGES.indexOf(stage) + 1 : 0;
           const line = it ? it.line : (others[id]?.line ?? R.about.replace(/^\[WIP\]\s*/, ""));
           const links = it ? it.links : [{ kind: "github", label: "GitHub", href: gh(id) }];
+          // the settled, hand-written pitch; a repository without one falls back to a generated explanation
+          const pitch = it?.pitch ?? others[id]?.pitch ?? R.explain;
           const what = it ?? others[id]; // what kind of thing it is and where it runs
           const kind = what ? [KIND[what.kind], what.platforms.map((p) => OS[p]).join(", ")].filter(Boolean).join(" · ") : null;
           const chips = [...(it ? [KIND[it.kind], ...it.platforms.map((p) => OS[p]), ...it.needs.map((n) => `Works with ${n}`)] : []), ...(R.license ? [`${R.license} licence`] : [])];
@@ -160,8 +162,8 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
                       </div>
                     )}
                     <div class="jr-about">
-                      <p class="jr-sub">{R.explain?.lead ?? it?.sub ?? line}</p>
-                      {R.explain && <ul class="jr-points">{R.explain.points.map((x) => <li>{x}</li>)}</ul>}
+                      <p class="jr-sub">{pitch?.lead ?? it?.sub ?? line}</p>
+                      {pitch && <ul class="jr-points">{pitch.points.map((x) => <li>{x}</li>)}</ul>}
                       <div class="jr-acts">
                         <p class="jr-links">{links.map((l) => <a href={l.href}><Icon name={l.kind === "github" ? "github" : "site"} size={14} />{l.label}</a>)}</p>
                         {it && it.needs.length > 0 && <p class="jr-needs mono dim"><Icon name="link" size={12} />Works with {it.needs.join(", ")}</p>}
