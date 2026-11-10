@@ -26,7 +26,7 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
       - name: Commit
         run: |
-          git add src/data/activity.json src/data/activity-summaries.json
+          git add src/data/activity.json src/data/activity-summaries.json src/data/activity-explainers.json
           if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

@@ -75,6 +75,9 @@ const D = "(prefers-color-scheme: dark)";
     document.addEventListener('themechange', (e) => sig.setTheme((e as CustomEvent).detail));
     // a film open in the products viewer covers the scene: stop drawing it so the GPU goes to the video
     document.addEventListener('px:viewer', (e) => sig.setRunning(!(e as CustomEvent).detail.open));
+    document.addEventListener('px:tint', (e) => sig.setTint((e as CustomEvent).detail.color));
+    const tint = (window as unknown as { __tint?: number[] | null }).__tint; // asked for before the scene existed
+    if (tint) sig.setTint(tint);
     let last = anchor().join();
     addEventListener('resize', () => {
       const a = anchor();

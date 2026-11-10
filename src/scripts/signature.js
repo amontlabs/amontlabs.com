@@ -83,6 +83,7 @@ const VERT_RIVER = /* glsl */`
 attribute vec4 aP;                    // phase, channel, lateral gaussian, seed
 uniform sampler2D uRiver;
 uniform float uNS, uTime, uSpeed, uPx, uIntro, uMinD, uPulse, uLight, uSizeK;
+uniform vec3 uTint;                   // the river's colour: Fonte, or the colour a page asks for (setTint)
 varying vec3 vCol;
 varying float vA;
 varying float vD;
@@ -114,7 +115,7 @@ void main() {
   float a = mix(0.80 + 0.20 * rnd, 0.78 + 0.22 * sqrt(1.0 - u), uLight) * on * (1.0 - smoothstep(0.88, 1.0, u));
   float d = 2.0 * r * uPx;
   if (d < uMinD) { a *= (d * d) / (uMinD * uMinD); d = uMinD; }
-  vCol = vec3(${FONTE.map(v => v.toFixed(5)).join(',')});
+  vCol = uTint;
   vA = a; vD = d;
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * mv;
@@ -126,6 +127,7 @@ const VERT_RIVER_IMG = /* glsl */`
 attribute vec4 aP;                    // s0, seed, size, 0
 uniform sampler2D uRiver;
 uniform float uNS, uTime, uSpeed, uPx, uIntro, uMinD, uPulse, uLight, uSizeK, uFlow, uFlowT, uConv, uBotFade;
+uniform vec3 uTint;                   // the river's colour: Fonte, or the colour a page asks for (setTint)
 varying vec3 vCol;
 varying float vA;
 varying float vD;
@@ -151,7 +153,7 @@ void main() {
   float a = (0.80 + 0.20 * aP.z) * (0.85 + 0.15 * env) * shown * (1.0 - smoothstep(0.93, 1.0, s0)) * (1.0 - uConv * smoothstep(0.04, 0.2, s0));
   float d = 2.0 * r * uPx;
   if (d < uMinD) { a *= (d * d) / (uMinD * uMinD); d = uMinD; }
-  vCol = vec3(${FONTE.map(v => v.toFixed(5)).join(',')});
+  vCol = uTint;
   vec4 gp = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
   vA = a * (1.0 - uBotFade * smoothstep(0.72, 1.0, 0.5 - 0.5 * gp.y / gp.w)); vD = d;
   gl_Position = gp;
@@ -173,6 +175,7 @@ void main() {
 }`;
 const FRAG_SOURCE = /* glsl */`
 uniform float uPx, uLight, uGs;
+uniform vec3 uTint;                   // the river's colour: Fonte, or the colour a page asks for (setTint)
 varying float vK;
 varying float vS;
 void main() {
@@ -182,7 +185,7 @@ void main() {
   float core = 1.0 - smoothstep(5.6 - w * 0.5, 5.6 + w * 0.5, r);
   // soft halo: one smooth falloff from the core edge, no step (a pale ring on paper otherwise)
   float halo = exp(-pow(max(r - mix(5.0, 4.0, uLight), 0.0) / mix(9.0, 6.0, uLight), mix(1.2, 1.5, uLight))) * mix(0.95, 0.42, uLight) * (1.0 - smoothstep(14.0, 26.0, r));
-  vec3 fonte = vec3(${FONTE.map(v => v.toFixed(5)).join(',')});
+  vec3 fonte = uTint;
   vec3 hot = mix(fonte, vec3(0.62, 0.92, 1.0), 0.30 * (1.0 - uLight));
   float a = clamp(core + halo * (1.0 - core) * vK, 0.0, 1.0) * clamp(vK * 1.4, 0.0, 1.0);
   vec3 col = mix(fonte, hot, core);
@@ -252,7 +255,7 @@ export async function mount(el, opts = {}) {
   tgeo.setAttribute('aAttr', new THREE.BufferAttribute(attr, 2, true));
   const U = {
     uPx: { value: 1 }, uTime: { value: 0 }, uIntro: { value: 9 }, uMinD: { value: 1.0 }, uSizeK: { value: 1 },
-    uBotFade: { value: 0 }, uConv: { value: 0 }, uLight: { value: 0 }, uPulse: { value: reduced ? 0 : 1 }, uFlow: { value: reduced ? 0 : 1 },
+    uTint: { value: new THREE.Vector3(...FONTE) }, uBotFade: { value: 0 }, uConv: { value: 0 }, uLight: { value: 0 }, uPulse: { value: reduced ? 0 : 1 }, uFlow: { value: reduced ? 0 : 1 },
   };
   const tmat = premultMaterial({
     vertexShader: VERT_TERRAIN, fragmentShader: FRAG_DISC,
@@ -433,6 +436,7 @@ export async function mount(el, opts = {}) {
   document.addEventListener('visibilitychange', onVis);
 
   let raf = 0, last = 0;
+  const tintTo = new THREE.Vector3(...FONTE);
   function kick() { if (!raf && S.running) { last = performance.now(); raf = requestAnimationFrame(tick); } }
   function tick(now) {
     raf = 0;
@@ -473,6 +477,7 @@ export async function mount(el, opts = {}) {
     const boost = S.journey ? Math.min(2.2, Math.abs(S.jvs) * 0.6) : 0;
     S.flowT += dt * S.speed * (1 + boost);
     rmat.uniforms.uFlowT.value = S.flowT;
+    if (tintTo.distanceToSquared(U.uTint.value) > 1e-7) U.uTint.value.lerp(tintTo, Math.min(1, dt * 5));
     if (S.camMode === 'hero') {
       S.px += (S.tpx - S.px) * Math.min(1, dt * 2.2); S.py += (S.tpy - S.py) * Math.min(1, dt * 2.2);
       const drift = reduced ? 0 : 1;
@@ -542,6 +547,8 @@ export async function mount(el, opts = {}) {
     setRiverSpeed: (v) => { S.speed = v; },
     setPreFrame: (fn) => { S.pre = fn; },
     setRunning: (v) => { S.running = v; if (v) kick(); },
+    // rgb in 0..1, or null for Fonte; eased in the frame loop (set at once under reduced motion)
+    setTint: (rgb) => { tintTo.set(...(rgb ?? FONTE)); if (reduced) { U.uTint.value.copy(tintTo); renderer.render(scene, camera); } else kick(); },
     setDprCap: (v) => { o.dprCap = v; resize(); kick(); },   // adaptive resolution (see Hero.astro)
     get dpr() { return renderer.getPixelRatio(); },   // pause rendering entirely (e.g. while a film plays full screen)
     setMetrics: (vh, max) => { S.vh = vh; S.max = max; },

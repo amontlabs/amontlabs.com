@@ -2,6 +2,14 @@
 import data from "./projects.json";
 
 export type Film = { id: string; ratio: string; dur: number; audio: boolean; full: string };
+// the ladder, earliest first
+export const STAGES = ["Prototype", "WIP", "Alpha", "Released"] as const;
+export type Stage = (typeof STAGES)[number];
+// repositories that are not among the site's projects but show in the activity
+export const others: Record<string, { stage: Stage; kind: "app" | "cli" | "web"; platforms: ("macos" | "linux" | "windows")[]; line?: string }> = {
+  // line: the first clause of its GitHub description, short enough for one row
+  hartlib: { stage: "Prototype", kind: "web", platforms: [], line: "One research chat across everything you subscribe to." },
+};
 export type Item = {
   id: string;
   name: string;
@@ -14,6 +22,7 @@ export type Item = {
   platforms: ("macos" | "linux" | "windows")[];
   film?: Film;
   tier: "product" | "tool";
+  stage: Stage; // how far along it is, one ladder for every project
 };
 
 export const items: Item[] = [
@@ -32,6 +41,7 @@ export const items: Item[] = [
     platforms: ["macos"],
     film: { id: "silo", ratio: "16 / 9", dur: 33, audio: true, full: "/media/silo-full.mp4" },
     tier: "product",
+    stage: "WIP",
   },
   {
     id: "fjord",
@@ -44,6 +54,7 @@ export const items: Item[] = [
     kind: "app",
     platforms: ["macos"],
     tier: "product",
+    stage: "WIP",
   },
   {
     id: "sic",
@@ -60,6 +71,7 @@ export const items: Item[] = [
     platforms: [],
     film: { id: "sic", ratio: "4 / 3", dur: 24, audio: true, full: "/media/sic-full.mp4" },
     tier: "product",
+    stage: "Prototype",
   },
   {
     id: "lcu",
@@ -76,6 +88,7 @@ export const items: Item[] = [
     platforms: ["macos", "linux", "windows"],
     film: { id: "lcu", ratio: "16 / 9", dur: 30, audio: true, full: "/media/lcu-full.mp4" },
     tier: "tool",
+    stage: "Released",
   },
   {
     id: "lastdrop",
@@ -92,6 +105,7 @@ export const items: Item[] = [
     platforms: ["macos"],
     film: { id: "lastdrop", ratio: "16 / 9", dur: 37, audio: true, full: "/media/lastdrop-full.mp4" },
     tier: "tool",
+    stage: "Released",
   },
 ];
 
@@ -113,7 +127,7 @@ export const day = (iso: string) => {
 };
 export const count = (n: number) =>
   n >= 1000 ? `${(Math.round(n / 100) / 10).toFixed(1).replace(/\.0$/, "")}k` : String(n);
-export const KIND = { app: "App", cli: "Command-line tool", web: "Website" } as const;
+export const KIND = { app: "App", cli: "CLI", web: "Website" } as const;
 export const OS = { macos: "macOS", linux: "Linux", windows: "Windows" } as const;
 export const runsOn = (it: Item) =>
   [KIND[it.kind], it.platforms.map((p) => OS[p]).join(", ")].filter(Boolean).join(" for ");

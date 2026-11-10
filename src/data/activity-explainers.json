@@ -1,0 +1,56 @@
+{
+ "hartlib": {
+  "hash": "9b2e2db8a4c577550692473a444c7bb0fa88a021",
+  "lead": "Hartlib is one research chat over everything you subscribe to, for people who read professional briefings.",
+  "points": [
+   "Answers plain-language questions with each claim linked to its page",
+   "Reads dense briefings, letters and official records for you",
+   "Lets publishers publish issues and invite client companies"
+  ]
+ },
+ "silo": {
+  "hash": "9ae9002f6779adf5b17b3b50fd8bbf509469b34d",
+  "lead": "Silo gives each AI agent its own Linux or macOS virtual machine, for apps that run agents on your Mac.",
+  "points": [
+   "Lets agents use credentials without being able to read them",
+   "Limits GitHub access to repositories you pick, read-only by default",
+   "Saves checkpoints so you can restore or copy a computer"
+  ]
+ },
+ "lcu": {
+  "hash": "ffbd50f2d965e684f3262570d585476ce28e8276",
+  "lead": "LCU lets AI agents in tools like Claude Code or Pi control your desktop apps, using Codex's own engine.",
+  "points": [
+   "Reads and controls Chrome tabs, with approval for each site",
+   "Asks you to approve each app before the agent can touch it",
+   "Manages the list of always-allowed apps from the terminal with Touch ID"
+  ]
+ },
+ "fjord": {
+  "hash": "bc33b01088868706535b97d9c7450bd13a87fc43",
+  "lead": "Fjord sits between your Claude Code sessions and GitHub, and brings you only what you need to know or decide.",
+  "points": [
+   "Answer every Claude Code session's questions and plans from one page",
+   "Sort your GitHub inbox and CI by rules you write as sentences",
+   "Hand a failing check to the Claude Code session that can fix it"
+  ]
+ },
+ "sic": {
+  "hash": "19d2e42ab6da9a66d4ac7315fb74cef106ae2c9b",
+  "lead": "Sic checks the facts in French political debates against official sources, live or on replay.",
+  "points": [
+   "Turns debate audio into text and names who is speaking",
+   "Picks out checkable claims and skips opinions and promises",
+   "Gives no verdict without a cited source and a precise link"
+  ]
+ },
+ "lastdrop": {
+  "hash": "8c83b875da444ca4370a83a7ba816171a21dcdc5",
+  "lead": "lastdrop lets Claude Code call any model as its own subagent, for people with several AI accounts.",
+  "points": [
+   "Switches to the next model when one is out of quota or can't start",
+   "Runs Claude's subagents on your other Claude accounts",
+   "Shows usage left and reset times for each account in the menu bar"
+  ]
+ }
+}

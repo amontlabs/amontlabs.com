@@ -4,7 +4,10 @@
 // dozen requests).
 //   scope      every public repository of the organisation with commits in the window, except EXCLUDE. Private,
 //              archived and forked repositories are never read.
-//   per repo   commits per day (30 values), totals for 30 and 7 days
+//   per repo   commits per day (30 values), totals for 30 and 7 days, and what GitHub knows about it: stars, forks,
+//              licence, languages, when it started, its latest release. Plus a short explanation of what the
+//              project is, written by Claude from its README and rewritten only when the README changes
+//              (src/data/activity-explainers.json).
 //   journal    one entry per active day, newest first: which projects moved and by how much, what was released,
 //              and one short summary of the day written by Claude. The model is reached with ANTHROPIC_API_KEY
 //              (the API, through the SDK) or, without one, with CLAUDE_CODE_OAUTH_TOKEN (a Claude subscription,
@@ -28,6 +31,7 @@ const EXCLUDE = new Set([".github", "amontlabs.com", "amont"]);
 const NAMES = { silo: "Silo", fjord: "Fjord", sic: "Sic", lcu: "LCU", lastdrop: "lastdrop", hartlib: "Hartlib" };
 const FILE = new URL("../src/data/activity.json", import.meta.url);
 const SUMMARIES = new URL("../src/data/activity-summaries.json", import.meta.url);
+const EXPLAINERS = new URL("../src/data/activity-explainers.json", import.meta.url);
 const MODEL = process.env.ACTIVITY_MODEL ?? "claude-opus-5-5";
 const DRY = process.argv.find((a) => a.startsWith("--dry="))?.slice(6);
 const VIA = process.env.ANTHROPIC_API_KEY
@@ -100,7 +104,7 @@ let commitsAll = 0,
   releasesAll = 0,
   mergedAll = 0;
 const failed = new Set();
-for (const { name, description } of list) {
+for (const { name, description, ...gh } of list) {
   try {
     const [commits, pulls, releases] = await Promise.all([
       get(`${name}/commits?since=${since}`),
@@ -135,9 +139,41 @@ for (const { name, description } of list) {
     for (const r of rels) page(dayOf(r.published_at))?.releases.push(r);
     const total = daily.reduce((a, b) => a + b, 0);
     if (!total && !merged.length && !rels.length) continue;
+    const langs = await fetch(api(`${name}/languages`), { headers }).then((r) => (r.ok ? r.json() : {}));
+    const bytes = Object.values(langs).reduce((a, b) => a + b, 0);
+    // the project's whole life, week by week (GitHub keeps the last 52; it answers 202 while it computes them)
+    let weeks = prev.repos?.[name]?.weeks ?? [];
+    for (let k = 0; k < 4; k++) {
+      const r = await fetch(api(`${name}/stats/commit_activity`), { headers });
+      if (r.status === 200) {
+        const rows = await r.json();
+        const from = rows.findIndex((w) => w.total > 0);
+        if (from >= 0) weeks = rows.slice(from).map((w) => ({ w: new Date(w.week * 1000).toISOString().slice(0, 10), n: w.total }));
+        break;
+      }
+      if (r.status !== 202) break;
+      await new Promise((ok) => setTimeout(ok, 2500));
+    }
+    const shipped = releases.filter((r) => !r.draft && !r.prerelease && /^v\d/.test(r.tag_name)).map((r) => r.published_at.slice(0, 10)).sort();
+    const out = releases
+      .filter((r) => !r.draft && !r.prerelease && /^v\d/.test(r.tag_name))
+      .sort((a, b) => new Date(b.published_at) - new Date(a.published_at))[0];
     about[name] = description ?? "";
     repos[name] = {
       name: NAMES[name] ?? name,
+      about: description ?? "",
+      stars: gh.stargazers_count ?? prev.repos?.[name]?.stars ?? 0,
+      forks: gh.forks_count ?? prev.repos?.[name]?.forks ?? 0,
+      license: gh.license && gh.license.spdx_id !== "NOASSERTION" ? gh.license.spdx_id : null,
+      created: gh.created_at ?? prev.repos?.[name]?.created ?? null,
+      // the three main languages, as shares of the code (anything under 3% is left out)
+      languages: Object.entries(langs)
+        .map(([k, v]) => ({ name: k, share: Math.round((v / bytes) * 100) }))
+        .filter((l) => l.share >= 3)
+        .slice(0, 3),
+      latest: out ? { tag: out.tag_name, at: out.published_at, url: out.html_url } : null,
+      weeks,
+      shipped,
       daily,
       commits: total,
       week: daily.slice(-7).reduce((a, b) => a + b, 0),
@@ -228,7 +264,7 @@ const readmes = {};
 const readme = async (repo) => {
   if (!(repo in readmes)) {
     const r = await fetch(api(`${repo}/readme`), { headers: { ...headers, Accept: "application/vnd.github.raw+json" } });
-    readmes[repo] = r.ok ? cut(await r.text(), 2500) : "";
+    readmes[repo] = r.ok ? await r.text() : "";
   }
   return readmes[repo];
 };
@@ -247,78 +283,107 @@ const request = async (d, m) => ({
       repository: x.repository,
       name: x.name,
       description: about[x.repository],
-      readme_start: await readme(x.repository),
+      readme_start: cut(await readme(x.repository), 2500),
     })),
   ),
   activity: m,
 });
+// One model call, returning its text. The API through the SDK, or a Claude subscription through the Claude Code
+// CLI used as a plain call (no tools, only this system prompt).
+let client;
+const ask = async (system, input, max) => {
+  let text;
+  if (VIA === "claude-code") {
+    const run = spawnSync(
+      "claude",
+      ["-p", "--model", MODEL, "--system-prompt", `${system}\n\nReply with the text and nothing else.`, "--tools", "", "--output-format", "json", "--no-session-persistence", "--strict-mcp-config", "--disable-slash-commands"],
+      { input: JSON.stringify(input), encoding: "utf8", timeout: 300000, maxBuffer: 1 << 24, cwd: tmpdir() },
+    );
+    if (run.status !== 0) throw new Error(run.stderr?.trim().slice(0, 300) || run.error?.message || `exit ${run.status}`);
+    const res = JSON.parse(run.stdout);
+    if (res.is_error) throw new Error(String(res.result).slice(0, 200));
+    text = String(res.result ?? "").trim();
+  } else {
+    client ??= new (await import("@anthropic-ai/sdk")).default();
+    const res = await client.beta.messages.create({
+      model: MODEL,
+      max_tokens: 16000,
+      // a policy decline (a security-themed commit, say) is answered by the fallback model instead
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      output_config: {
+        effort: "medium",
+        format: {
+          type: "json_schema",
+          schema: { type: "object", properties: { text: { type: "string" } }, required: ["text"], additionalProperties: false },
+        },
+      },
+      system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+      messages: [{ role: "user", content: JSON.stringify(input) }],
+    });
+    if (res.stop_reason !== "end_turn") throw new Error(`stopped: ${res.stop_reason}`);
+    text = JSON.parse(res.content.find((b) => b.type === "text").text).text.trim();
+  }
+  if (!text || text.length > max) throw new Error(`unusable text (${text.length} characters)`);
+  return text;
+};
 if (DRY) {
   const out = [];
   for (const [d, m] of pending) out.push({ hash: hash(m), request: await request(d, m) });
   writeFileSync(DRY, JSON.stringify(out, null, 1));
   for (const o of out)
     console.log(o.request.day, `~${Math.round((SYSTEM.length + JSON.stringify(o.request).length) / 4)} input tokens`);
-} else if (pending.length && VIA === "claude-code") {
-  // a Claude subscription: the Claude Code CLI as a plain model call, with no tools and only this system prompt
+} else
   for (const [d, m] of pending) {
     try {
-      const run = spawnSync(
-        "claude",
-        ["-p", "--model", MODEL, "--system-prompt", `${SYSTEM}\n\nReply with the summary text and nothing else.`, "--tools", "", "--output-format", "json", "--no-session-persistence", "--strict-mcp-config", "--disable-slash-commands"],
-        { input: JSON.stringify(await request(d, m)), encoding: "utf8", timeout: 300000, maxBuffer: 1 << 24, cwd: tmpdir() },
-      );
-      if (run.status !== 0) throw new Error(run.stderr?.trim().slice(0, 300) || run.error?.message || `exit ${run.status}`);
-      const res = JSON.parse(run.stdout);
-      const text = String(res.result ?? "").trim();
-      if (res.is_error || !text || text.length > 300) throw new Error(`unusable summary: ${text.slice(0, 120)}`);
-      summaries[d] = { hash: hash(m), text };
-      console.log(`${d} summarised: ${JSON.stringify(res.usage ?? {}).slice(0, 200)}`);
+      if (!VIA) throw new Error("no model credentials");
+      summaries[d] = { hash: hash(m), text: await ask(SYSTEM, await request(d, m), 300) };
+      console.log(`${d} summarised`);
     } catch (e) {
-      console.error(`${d} not summarised:`, e.message);
-      if (cache[d]) summaries[d] = cache[d];
-    }
-  }
-} else if (pending.length && VIA === "api") {
-  const { default: Anthropic } = await import("@anthropic-ai/sdk");
-  const client = new Anthropic();
-  for (const [d, m] of pending) {
-    try {
-      const res = await client.beta.messages.create({
-        model: MODEL,
-        max_tokens: 16000,
-        // a policy decline (a security-themed commit, say) is answered by the fallback model instead
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
-        output_config: {
-          effort: "medium",
-          format: {
-            type: "json_schema",
-            schema: {
-              type: "object",
-              properties: { summary: { type: "string" } },
-              required: ["summary"],
-              additionalProperties: false,
-            },
-          },
-        },
-        system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
-        messages: [{ role: "user", content: JSON.stringify(await request(d, m)) }],
-      });
-      if (res.stop_reason !== "end_turn") throw new Error(`stopped: ${res.stop_reason}`);
-      const text = JSON.parse(res.content.find((b) => b.type === "text").text).summary.trim();
-      if (!text || text.length > 300) throw new Error(`unusable summary (${text.length} characters)`);
-      summaries[d] = { hash: hash(m), text };
-      console.log(`${d} summarised: ${res.usage.input_tokens} in, ${res.usage.output_tokens} out`);
-    } catch (e) {
-      console.error(`${d} not summarised:`, e.message);
+      if (VIA) console.error(`${d} not summarised:`, e.message);
       // a day that changed keeps its last summary until the next one can be written
       if (cache[d]) summaries[d] = cache[d];
     }
   }
-} else for (const [d] of pending) if (cache[d]) summaries[d] = cache[d];
 for (const e of journal) if (summaries[e.day]) e.text = summaries[e.day].text;
 if (!DRY && JSON.stringify(summaries) !== JSON.stringify(cache))
   writeFileSync(SUMMARIES, `${JSON.stringify(summaries, null, 1)}\n`);
+
+// ---- what each project is: a short explanation from its README, rewritten only when the README changes
+const EXPLAIN = `You write for amontlabs.com, the site of Amont Labs, a small lab building what AI agents need to do real work. You receive one of its projects as JSON: its name, its one-line GitHub description and its README.
+
+Explain the project to a visitor who has never heard of it and will give it five seconds. Reply with JSON only, in this shape: {"lead": "…", "points": ["…", "…", "…"]}
+
+- "lead": one sentence, at most 110 characters, starting with the project's name: what it is and who it is for. This is the line people read; the points are for those who keep reading.
+- "points": exactly three, each at most 70 characters, each one concrete thing it does or lets you do, starting with a verb, with no full stop at the end. Pick the three that best tell this project apart; do not restate the lead.
+- Everyday words. If a term would need explaining, say the plain thing instead. No slogans and no adjectives that judge it ("powerful", "seamless", "simple").
+- Use only what the README and description say. Never add a feature, a platform, a number or a promise that is not in them: the text is published without review.
+- Do not mention installation, versions, licences, platforms or that it is open source; those are shown next to your text.
+- Present tense.`;
+const explCache = read(EXPLAINERS);
+const explainers = {};
+for (const name of Object.keys(repos)) {
+  try {
+    if (failed.has(name)) throw new Error("repository not read");
+    const src = { name: NAMES[name] ?? name, description: about[name], readme: cut(await readme(name), 9000) };
+    const h = hash({ format: 2, ...src });
+    if (explCache[name]?.hash === h) explainers[name] = explCache[name];
+    else if (VIA && !DRY) {
+      const out = JSON.parse((await ask(EXPLAIN, src, 700)).replace(/^```(?:json)?\s*|\s*```$/g, ""));
+      const points = Array.isArray(out.points) ? out.points.map((x) => String(x).trim().replace(/\.$/, "")) : [];
+      if (typeof out.lead !== "string" || out.lead.length > 150 || points.length !== 3 || points.some((x) => !x || x.length > 95))
+        throw new Error("unusable explanation");
+      explainers[name] = { hash: h, lead: out.lead.trim(), points };
+      console.log(`${name} explained`);
+    } else throw new Error("not written");
+  } catch (e) {
+    if (VIA && !DRY && e.message !== "repository not read") console.error(`${name} not explained:`, e.message);
+    if (explCache[name]) explainers[name] = explCache[name];
+  }
+  if (explainers[name]?.lead) repos[name].explain = { lead: explainers[name].lead, points: explainers[name].points };
+}
+if (!DRY && JSON.stringify(explainers) !== JSON.stringify(explCache))
+  writeFileSync(EXPLAINERS, `${JSON.stringify(explainers, null, 1)}\n`);
 
 const next = {
   days,

@@ -42,13 +42,14 @@ const all = [
 
 <style>
   .is-landing :global(.hero) {
-    min-height: clamp(190px, 25svh, 280px);
+    min-height: clamp(84px, 10svh, 160px);
   }
+  /* on this page the line sits just above the panel (Journal.astro), not in the hero */
   .is-landing :global(.hero-text) {
-    padding-bottom: 0;
+    display: none;
   }
   .is-landing :global(.hero + section.block) {
-    padding-top: 28px;
+    padding-top: 18px;
   }
   .lab-nav {
     position: fixed;
