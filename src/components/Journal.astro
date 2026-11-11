@@ -18,6 +18,8 @@ const nf = new Intl.NumberFormat("en-GB");
 const dfmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 const label = (d: string) => dfmt.format(new Date(`${d}T12:00:00Z`));
 const short = (d: string) => label(d).replace(/^\w+ /, "");
+// the day as a calendar leaf: month, number, weekday (the script swaps the weekday for "Yesterday" or "So far today")
+const leaf = (d: string) => label(d).split(" ") as [string, string, string];
 const gh = (repo: string) => `https://github.com/amontlabs/${repo}`;
 const N = A.days.length;
 
@@ -66,7 +68,16 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
 
       <div class="jr-lead">
         <div class="jr-nav">
-          <h3 aria-live="polite">{first && label(first)}</h3>
+          <h3 aria-live="polite">
+            <span class="jr-dl">{first && label(first)}</span>
+            {first && (
+              <span class="jr-leaf" aria-hidden="true">
+                <span class="jr-lm mono">{leaf(first)[2]}</span>
+                <span class="jr-ln">{leaf(first)[1]}</span>
+                <span class="jr-lw mono">{leaf(first)[0]}</span>
+              </span>
+            )}
+          </h3>
           <button type="button" class="jr-daymore" aria-expanded="false" aria-label="The whole day"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
           <div>
             <button type="button" data-step="-1" aria-label="Earlier day"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
@@ -75,7 +86,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
         </div>
         <div class="jr-stack">
           {A.journal.map((e) => (
-            <article data-day={e.day} data-i={A.days.indexOf(e.day)} data-label={label(e.day)} class:list={[e.day === first && "is-on"]} inert={e.day !== first}>
+            <article data-day={e.day} data-i={A.days.indexOf(e.day)} data-label={label(e.day)} data-full={label(e.day)} class:list={[e.day === first && "is-on"]} inert={e.day !== first}>
               {e.text ? (
                 <p class="jr-text">{parts(e.text).map((p) => (p.id ? <a href={`#${p.id}`} data-open={p.id} style={`--c: ${color(p.id)}`}>{p.t}</a> : p.t))}</p>
               ) : (
@@ -374,10 +385,11 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   }
 
   /* ---- the day */
+  /* the summary starts where the project descriptions start (dot 8 + gap 9 + name 76 + gap 9), so the day reads as one more row label */
   .jr-lead {
     display: grid;
-    grid-template-columns: 184px minmax(0, 1fr);
-    column-gap: 40px;
+    grid-template-columns: 93px minmax(0, 1fr);
+    column-gap: 9px;
     margin-top: 16px;
   }
   .jr-nav {
@@ -390,6 +402,51 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     line-height: 27px;
     font-weight: 500;
     letter-spacing: -0.01em;
+  }
+  /* wide screens: the day as a calendar leaf, read as text by screen readers through .jr-dl */
+  @media (min-width: 900px) {
+    .jr-nav {
+      gap: 12px;
+    }
+    .jr-dl {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .jr-leaf {
+      display: grid;
+      justify-items: start;
+    }
+    .jr-lm,
+    .jr-lw {
+      font-size: 11px;
+      line-height: 16px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--secondary);
+      white-space: nowrap;
+    }
+    .jr-ln {
+      margin: 1px 0 2px -0.04em;
+      font-size: 40px;
+      line-height: 38px;
+      font-weight: 500;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+    }
+    /* a word, not a weekday: the relative day stands out */
+    .jr-lw.is-rel {
+      color: var(--text);
+    }
+  }
+  @media (max-width: 899px) {
+    .jr-leaf {
+      display: none;
+    }
   }
   .jr-nav div {
     display: flex;
@@ -2087,7 +2144,10 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   new IntersectionObserver((es, io) => es[0].isIntersecting && (root.classList.add('is-in'), io.disconnect()), { threshold: 0.15 }).observe(root);
 
   // ---- days: across the strips. Pointing previews a day, choosing one keeps it.
-  const title = root.querySelector('.jr-nav h3')!;
+  const title = root.querySelector('.jr-nav .jr-dl')!;
+  const leaf = root.querySelector<HTMLElement>('.jr-leaf');
+  const [lm, ln, lw] = leaf ? [...leaf.children] as HTMLElement[] : [];
+  const calm = matchMedia('(prefers-reduced-motion: reduce)');
   const marks = [...root.querySelectorAll<HTMLElement>('.jr-mark')];
   const [prev, next] = root.querySelectorAll<HTMLButtonElement>('.jr-nav [data-step]');
   const byIndex = new Map(arts.map((a) => [Number(a.dataset.i), a]));
@@ -2114,6 +2174,19 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       a.inert = a !== art;
     }
     title.textContent = art.dataset.label!;
+    if (leaf) {
+      const [wd, dn, mo] = art.dataset.full!.split(' ');
+      const rel = art.dataset.label!.startsWith('Today') ? 'So far today' : art.dataset.label === 'Yesterday' ? 'Yesterday' : '';
+      if (ln.textContent !== dn || lm.textContent !== mo) {
+        const step = Number(art.dataset.day! > (leaf.dataset.day || art.dataset.day!)) * 2 - 1;
+        if (leaf.dataset.day && !calm.matches) ln.animate([{ transform: `translateY(${step * 6}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 180, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+      }
+      leaf.dataset.day = art.dataset.day!;
+      lm.textContent = mo;
+      ln.textContent = dn;
+      lw.textContent = rel || wd;
+      lw.classList.toggle('is-rel', !!rel);
+    }
     const i = Number(arts[kept].dataset.i);
     root.style.setProperty('--sel', String(i));
     const viewing = art !== arts[kept];
