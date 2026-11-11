@@ -79,6 +79,10 @@
   "hash": "01d011412510e960611179b175d7830fe9f3cfc1",
   "text": "Fjord can now wake a Claude Code chat that the Claude app isn't running, so a message sent to it still goes through. Retrying a failed send now resends it as it was."
  },
+ "2026-10-21": {
+  "hash": "a4ba9d39136ba14f56d7a50f59b97b9fa523e9a6",
+  "text": "LCU added experimental support for DeepSeek Harness and stopped Hermes sessions from growing their prompt by about 3 KB every turn. In Fjord, each session the Router follows now shows a line on what it is about overall and one on what its latest turn did."
+ },
  "2026-10-20": {
   "hash": "1df5f7d9f7381b6a2ec357d4b73f7aa75df61204",
   "text": "LCU fixed approvals in the Claude app, where answering the card for a new app could leave computer use waiting about 30 minutes, mostly in auto permission mode. Fjord's Router now checks more messages for parts meant for different sessions."
@@ -107,12 +111,8 @@
   "hash": "e61ab16e22fb23f469f0b232262a2d4a15c75d88",
   "text": "Fjord gained a canvas view, in beta, that lays out each project's coding sessions on a board you can pan and zoom, where a sent message flies to the session it went to. Its window also opens and closes faster, and its idle CPU use fell from about 10% to 0.5%."
  },
- "2026-10-21": {
-  "hash": "a4ba9d39136ba14f56d7a50f59b97b9fa523e9a6",
-  "text": "LCU added experimental support for DeepSeek Harness and stopped Hermes sessions from growing their prompt by about 3 KB every turn. In Fjord, each session the Router follows now shows a line on what it is about overall and one on what its latest turn did."
- },
  "2026-11-11": {
-  "hash": "bfe26a334e38d80857e38afcfcb608231f237070",
-  "text": "Silo rewrote the short description at the top of its project page, the only change so far."
+  "hash": "f1dc45fc7b42b7e45302da1fb2713b2b7770cb22",
+  "text": "lastdrop now picks Claude accounts for both your main threads and subagents from one shared pool, sending each to the account with the most room, and also counts weekly limits. It also shows usage limits for Google's Argon model."
  }
 }
