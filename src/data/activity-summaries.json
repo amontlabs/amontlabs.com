@@ -112,7 +112,7 @@
   "text": "Silo moved its engine into a separate background service that its app now talks to, and it can manage computers on another Mac. Fjord gained a ⌘K palette that finds inbox items, sessions, settings and computers."
  },
  "2026-11-12": {
-  "hash": "6e159af4ed32b5b49642368fd09af21914b1d962",
-  "text": "lastdrop now keeps every Claude account signed in, and skips and tells you about any account that needs a new sign-in. It also fixed Claude Code wrongly refusing the next message as too long after a subagent finished."
+  "hash": "a6c6966bbb2b2e60fdf490328a13270d0e2a461f",
+  "text": "lastdrop's subagents no longer fail when an account hits its usage limit partway through: the work moves to another account with room or the next model in line. It also keeps every Claude account signed in, so idle ones stay readable."
  }
 }
