@@ -1,4 +1,8 @@
 {
+ "2026-11-11": {
+  "hash": "64debb80233999e2754e6ea4a768ecbdc3dca4db",
+  "text": "harness-bench compared Claude Code with nanocode, an open-source agent, on the same Claude model and tasks: neither solved detectably more, and on real GitHub issues nanocode was cheaper and faster. lastdrop now picks accounts for threads and subagents from one pool."
+ },
  "2026-11-10": {
   "hash": "8aebe4ff1b5ad0b118ab60044e37fd72d2f04d32",
   "text": "Fjord's Router summary now checks whether pull requests its threads mention were merged or closed, and keeps finished threads until you clear them. Silo fixed exports of its computers so they never include their memory."
@@ -107,8 +111,8 @@
   "hash": "81ae6010bb8f7c17bb96e0ba4f27bd7ee6aca6ae",
   "text": "Silo moved its engine into a separate background service that its app now talks to, and it can manage computers on another Mac. Fjord gained a ⌘K palette that finds inbox items, sessions, settings and computers."
  },
- "2026-11-11": {
-  "hash": "64debb80233999e2754e6ea4a768ecbdc3dca4db",
-  "text": "harness-bench compared Claude Code with nanocode, an open-source agent, on the same Claude model and tasks: neither solved detectably more, and on real GitHub issues nanocode was cheaper and faster. lastdrop now picks accounts for threads and subagents from one pool."
+ "2026-11-12": {
+  "hash": "4d73b55a26fcf2d43c4a8c9e0b636ada0d342124",
+  "text": "lastdrop now renews each Claude account's sign-in shortly before it expires, so idle accounts stay usable. An account that needs signing in again is skipped and you are asked to sign in, and its panel shows where work goes."
  }
 }
