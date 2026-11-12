@@ -40,7 +40,7 @@ Page scroll is native. The scene follows the scroll position through a criticall
 
 `src/data/projects.json` holds, for Silo, Sic, Fjord, LCU and lastdrop, the latest app release (tags `vX.Y.Z`; Silo's `engine-` and `guest-` tags are skipped), its date, stars and forks. `scripts/update-projects-data.mjs` refreshes it from the GitHub API (keeping the last known values for a repo it can't reach), and `.github/workflows/update-projects-data.yml` runs it hourly, on manual dispatch and on `repository_dispatch` (`silo-release` or `release`), committing as github-actions[bot] to main. Each exhibit shows the version, release date, stars and forks; a project without a release or stars shows no stats line.
 
-Optional instant refresh: a project's release workflow can send `repository_dispatch` with `event_type: release` (Silo already uses `silo-release`) to `amontlabs/amontlabs.com`, using a fine-grained token with Contents read/write on this repo stored as a secret in the project's repo.
+Instant refresh: when a release is published, Silo (`publish-release.yml`), Fjord and lastdrop (`release.yml`) and LCU (`notify-site.yml`, on the release event since its releases are made by hand) send `repository_dispatch` with `event_type: release` to `amontlabs/amontlabs.com`, which runs both data workflows. They use the org secret `SITE_DISPATCH_TOKEN` (fine-grained token, resource owner amontlabs, Contents read/write on this repo only; shared with those four repos). If it is missing or expired, the step warns and the release still succeeds; the site then waits for its schedule. A new project needs the same step and access to the secret.
 
 ## Deployment
 
