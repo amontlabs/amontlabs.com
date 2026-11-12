@@ -64,9 +64,16 @@ import Base from "../layouts/Base.astro";
       text-wrap: pretty;
     }
   }
-  /* phones held upright: exactly one screen. The mountain takes what the panel leaves; the last line only shows
-     where there is room for it. If the panel ever outgrows the screen, the script sets .is-loose and it scrolls. */
-  @media (max-width: 599px) and (min-height: 520px) {
+  /* under 900px wide the panel is compact: where the page does scroll, the mountain band is a short one */
+  @media (max-width: 899px) {
+    .is-landing :global(.hero) {
+      min-height: 56px !important;
+    }
+  }
+  /* under 900px wide, with 520px of height: exactly one screen. The mountain takes what the panel leaves; the last
+     line only shows where there is room for it. If the panel ever outgrows the screen, the script sets .is-loose
+     and it scrolls. */
+  @media (max-width: 899px) and (min-height: 520px) {
     .is-landing:not(.is-loose) {
       height: 100svh;
       min-height: 0;
@@ -85,6 +92,23 @@ import Base from "../layouts/Base.astro";
       display: flex;
       padding-top: 10px;
       padding-bottom: calc(18px + env(safe-area-inset-bottom));
+    }
+  }
+  @media (min-width: 720px) and (max-width: 899px) and (min-height: 700px), (min-width: 600px) and (max-width: 719px) and (min-height: 800px) {
+    .is-landing:not(.is-loose) .foot {
+      display: flex;
+    }
+  }
+  @media (min-width: 600px) and (max-width: 899px) {
+    .foot p {
+      text-wrap: balance;
+    }
+  }
+  /* one screen never scrolls, so it needs no room kept for a scrollbar: the margins stay even, and a sheet's dimmed
+     page reaches the window's edge */
+  @media (max-width: 899px) and (min-height: 520px) {
+    :global(html:has(.is-landing:not(.is-loose))) {
+      scrollbar-gutter: auto;
     }
   }
 </style>

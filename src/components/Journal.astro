@@ -27,13 +27,22 @@ const N = A.days.length;
 const ORDER = ["silo", "fjord", "sic", "lcu", "lastdrop", "hartlib"];
 const color = (id: string) => (ORDER.includes(id) ? `var(--c${ORDER.indexOf(id) + 1})` : "var(--c0)");
 const name = (id: string) => A.repos[id]?.name ?? id;
-// the rows: every repository that moved, the busiest first
-const ids = Object.keys(A.repos).sort((a, b) => A.repos[b].commits - A.repos[a].commits);
+// the rows: the featured projects (ORDER), the busiest first. Any other repository that moved is not a row, so a
+// new repository never grows the panel: it is listed under "More" (a menu in the axis line) and opens like a row.
+// Every repository still counts in the totals, the summaries, and the tabs and chips of an open project.
+const busiest = (a: string, b: string) => A.repos[b].commits - A.repos[a].commits;
+const featured = Object.keys(A.repos).filter((id) => ORDER.includes(id)).sort(busiest);
+const extra = Object.keys(A.repos).filter((id) => !ORDER.includes(id)).sort(busiest);
+const ids = [...featured, ...extra];
 const item = (id: string) => items.find((it) => it.id === id);
+// what a repository is, in one row: the site's wording, else the first sentence of its GitHub description
+const about = (id: string) => A.repos[id].about.replace(/^\[WIP\]\s*/, "");
+const lineOf = (id: string) => item(id)?.line ?? others[id]?.line ?? (about(id).match(/^.*?[.!?](?=\s|$)/)?.[0] || about(id));
 
 // one scale for every row, so a quiet project looks quiet next to a busy one. A burst day would flatten the rest:
 // the scale stops at twice the typical busy day, and a bar past it is drawn full height with a break near its top.
-const busy = ids.flatMap((id) => A.repos[id].daily.filter((n) => n > 0)).sort((a, b) => a - b);
+// The scale is set by the rows alone: a repository under "More" never changes how they are drawn.
+const busy = featured.flatMap((id) => A.repos[id].daily.filter((n) => n > 0)).sort((a, b) => a - b);
 const peak = Math.max(1, Math.min(busy.at(-1) ?? 1, (busy[Math.floor(busy.length * 0.75)] ?? 1) * 2));
 const burst = (n: number) => n > peak * 1.25;
 
@@ -120,7 +129,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
           // how far along, on one ladder: the site's own word for its projects, GitHub's "[WIP]" for the others
           const stage = it?.stage ?? others[id]?.stage ?? (/^\[WIP\]/.test(R.about) ? "WIP" : null);
           const step = stage ? STAGES.indexOf(stage) + 1 : 0;
-          const line = it ? it.line : (others[id]?.line ?? R.about.replace(/^\[WIP\]\s*/, ""));
+          const line = lineOf(id);
           const links = it ? it.links : [{ kind: "github", label: "GitHub", href: gh(id) }];
           // the settled, hand-written pitch; a repository without one falls back to a generated explanation
           const pitch = it?.pitch ?? others[id]?.pitch ?? R.explain;
@@ -131,7 +140,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
           const since = young ? `Since ${sinceFmt.format(new Date(R.created!))}` : "Last 12 months";
           const life = R.weeks.reduce((a, w) => a + w.n, 0);
           return (
-            <div class="jr-item" id={id} data-r={id} style={`--c: ${color(id)}; --row: ${row}`}>
+            <div class:list={["jr-item", row >= featured.length && "is-extra"]} id={id} data-r={id} style={`--c: ${color(id)}; --row: ${row}`}>
               <div class="jr-rowline">
                 <h3>
                   <button type="button" class="jr-who" data-open={id} aria-expanded="false" aria-controls={`jr-more-${id}`}>
@@ -139,7 +148,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
                     <b>{R.name}</b>
                     <span class="jr-what">
                       <span class="jr-line" title={line}>{line}</span>
-                      <span class="jr-meta mono">
+                      <span class:list={["jr-meta mono", !stage && !what && "is-bare"]}>
                         {!stage && <em></em>}
                         {stage && <em><span class="jr-ladder" aria-hidden="true">{STAGES.map((_, k) => <i class:list={[k < step && "is-on"]}></i>)}</span>{stage}</em>}
                         {what ? <span class="jr-kinds" role="img" aria-label={kind}><Icon name={what.kind} size={12} />{what.platforms.map((p) => <Icon name={p} size={12} />)}</span> : <span></span>}
@@ -161,9 +170,9 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
                 <button type="button" class="jr-tog" data-open={id} tabindex="-1" aria-hidden="true"><svg class="jr-chev" viewBox="0 0 16 16" width="16" height="16"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
               </div>
               <div class="jr-axis jr-axis-in mono dim" aria-hidden="true">
-                <span><i class="jr-key"></i>Release</span>
-                <div><span class="jr-end">{short(A.days[0])}</span><b class="jr-mark"></b><span class="jr-end" data-last={A.days.at(-1)}>{short(A.days.at(-1)!)}</span></div>
                 <span></span>
+                <div><span class="jr-end">{short(A.days[0])}</span><b class="jr-mark"></b><span class="jr-end" data-last={A.days.at(-1)}>{short(A.days.at(-1)!)}</span></div>
+                <span><i class="jr-key"></i>Release</span>
               </div>
               <div class="jr-more" id={`jr-more-${id}`} role="region" aria-label={R.name}>
                 <div class="jr-more-in">
@@ -179,23 +188,23 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
                     <div class="jr-sheettitle">
                       <p class="jr-sheetname" id={`jr-name-${id}`}><i aria-hidden="true"></i>{R.name}</p>
                       <p class="jr-sheetlinks">{links.map((l) => <a href={l.href} aria-label={l.kind === "github" ? `${R.name} on GitHub` : `${R.name} website (${l.label})`}><Icon name={l.kind === "github" ? "github" : "site"} size={18} /></a>)}</p>
-                      <p class="jr-sheetline">{line}</p>
+                      {(pitch || it?.sub) && <p class="jr-sheetline">{line}</p>}
                     </div>
                     {it?.film && (
-                      <div class="jr-film" style={`aspect-ratio: ${it.film.ratio}`}>
+                      <div class="jr-film" style={`aspect-ratio: ${it.film.ratio}; --ar: ${it.film.ratio}`}>
                         <video muted loop playsinline disablepictureinpicture preload="none" poster={`/media/${it.film.id}-1280.webp`} data-src={`/media/${it.film.id}.mp4`} data-full={it.film.full}></video>
                         <button type="button" class="jr-sound mono"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M5 3.5v9l7.5-4.5z" fill="currentColor" /></svg>Watch with sound · {clock(it.film.dur)}</button>
                       </div>
                     )}
                     <div class="jr-about">
-                      <p class="jr-sub">{pitch?.lead ?? it?.sub ?? line}</p>
+                      <p class="jr-sub">{pitch?.lead ?? it?.sub ?? about(id)}</p>
                       {pitch && <ul class="jr-points">{pitch.points.map((x) => <li>{x}</li>)}</ul>}
                       {it && it.needs.length > 0 && <p class="jr-needs mono dim"><Icon name="link" size={12} />Works with {it.needs.join(", ")}</p>}
                     </div>
                     <div class="jr-acts">
                       <p class="jr-links">{links.map((l) => <a href={l.href}><Icon name={l.kind === "github" ? "github" : "site"} size={14} />{l.label}</a>)}</p>
                     </div>
-                    <div class="jr-profile">
+                    <div class:list={["jr-profile", !stage && "is-bare"]}>
                       {stage && (
                         <section class="p-stage">
                           <div class="jr-stagehead">
@@ -250,10 +259,24 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
             </div>
           );
         })}
-        <div class="jr-axis mono dim" aria-hidden="true">
-          <span><i class="jr-key"></i>Release</span>
-          <div><span class="jr-end">{short(A.days[0])}</span><b class="jr-mark"></b><span class="jr-end" data-last={A.days.at(-1)}>{short(A.days.at(-1)!)}</span></div>
-          <span></span>
+        <div class="jr-axis mono dim">
+          <span>{extra.length > 0 && (
+            <span class="jr-ext jr-ext-axis">
+              <button type="button" class="jr-ext-btn mono" aria-expanded="false" aria-controls="jr-ext-axis" aria-label={`More repositories (${extra.length})`}>More<svg class="jr-ext-chev" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
+              <span class="jr-ext-menu" id="jr-ext-axis" role="group" aria-label="More repositories">
+                {extra.map((x) => (
+                  <button type="button" data-open={x} style={`--c: ${color(x)}`}>
+                    <i aria-hidden="true"></i>
+                    <b>{name(x)}</b>
+                    <span class="jr-ext-n mono" aria-label={`${nf.format(A.repos[x].commits)} commits in the last 30 days`}><Icon name="commit" size={12} />{nf.format(A.repos[x].commits)}</span>
+                    <span class="jr-ext-line">{lineOf(x)}</span>
+                  </button>
+                ))}
+              </span>
+            </span>
+          )}</span>
+          <div aria-hidden="true"><span class="jr-end">{short(A.days[0])}</span><b class="jr-mark"></b><span class="jr-end" data-last={A.days.at(-1)}>{short(A.days.at(-1)!)}</span></div>
+          <span aria-hidden="true"><i class="jr-key"></i>Release</span>
         </div>
       </div>
 
@@ -574,7 +597,8 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   }
   .jr-tabs > div {
     min-height: 0;
-    overflow: hidden;
+    overflow: auto hidden; /* more repositories than fit: the line scrolls sideways */
+    scrollbar-width: none;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -582,7 +606,12 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     opacity: 0;
     transition: opacity 0.2s linear;
   }
+  .jr-tabs > div::-webkit-scrollbar {
+    display: none;
+  }
   .jr-tabs button {
+    flex: none;
+    white-space: nowrap;
     display: inline-flex;
     align-items: center;
     gap: 7px;
@@ -610,6 +639,9 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     background: var(--c);
   }
   .jr-tabs .jr-all {
+    position: sticky; /* the way back stays put when the line of tabs scrolls */
+    left: 0;
+    z-index: 1;
     margin-right: 10px !important;
     padding: 0 12px 0 9px !important;
     border-color: var(--text) !important;
@@ -747,6 +779,147 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   }
   .is-open .jr-chev {
     transform: rotate(180deg);
+  }
+  /* ---- repositories past the featured ones. Not rows: the panel keeps its six rows and its one height. Each has a
+     row's markup, so it opens in place, in a tab or as a sheet like any project, but takes no room until it is open */
+  .jr-item.is-extra:not(.is-open) {
+    border-bottom-width: 0;
+  }
+  .jr-item.is-extra:not(.is-open) .jr-rowline {
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+  }
+  .jr-item.is-extra .jr-who b {
+    width: auto;
+    min-width: 76px; /* a repository's name is as long as it is; open, its row is the only one */
+    white-space: nowrap;
+  }
+  /* no stage and no platforms to line up: its stars and forks start under its description */
+  @media (min-width: 900px) {
+    .jr-meta.is-bare {
+      grid-template-columns: auto;
+    }
+    .jr-meta.is-bare > :empty {
+      display: none;
+    }
+  }
+  /* "More": a quiet menu at the left of the axis line, under the names. It lists them as small rows (name, commits,
+     what it is); choosing one opens it */
+  .jr-ext {
+    position: relative;
+    display: inline-flex;
+  }
+  .jr-ext-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    line-height: 16px;
+    color: var(--secondary);
+    transition: color 0.15s;
+  }
+  .jr-ext-btn:hover,
+  .jr-ext.is-on .jr-ext-btn {
+    color: var(--text);
+  }
+  .jr-ext-btn svg {
+    margin-left: 4px;
+    transition: transform 0.3s var(--out);
+  }
+  .jr-ext.is-on .jr-ext-btn svg {
+    transform: rotate(180deg);
+  }
+  /* the axis: "More" under the names, the release legend under the totals */
+  .jr-axis > span:last-child {
+    grid-column: 3 / 5;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+    white-space: nowrap;
+  }
+  .jr-axis > span:first-child {
+    align-self: stretch;
+  }
+  .jr-ext-axis .jr-ext-btn {
+    height: 100%;
+  }
+  .jr-ext-menu {
+    position: absolute;
+    z-index: 6;
+    left: 0;
+    bottom: calc(100% + 2px);
+    display: grid;
+    gap: 2px;
+    width: max-content;
+    min-width: 264px;
+    max-width: min(400px, 100vw - 2 * var(--gutter));
+    padding: 5px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--bg);
+    box-shadow: 0 16px 28px -16px rgb(0 0 0 / 0.3);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(4px);
+    transition: opacity 0.12s linear, transform 0.2s var(--out), visibility 0s 0.2s;
+  }
+  .jr-ext.is-on .jr-ext-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: opacity 0.12s linear, transform 0.2s var(--out);
+  }
+  .jr-ext-menu button {
+    display: grid;
+    grid-template-columns: 9px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1px 9px;
+    padding: 7px 10px 8px;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--text);
+    transition: background-color 0.12s;
+  }
+  .jr-ext-menu button:hover,
+  .jr-ext-menu button:focus-visible {
+    background: color-mix(in srgb, var(--text) 5%, transparent);
+  }
+  .jr .jr-ext-menu button:focus-visible {
+    outline-offset: -2px;
+  }
+  .jr-ext-menu i {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    background: var(--c);
+  }
+  .jr-ext-menu b {
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .jr-ext-n {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--secondary);
+  }
+  .jr-ext-n svg {
+    opacity: 0.6;
+  }
+  .jr-ext-line {
+    grid-column: 2 / -1;
+    white-space: normal;
+    text-wrap: pretty;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--secondary);
   }
   /* the strip: thirty slots on the axis every row shares */
   .jr-strip {
@@ -1162,6 +1335,11 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     padding-left: 24px;
     border-left: 1px solid var(--line);
   }
+  /* no stage to show: its figures start at the top, level with the text beside them */
+  .jr-profile.is-bare {
+    grid-template-areas: "days life github" "built built built";
+    grid-template-rows: auto auto;
+  }
   /* what kind of thing it is and where it runs, on the stage's line */
   .jr-stagehead {
     display: flex;
@@ -1314,49 +1492,218 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     }
   }
 
-  @media (max-width: 1099px) {
-    .jr {
-      --who: 300px;
+  /* ---- 900 to 1279px wide: a film, the text and the figures side by side would crush the text between them
+     (46px of it at 960). A project with a film opens in two bands instead: what it is on top (the film and the
+     ways to it, its line, its three points), its figures in one line under it. One without a film keeps its two
+     columns. The panel still has one height in every state: the view is as tall as the fullest project needs,
+     and the six rows of the default view share that height. */
+  @media (min-width: 900px) and (max-width: 1279px) {
+    .jr-view {
+      min-height: 344px; /* 254 + 6 × 15: lastdrop's text beside its film at 900px */
+    }
+    .jr-rows:not(.has-open) .jr-rowline {
+      height: 72px;
+    }
+    .jr-rows:not(.has-open) .jr-strip {
+      --plot: 46px;
+    }
+    .jr-view.has-film {
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 12px 28px;
+    }
+    .jr-view.has-film .jr-film {
+      grid-area: 1 / 1;
+      height: 150px;
+    }
+    .jr-view.has-film .jr-acts {
+      grid-area: 2 / 1;
+    }
+    /* under a smaller film: the site by name, GitHub by its mark */
+    .jr-view.has-film .jr-links {
+      flex-wrap: nowrap;
+    }
+    .jr-view.has-film .jr-links a:not(:first-child) {
+      justify-content: center;
+      flex: none;
+      width: 34px;
+      padding: 0;
+      gap: 0;
+      font-size: 0;
+    }
+    .jr-view.has-film .jr-about {
+      grid-area: 1 / 2 / 3 / -1;
+    }
+    .jr-view.has-film .jr-sub {
+      max-width: 34em;
+    }
+    .jr-view.has-film .jr-points {
+      max-width: 44em;
+      align-content: start;
+    }
+    .jr-view.has-film .jr-needs {
+      margin-top: 10px;
+    }
+    /* the figures: one line across */
+    .jr-view.has-film .jr-profile {
+      grid-area: 3 / 1 / 4 / -1;
+      grid-template: "stage days life github built" auto / minmax(248px, 3fr) auto auto auto minmax(120px, 2fr);
+      align-content: start !important;
+      gap: 0 clamp(18px, 2.4vw, 32px);
+      padding: 8px 0 0;
+      border-left: 0;
+      border-top: 1px solid var(--line);
+    }
+    /* what kind of thing it is and where it runs is in the row above, as icons */
+    .jr-view.has-film .jr-stagehead .jr-chips {
+      display: none;
+    }
+    .jr-view.has-film .jr-stagehead {
+      min-height: 16px;
+    }
+    .jr-view.has-film .jr-stage {
+      margin-top: 9px;
+    }
+    .jr-view.has-film .jr-langs {
+      margin-top: 4px;
+    }
+    /* one language per line, as tall as the figures beside it */
+    .jr-view.has-film .jr-langlist {
+      display: grid;
+      margin-top: 5px;
+      line-height: 16px;
+    }
+    .jr-view.has-film .jr-langlist .mono {
+      line-height: inherit;
     }
   }
-  /* ---- narrow screens (phones, small tablets): one column, built for the thumb.
-     Every row is one tap target, figures line up on the right edge, the time axis heads the charts it labels. */
-  @media (max-width: 899px) {
-    .jr-panel {
-      padding: 20px 20px 4px;
-      border-radius: 16px;
+  /* from 1100px the text has room for two columns of its own beside the film: its line, then its points */
+  @media (min-width: 1100px) and (max-width: 1279px) {
+    .jr-view {
+      min-height: 320px; /* 254 + 6 × 11 */
     }
-    /* the month in three figures, each with its label under it, then where it comes from */
+    .jr-rows:not(.has-open) .jr-rowline {
+      height: 68px;
+    }
+    .jr-rows:not(.has-open) .jr-strip {
+      --plot: 44px;
+    }
+    .jr-view.has-film {
+      grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .jr-view.has-film .jr-about {
+      display: contents;
+    }
+    .jr-view.has-film .jr-sub {
+      grid-area: 1 / 2;
+    }
+    .jr-view.has-film .jr-needs {
+      grid-area: 2 / 2;
+      align-self: start;
+      height: 34px;
+      margin: 0;
+    }
+    .jr-view.has-film .jr-points {
+      grid-area: 1 / 3 / 3 / 4;
+      margin: 3px 0 0;
+    }
+  }
+  /* just past 1280px the text column is at its narrowest (359px): lastdrop's, the fullest, was 1px too tall for the
+     view, which made the panel 1px taller on that tab alone */
+  @media (min-width: 1280px) and (max-width: 1299px) {
+    .jr-needs {
+      margin-top: 10px;
+    }
+  }
+  /* 900 to 1239px: the month's figures with their labels under them and the caption in two short lines, as under
+     900px (in one line they wrapped) */
+  @media (min-width: 900px) and (max-width: 1239px) {
     .jr-head {
-      display: block;
+      align-items: flex-end;
     }
     .jr-nums {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-      gap: 14px 16px;
+      flex-wrap: nowrap;
+      gap: 0 30px;
     }
     .jr-nums div {
       flex-direction: column;
       gap: 0;
     }
     .jr-nums dd {
-      font-size: 24px;
-      line-height: 30px;
+      line-height: 26px;
     }
     .jr-nums dt {
-      font-size: 13px;
-      line-height: 17px;
+      font-size: 12px;
+      line-height: 16px;
+    }
+    .jr-nums .mono,
+    .jr-contrib {
+      display: none;
+    }
+    .jr-head p {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      justify-items: end;
+      gap: 0 14px;
+      font-size: 11px;
+      line-height: 16px;
+    }
+    .jr-cap {
+      display: inline;
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* 900 to 1099px: a narrower identity column, so the strips keep their room, and rows tall enough for what the
+     project is to take two lines instead of being cut (6px more on the open row, 1px on each of the six) */
+  @media (min-width: 900px) and (max-width: 1099px) {
+    .jr {
+      --who: 380px;
+    }
+    .jr-item.is-open .jr-rowline {
+      height: 56px;
+    }
+    .jr-rows:not(.has-open) .jr-rowline {
+      height: 73px;
+    }
+    /* stars and forks do not fit beside the stage here: they are in the open project */
+    .jr-meta .jr-gh {
+      display: none;
+    }
+    .jr-line {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      white-space: normal;
+      line-height: 18px;
+      text-wrap: balance;
+    }
+    .jr-rows:not(.has-open) .jr-what {
+      gap: 4px;
+    }
+    .jr-item.is-open .jr-what {
+      gap: 1px;
+    }
+  }
+  /* ---- under 900px wide (phones, tablets, a laptop's half screen): one column. What every such screen shares;
+     the compact one-screen design itself follows below. */
+  @media (max-width: 899px) {
+    /* the month in figures, each with its label under it, then where it comes from */
+    .jr-head {
+      display: block;
+    }
+    .jr-nums {
+      display: grid;
+    }
+    .jr-nums div {
+      flex-direction: column;
+      gap: 0;
     }
     .jr-nums .mono {
       display: none;
     }
     .jr-head p {
-      flex-wrap: wrap;
       gap: 0 14px;
-      margin-top: 12px;
-      padding-top: 10px;
-      border-top: 1px solid var(--line);
-      line-height: 20px;
     }
     .jr-cap {
       display: inline !important;
@@ -1364,39 +1711,14 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     .jr-contrib {
       display: none;
     }
-
-    /* the day: its name and the arrows on one line, the summary, then the projects that moved, one per line */
+    /* the day: its name and the arrows on one line, then the summary */
     .jr-lead {
       grid-template-columns: minmax(0, 1fr);
-      row-gap: 8px;
-      margin-top: 22px;
     }
     .jr-nav {
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
-    }
-    .jr-nav h3 {
-      font-size: 18px;
-    }
-    .jr-nav div {
-      gap: 8px;
-    }
-    .jr-nav button {
-      width: 40px;
-      height: 40px;
-    }
-    /* only the day shown takes room (stacked, the longest day left a hole under the shorter ones); while a finger
-       scrubs the strips, the script keeps them still under it */
-    .jr-stack article {
-      grid-area: auto;
-    }
-    .jr-stack article:not(.is-on) {
-      display: none;
-    }
-    .jr-text {
-      font-size: 17px;
-      line-height: 26px;
     }
     .jr-split {
       gap: 2px 20px;
@@ -1405,93 +1727,33 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       flex-wrap: wrap;
       gap: 0 7px;
     }
-    /* the projects */
+    /* the projects. The axis heads the charts: first, with its dates over the strips they label */
     .jr-rows {
       display: flex;
       flex-direction: column;
-      margin-top: 14px;
     }
-    /* the axis heads the charts: first, with its dates over the strips they label */
     .jr-rows > .jr-axis {
       order: -1;
-      height: 30px;
       border-bottom: 1px solid var(--line);
-    }
-    .jr-axis {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .jr-axis > span {
-      display: none !important;
     }
     .jr-item {
       scroll-margin-top: 16px;
     }
-    /* a row: name, total and chevron on top, what it is, its stage and reception, then its strip.
-       The name's button spans the whole top so the row is one tap target */
     .jr-rowline {
-      grid-template-columns: minmax(0, 1fr) auto 32px;
-      grid-template-rows: auto auto;
-      height: auto;
-      padding: 14px 0 0;
-    }
-    .jr-rowline h3 {
-      grid-column: 1 / -1;
-      grid-row: 1;
       height: auto;
     }
     .jr-who {
-      flex-wrap: wrap;
-      gap: 0 9px;
       padding: 0 !important;
-      font-size: 16px;
-      line-height: 24px;
-    }
-    .jr-who b {
-      flex: 1;
-      width: auto;
-      padding-right: 104px;
-    }
-    .jr-what {
-      order: 3;
-      flex: 0 0 100%;
-      gap: 6px;
-      margin-top: 2px;
-    }
-    .jr-line {
-      white-space: normal;
-      font-size: 14px;
-      line-height: 20px;
-    }
-    /* stage and platforms on the left, stars and forks flush with the right edge */
-    .jr-meta {
-      grid-template-columns: 104px auto minmax(0, 1fr);
-    }
-    .jr-gh {
-      justify-self: end;
     }
     .jr-total {
-      grid-column: 2;
       grid-row: 1;
-      align-self: start;
-      line-height: 24px;
       pointer-events: none;
     }
     .jr-tog {
-      grid-column: 3;
       grid-row: 1;
-      align-self: start;
-      height: 24px;
-      color: var(--text);
     }
     .jr-strip {
       --plot: 34px;
-      grid-column: 1 / -1;
-      grid-row: 2;
-      height: 46px;
-      margin-top: 8px;
-    }
-    .jr-strip > span {
-      padding: 0 1px;
     }
     /* pressed: the whole row answers */
     .jr-item:not(.is-open) .jr-rowline {
@@ -1500,59 +1762,16 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     .jr-item:not(.is-open) .jr-rowline:active {
       background: color-mix(in srgb, var(--text) 4%, transparent);
     }
-
-    /* a project, opened in place: one column, film first */
-    .jr-view,
-    .jr-view.has-film {
-      grid-template-columns: minmax(0, 1fr);
-      row-gap: 18px;
-      padding: 16px 0 22px;
-    }
     .jr-film {
-      height: auto;
       border-radius: 12px;
     }
-    .jr-sub {
-      font-size: 18px;
-      line-height: 25px;
-    }
-    .jr-points {
-      gap: 8px;
-      margin-top: 12px;
-      font-size: 15px;
-      line-height: 22px;
-    }
-    .jr-points li::before {
-      top: 8px;
-    }
-    /* the ways to it: full-width buttons, thumb height */
-    .jr-acts {
-      display: block;
-    }
-    .jr-links {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-      gap: 8px;
-    }
-    .jr-links a {
-      justify-content: center;
-      height: 44px;
-      padding: 0 12px;
-      font-size: 15px;
-      min-width: 0;
-      white-space: nowrap;
-    }
     .jr-profile {
-      gap: 20px 12px;
-      padding: 18px 0 0;
+      padding: 0;
       border-left: 0;
       border-top: 1px solid var(--line);
     }
     .jr-profile h4 {
       white-space: normal;
-    }
-    .jr-figs {
-      font-size: 13px;
     }
     .jr-figs li {
       gap: 5px;
@@ -1605,6 +1824,11 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       position: absolute;
       inset: -10px -4px;
     }
+    /* the film never takes more than a quarter of the screen: full width, a squarer one letterboxed in it */
+    .jr-film {
+      height: min(25svh, 222px) !important;
+      aspect-ratio: auto !important;
+    }
 
     .jr-panel {
       padding: 22px var(--gutter) 4px;
@@ -1613,10 +1837,11 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       background: var(--bg);
     }
   }
-  /* ==== phones held upright: one screen, nothing scrolls. The mountain and the line on top; then the month in four
-     figures, the day (its summary in a fixed slot, the whole day unrolls over the list), and the six projects as
-     compact rows on the shared axis. A project opens as a sheet over everything (swipe down, back or ✕ to close). */
-  @media (max-width: 599px) and (min-height: 520px) {
+  /* ==== under 900px wide: one screen, nothing scrolls (given 520px of height; shorter, the same design scrolls).
+     The mountain and the line on top; then the month in four figures, the day (its summary in a fixed slot, the
+     whole day unrolls over the list), and the six projects as compact rows on the shared axis. A project opens as
+     a sheet over everything (swipe down, back or ✕ to close). Written for phones; 600px and up adjusts it below. */
+  @media (max-width: 899px) {
     .jr {
       --rowh: 36px;
       --plot: 20px;
@@ -1757,8 +1982,10 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       pointer-events: none;
     }
     /* the projects: name and stage, the strip, the day's commits, a chevron. The whole row opens the project */
+    /* nothing between the day and the axis line but space: the line under the axis is the first row's */
     .jr-rows {
       margin-top: 8px;
+      border-top: 0;
     }
     .jr-rows > .jr-axis,
     .jr-axis {
@@ -1770,8 +1997,34 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       display: flex !important;
     }
     .jr-axis > span:last-child {
-      display: block !important;
+      display: flex !important;
       grid-column: 3 / 5;
+    }
+    /* "More" under the names, the release legend over the day's commits; the menu drops over the list */
+    .jr-ext-btn svg {
+      margin-left: 2px;
+    }
+    .jr-ext-btn::after {
+      content: "";
+      position: absolute;
+      inset: -10px -12px -10px -6px;
+    }
+    .jr-ext-menu {
+      top: calc(100% + 2px);
+      bottom: auto;
+      transform: translateY(-4px);
+    }
+    /* a repository under "More" opens as a sheet and never shows a row */
+    .jr-item.is-extra,
+    .jr-item.is-extra.is-open {
+      border-bottom-width: 0;
+    }
+    .jr-item.is-extra .jr-rowline,
+    .jr-item.is-extra.is-open .jr-rowline {
+      height: 0;
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
     }
     .jr-rowline {
       grid-template-columns: var(--name) minmax(0, 1fr) var(--fig) 14px;
@@ -2035,12 +2288,10 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       line-height: 21px;
       color: var(--secondary);
     }
-    /* the film never takes more than a quarter of the screen: full width, a squarer one letterboxed in it */
     .jr-film {
       flex: none;
       width: 100%;
-      height: min(25svh, 222px);
-      aspect-ratio: auto !important;
+      height: auto;
       background: #0b0e11; /* letterbox like a player, in both themes */
     }
     .jr-film video {
@@ -2071,7 +2322,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     }
   }
   /* taller screens: the room goes to the rows and the day */
-  @media (max-width: 599px) and (min-height: 620px) {
+  @media (max-width: 899px) and (min-height: 620px) {
     .jr {
       --rowh: 43px;
       --plot: 26px;
@@ -2098,7 +2349,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       font-size: 17px;
     }
   }
-  @media (max-width: 599px) and (min-height: 740px) {
+  @media (max-width: 899px) and (min-height: 740px) {
     .jr {
       --rowh: 48px;
       --plot: 30px;
@@ -2116,11 +2367,355 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       font-size: 16px;
     }
   }
-  @media (max-width: 599px) and (min-height: 820px) {
+  @media (max-width: 899px) and (min-height: 820px) {
     .jr {
       --rowh: 52px;
       --plot: 32px;
       --lines: 5;
+    }
+  }
+  /* ==== 600 to 899px wide (a laptop's half screen, a tablet held upright): the same one screen, drawn for the
+     width. The panel stays a card; the figures sit left with their caption right; a row says the project's stage
+     in words and, with room, what it is; the project is a sheet rising over the dimmed page, in two columns. */
+  @media (min-width: 600px) and (max-width: 899px) {
+    .jr {
+      --name: 196px;
+      --fig: 40px;
+      --lh: 24px;
+      --lines: 3;
+    }
+    .jr-title {
+      margin-bottom: 14px;
+      font-size: 28px;
+      line-height: 30px;
+    }
+    .jr-panel {
+      padding: 14px 24px 4px;
+      background: var(--bg);
+    }
+    .jr-nums {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 0 30px;
+    }
+    .jr-nums dd {
+      font-size: 22px;
+      line-height: 26px;
+    }
+    .jr-nums dt {
+      font-size: 12px;
+      line-height: 16px;
+    }
+    .jr-head p a {
+      display: inline-flex;
+    }
+    .jr-upd {
+      display: inline;
+    }
+    .jr-head p {
+      justify-content: flex-start;
+      gap: 0 16px;
+    }
+    .jr-head p > :last-child {
+      margin-left: auto;
+    }
+    .jr-lead {
+      margin-top: 10px;
+      padding-top: 6px;
+    }
+    .jr-nav h3 {
+      font-size: 18px;
+    }
+    .jr-nav div {
+      gap: 6px;
+    }
+    .jr-text {
+      max-width: 70ch;
+      font-size: 17px;
+      letter-spacing: -0.012em;
+    }
+    .jr-rows {
+      margin-top: 10px;
+    }
+    .jr-rows > .jr-axis,
+    .jr-axis,
+    .jr-rowline {
+      column-gap: 16px;
+    }
+    .jr-rows > .jr-axis {
+      height: 26px;
+    }
+    /* the card's own edge closes the list */
+    .jr-item:not(.is-extra):not(:has(~ .jr-item:not(.is-extra))) {
+      border-bottom-width: 0;
+    }
+    /* a row: the name, then its stage on the ladder and in words; under them, with room, what it is */
+    .jr-who {
+      grid-template-columns: 9px 76px minmax(0, 1fr);
+      gap: 2px 8px;
+    }
+    .jr-who b {
+      width: auto;
+      font-size: 16px;
+      line-height: 20px;
+    }
+    .jr-what {
+      display: contents;
+    }
+    .jr-meta {
+      grid-area: 1 / 3;
+      display: flex;
+      align-items: center;
+      line-height: 20px;
+      transition: opacity 0.15s linear;
+    }
+    .jr-meta em {
+      font-size: 11px;
+    }
+    .jr-meta > :not(em) {
+      display: none !important;
+    }
+    .jr-strip {
+      --plot: calc(var(--rowh) - 14px);
+    }
+    .jr-strip span > i {
+      width: min(100% - 3px, 12px);
+      border-radius: 2px 2px 0 0;
+    }
+    .jr-strip u {
+      width: 4px;
+      height: 4px;
+      margin-left: -2px;
+    }
+    .jr-ext-menu {
+      top: calc(100% + 4px);
+    }
+
+    /* ---- the project: a sheet from the bottom edge, the page dimmed behind it (a press there closes it). One
+       height for every project, so its head stays under the pointer from one to the next */
+    .jr-more,
+    .is-open .jr-more {
+      background: none;
+    }
+    .jr-more-in,
+    .is-open .jr-more-in {
+      position: absolute;
+      inset: auto 0 0;
+      height: min(100% - 28px, 940px);
+      border-top: 1px solid var(--line);
+      border-radius: 20px 20px 0 0;
+      background: var(--bg);
+      box-shadow: 0 0 0 100vmax transparent;
+      transition: box-shadow 0.24s linear;
+    }
+    .is-open .jr-more-in {
+      box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.36);
+    }
+    .jr-rows.is-swap .jr-more-in {
+      transition: none;
+    }
+    .jr-sheethead {
+      padding: 16px 12px 8px 24px;
+    }
+    .jr-grab {
+      top: 6px;
+    }
+    /* one column, held to a reading width */
+    .jr-view,
+    .jr-view.has-film,
+    .is-open .jr-view {
+      gap: 16px;
+      padding: 18px max(24px, (100% - 560px) / 2) 24px;
+    }
+    /* the film at its own shape, as wide as the column unless that makes it taller than 38% of the screen */
+    .jr-film {
+      align-self: flex-start;
+      width: min(100%, 38svh * (var(--ar)));
+    }
+    .jr-profile {
+      gap: 16px 12px;
+      padding-top: 16px;
+    }
+  }
+  /* 600px and up, by height. Under 620px of it, everything a little smaller so the screen still holds */
+  @media (min-width: 600px) and (max-width: 899px) and (max-height: 619.98px) {
+    .jr {
+      --rowh: 34px;
+      --lh: 22px;
+    }
+    .jr-title {
+      margin-bottom: 10px;
+      font-size: 24px;
+      line-height: 26px;
+    }
+    .jr-nums dd {
+      font-size: 20px;
+      line-height: 24px;
+    }
+    .jr-nav button:not(.jr-daymore) {
+      width: 32px;
+      height: 32px;
+    }
+    .jr-nav .jr-daymore {
+      height: 32px;
+    }
+    .jr-text {
+      font-size: 16px;
+    }
+    .jr-rows {
+      margin-top: 6px;
+    }
+    .jr-rows > .jr-axis {
+      height: 22px;
+    }
+  }
+  @media (min-width: 600px) and (max-width: 899px) and (min-height: 620px) {
+    .jr {
+      --rowh: 44px;
+    }
+    .jr-lead {
+      margin-top: 12px;
+      padding-top: 8px;
+    }
+  }
+  @media (min-width: 600px) and (max-width: 899px) and (min-height: 740px) {
+    .jr {
+      --rowh: 50px;
+      --lines: 4;
+    }
+    .jr-panel {
+      padding-top: 16px;
+    }
+    .jr-lead {
+      margin-top: 14px;
+    }
+  }
+  @media (min-width: 600px) and (max-width: 899px) and (min-height: 860px) {
+    .jr {
+      --rowh: 56px;
+    }
+    .jr-title {
+      margin-bottom: 18px;
+      font-size: 32px;
+      line-height: 34px;
+    }
+    .jr-panel {
+      padding-top: 18px;
+    }
+    .jr-lead {
+      margin-top: 16px;
+      padding-top: 10px;
+    }
+    .jr-rows {
+      margin-top: 12px;
+    }
+  }
+  /* no last line under it on a short screen: the card keeps a margin of its own */
+  @media (min-width: 600px) and (max-width: 899px) and (min-height: 520px) and (max-height: 699.98px) {
+    .jr-panel {
+      margin-bottom: 16px;
+    }
+  }
+  /* 600 to 719px: the caption takes a line of its own and the line over the mountain two at 28px, so on a short
+     screen it is set smaller (one line) and the rows are a little lower: the one screen holds from 520px up */
+  @media (min-width: 600px) and (max-width: 719px) and (max-height: 739.98px) {
+    .jr-title {
+      margin-bottom: 12px;
+      font-size: 24px;
+      line-height: 26px;
+    }
+  }
+  @media (min-width: 600px) and (max-width: 719px) and (min-height: 620px) and (max-height: 739.98px) {
+    .jr {
+      --rowh: 40px;
+    }
+  }
+  @media (min-width: 600px) and (max-width: 719px) and (max-height: 619.98px) {
+    .jr {
+      --rowh: 32px;
+    }
+    .jr-lead {
+      margin-top: 8px;
+      padding-top: 4px;
+    }
+    .jr-rows > .jr-axis {
+      height: 20px;
+    }
+  }
+  @media (min-width: 600px) and (max-width: 719px) and (min-height: 700px) and (max-height: 799.98px) {
+    .jr-panel {
+      margin-bottom: 16px;
+    }
+  }
+  /* 720px and up: the caption beside the figures, in two short lines */
+  @media (min-width: 720px) and (max-width: 899px) {
+    .jr-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+    .jr-head p {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      justify-items: end;
+      gap: 0 14px;
+      margin-top: 0;
+    }
+    .jr-head p > .jr-cap {
+      grid-column: 1 / -1;
+      justify-self: end;
+    }
+    .jr-head p > :last-child {
+      margin-left: 0;
+    }
+  }
+  /* 760px and up: a row has room to say what the project is (given the height for a second line) */
+  @media (min-width: 760px) and (max-width: 899px) and (min-height: 620px) {
+    .jr {
+      --name: 328px;
+    }
+    .jr-line {
+      grid-area: 2 / 2 / auto / -1;
+      display: block !important;
+      font-size: 13px;
+      line-height: 17px;
+    }
+  }
+  /* 800px and up: the sheet sets the project in two columns, what it is on the left, its figures on the right */
+  @media (min-width: 800px) and (max-width: 899px) {
+    .jr-more-in,
+    .is-open .jr-more-in {
+      height: min(100% - 28px, 640px);
+    }
+    .jr-view,
+    .jr-view.has-film,
+    .is-open .jr-view {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 372px;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      align-content: start;
+      gap: 16px 28px;
+      padding-inline: 24px;
+    }
+    .jr-sheettitle {
+      grid-area: 1 / 1 / auto / -1;
+    }
+    .jr-film {
+      grid-area: 2 / 1;
+      width: min(100%, 250px * (var(--ar)));
+    }
+    .jr-about {
+      grid-area: 3 / 1;
+    }
+    .jr-view:not(.has-film) .jr-about {
+      grid-row: 2 / -1;
+    }
+    .jr-profile {
+      grid-area: 2 / 2 / -1 / auto;
+      align-self: start;
+      padding: 0 0 0 24px;
+      border-top: 0;
+      border-left: 1px solid var(--line);
     }
   }
 </style>
@@ -2159,15 +2754,13 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     return [el, num, daily] as const;
   });
   const rows = root.querySelector<HTMLElement>('.jr-rows')!;
-  const narrow = matchMedia('(max-width: 899px)');
-  // phones held upright: one screen, the project as a sheet (see the styles)
-  const phone = matchMedia('(max-width: 599px) and (min-height: 520px)');
+  // under 900px wide: the compact design, the project as a sheet (see the styles); with the height for it, one screen
+  const phone = matchMedia('(max-width: 899px)');
+  const oneScreen = matchMedia('(max-width: 899px) and (min-height: 520px)');
   const lead = root.querySelector<HTMLElement>('.jr-lead')!;
-  const show = (n: number, keep: boolean, pointing = false, still = false) => {
+  const show = (n: number, keep: boolean, pointing = false) => {
     const art = arts[n];
     if (!art) return;
-    // narrow screens size the summary to its day: when the change comes from the strips, they must not move
-    const at = still && narrow.matches ? rows.getBoundingClientRect().top : null;
     if (keep) kept = n;
     for (const a of arts) {
       a.classList.toggle('is-on', a === art);
@@ -2211,7 +2804,6 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     }
     prev.disabled = kept <= 0;
     next.disabled = kept >= arts.length - 1;
-    if (at !== null) scrollBy(0, rows.getBoundingClientRect().top - at);
     // the summary cut by its slot: say so (a fade on the last line)
     const text = art.querySelector<HTMLElement>('.jr-text, .jr-hl');
     lead.classList.toggle('is-long', !!text && text.offsetHeight > (art.parentElement as HTMLElement).clientHeight + 1);
@@ -2230,7 +2822,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   rows.addEventListener('pointermove', (e) => {
     const n = dayAt(e);
     if (e.pointerType === 'mouse') show(n < 0 ? kept : n, false, n >= 0);
-    else if (n >= 0 && n !== kept) (show(n, true, false, true), (scrubbed = true));
+    else if (n >= 0 && n !== kept) (show(n, true), (scrubbed = true));
   });
   rows.addEventListener('pointerleave', () => show(kept, false));
   rows.addEventListener('click', (e) => {
@@ -2242,7 +2834,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       const id = (e.target as Element).closest<HTMLElement>('.jr-item')!.dataset.r!;
       return set(id === open ? null : id, true);
     }
-    show(n, true, pe.pointerType === 'mouse', true);
+    show(n, true, pe.pointerType === 'mouse');
   });
   prev.addEventListener('click', () => show(kept - 1, true));
   next.addEventListener('click', () => show(kept + 1, true));
@@ -2254,7 +2846,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   });
   show(kept, true);
 
-  // ---- phones: the whole day unrolls over the list (the chevron, or a tap on the summary); a swipe changes day
+  // ---- under 900px: the whole day unrolls over the list (the chevron, or a tap on the summary); a swipe changes day
   const more = root.querySelector<HTMLButtonElement>('.jr-daymore')!;
   const full = (on: boolean) => {
     lead.classList.toggle('is-full', on);
@@ -2296,6 +2888,21 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
 
   // ---- projects: a row's name, or a project named in a summary, opens it in place. One at a time.
   const its = [...root.querySelectorAll<HTMLElement>('.jr-item')];
+  // "More": the repositories that are not rows, as a small menu in the axis line. Esc, a press elsewhere or leaving
+  // it closes it; choosing one opens it like any project.
+  const exts = [...root.querySelectorAll<HTMLElement>('.jr-ext')];
+  const ext = (el: HTMLElement | null) => {
+    for (const x of exts) {
+      x.classList.toggle('is-on', x === el);
+      x.querySelector('.jr-ext-btn')!.setAttribute('aria-expanded', String(x === el));
+    }
+  };
+  for (const x of exts) {
+    x.querySelector('.jr-ext-btn')!.addEventListener('click', () => ext(x.classList.contains('is-on') ? null : x));
+    x.addEventListener('focusout', (e) => e.relatedTarget && !x.contains(e.relatedTarget as Node) && ext(null));
+  }
+  document.addEventListener('pointerdown', (e) => (e.target as Element).closest?.('.jr-ext.is-on') || ext(null));
+  addEventListener('resize', () => ext(null), { passive: true });
   let open: string | null = null;
   // the river takes the colour of the project pointed at, else of the one that is open, else its own
   const tint = (id: string | null) => {
@@ -2305,7 +2912,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     (window as unknown as { __tint: number[] | null }).__tint = color; // the scene mounts late: it reads this when it does
     document.dispatchEvent(new CustomEvent('px:tint', { detail: { color } }));
   };
-  // ---- phones: the project as a sheet over the screen
+  // ---- under 900px: the project as a sheet over the screen
   let pushed = false;
   const page = () => [document.querySelector('.top'), document.querySelector('.top-logo'), document.querySelector('.hero'), document.querySelector('.foot'), root.querySelector('.jr-title'), root.querySelector('.jr-head'), lead, root.querySelector('.jr-tabs'), rows.querySelector(':scope > .jr-axis')].filter(Boolean) as HTMLElement[];
   const sheet = (id: string | null, prev: string | null, opts: { history?: boolean; instant?: boolean }) => {
@@ -2332,7 +2939,11 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     }
     document.dispatchEvent(new CustomEvent('px:viewer', { detail: { open: !!id } }));
     if (id) its.find((x) => x.dataset.r === id)!.querySelector<HTMLElement>('.jr-x')!.focus({ preventScroll: true });
-    else if (prev) its.find((x) => x.dataset.r === prev)!.querySelector<HTMLElement>('.jr-who')!.focus({ preventScroll: true });
+    else if (prev) {
+      // a repository under "More" has no row to return to: back to "More"
+      const it = its.find((x) => x.dataset.r === prev)!;
+      (it.classList.contains('is-extra') ? rows.querySelector<HTMLElement>('.jr-ext-btn') : it.querySelector<HTMLElement>('.jr-who'))?.focus({ preventScroll: true });
+    }
     if (opts.history) return;
     if (id && !prev) {
       history.pushState(null, '', `#${id}`);
@@ -2381,7 +2992,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   const fit = () => {
     if (!main) return;
     main.classList.remove('is-loose');
-    if (!phone.matches) return;
+    if (!oneScreen.matches) return;
     // the unrolled day hangs below its slot (clipped), so ask where the last block ends, not how far main scrolls
     const end = Math.max(...[...main.children].map((c) => (c as HTMLElement).offsetTop + (c as HTMLElement).offsetHeight));
     if (end > main.clientHeight + 1) main.classList.add('is-loose');
@@ -2391,12 +3002,19 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     const prev = open;
     const snap = prev !== id && matchMedia('(min-width: 900px)').matches;
     const glide = snap && !(prev && id) && !matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const anchor = glide ? its.find((x) => x.dataset.r === (id ?? prev)) : undefined;
+    // (a repository under "More" has no row to glide from or back to: it fades in with the rest)
+    const anchor = glide ? its.find((x) => x.dataset.r === (id ?? prev) && !x.classList.contains('is-extra')) : undefined;
     const from = anchor?.getBoundingClientRect().top ?? 0;
     open = id;
+    ext(null);
     if (snap) rows.classList.add('is-snap');
     rows.classList.toggle('has-open', !!id);
-    for (const tab of root.querySelectorAll<HTMLElement>('[data-tab]')) tab.setAttribute('aria-pressed', String(tab.dataset.tab === id));
+    for (const tab of root.querySelectorAll<HTMLElement>('[data-tab]')) {
+      tab.setAttribute('aria-pressed', String(tab.dataset.tab === id));
+      // a line of tabs longer than the panel scrolls sideways: keep the open one in it
+      const strip = tab.parentElement!;
+      if (tab.dataset.tab === id && strip.scrollWidth > strip.clientWidth) strip.scrollLeft = tab.offsetLeft - (strip.clientWidth - tab.offsetWidth) / 2;
+    }
     for (const it of its) {
       const on = it.dataset.r === id;
       it.classList.toggle('is-open', on);
@@ -2432,8 +3050,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
     if (phone.matches) sheet(id, prev, opts);
     else if (!opts.history) history.replaceState(null, '', id ? `#${id}` : location.pathname + location.search);
     // opened from a summary: bring the row into view once it has its height
-    // on narrow screens the project starts at the top of the screen, whatever folded above it
-    if (id && reveal && !phone.matches) setTimeout(() => its.find((x) => x.dataset.r === id)!.scrollIntoView({ block: narrow.matches ? 'start' : 'nearest', behavior: 'smooth' }), 440);
+    if (id && reveal && !phone.matches) setTimeout(() => its.find((x) => x.dataset.r === id)!.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 440);
   };
   root.addEventListener('click', (e) => {
     const el = e.target as Element;
@@ -2442,9 +3059,12 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
       e.preventDefault();
       const row = o.classList.contains('jr-who') || o.classList.contains('jr-tog');
       set(row && o.dataset.open === open ? null : o.dataset.open!, true);
+      // chosen in "More": the menu is gone, so the keyboard carries on from the project it opened
+      if (o.closest('.jr-ext') && !phone.matches) its.find((x) => x.dataset.r === open)?.querySelector<HTMLElement>('.jr-who')?.focus({ preventScroll: true });
       return;
     }
-    if (el.closest('[data-close]')) return set(null);
+    // the sheet's own close button, or a press on the dimmed page around a sheet that leaves some of it showing
+    if (el.closest('[data-close]') || (phone.matches && el.classList.contains('jr-more'))) return set(null);
     const g = el.closest<HTMLElement>('[data-goto]');
     if (g) {
       show(arts.findIndex((a) => a.dataset.day === g.dataset.goto), true);
@@ -2464,6 +3084,8 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   root.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (lead.classList.contains('is-full')) return full(false);
+    const menu = exts.find((x) => x.classList.contains('is-on'));
+    if (menu) return (ext(null), menu.querySelector<HTMLElement>('.jr-ext-btn')!.focus());
     if (open) set(null);
   });
   for (const it of its) {
@@ -2483,7 +3105,7 @@ const parts = (text: string) => text.split(re).map((t) => ({ t, id: names.find((
   };
   addEventListener('hashchange', () => fromHash());
   fromHash(true);
-  // turned sideways or resized out of the phone layout: put the sheet away cleanly
+  // resized across 900px: put the sheet away cleanly
   phone.addEventListener('change', () => {
     for (const el of [...page(), ...its, ...root.querySelectorAll<HTMLElement>('.jr-rowline, .jr-axis-in')]) el.inert = false;
     if (open) set(null);
