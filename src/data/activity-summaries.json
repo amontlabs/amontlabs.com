@@ -107,12 +107,8 @@
   "hash": "81ae6010bb8f7c17bb96e0ba4f27bd7ee6aca6ae",
   "text": "Silo moved its engine into a separate background service that its app now talks to, and it can manage computers on another Mac. Fjord gained a ⌘K palette that finds inbox items, sessions, settings and computers."
  },
- "2026-10-13": {
-  "hash": "e61ab16e22fb23f469f0b232262a2d4a15c75d88",
-  "text": "Fjord gained a canvas view, in beta, that lays out each project's coding sessions on a board you can pan and zoom, where a sent message flies to the session it went to. Its window also opens and closes faster, and its idle CPU use fell from about 10% to 0.5%."
- },
  "2026-11-11": {
-  "hash": "f1dc45fc7b42b7e45302da1fb2713b2b7770cb22",
-  "text": "lastdrop now picks Claude accounts for both your main threads and subagents from one shared pool, sending each to the account with the most room, and also counts weekly limits. It also shows usage limits for Google's Argon model."
+  "hash": "64debb80233999e2754e6ea4a768ecbdc3dca4db",
+  "text": "harness-bench compared Claude Code with nanocode, an open-source agent, on the same Claude model and tasks: neither solved detectably more, and on real GitHub issues nanocode was cheaper and faster. lastdrop now picks accounts for threads and subagents from one pool."
  }
 }
