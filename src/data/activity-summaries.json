@@ -1,12 +1,4 @@
 {
- "2026-11-11": {
-  "hash": "64debb80233999e2754e6ea4a768ecbdc3dca4db",
-  "text": "harness-bench compared Claude Code with nanocode, an open-source agent, on the same Claude model and tasks: neither solved detectably more, and on real GitHub issues nanocode was cheaper and faster. lastdrop now picks accounts for threads and subagents from one pool."
- },
- "2026-11-10": {
-  "hash": "8aebe4ff1b5ad0b118ab60044e37fd72d2f04d32",
-  "text": "Fjord's Router summary now checks whether pull requests its threads mention were merged or closed, and keeps finished threads until you clear them. Silo fixed exports of its computers so they never include their memory."
- },
  "2026-11-09": {
   "hash": "de9113b8348d884274de01846b11ee0ed14e27d9",
   "text": "lastdrop now starts each T3 Code thread on the Claude account with the most usage left, and moves it when that account runs out. Silo's container computers got a desktop, checkpoints, copies, a terminal and export. LCU fixed computer use missing in Claude Code."
@@ -107,12 +99,16 @@
   "hash": "35b528e12095aa8aa0989be7637b631424be0916",
   "text": "Fjord can now stop a running coding session or interrupt it with a new message, and each send checks whether an item should be archived or a session stopped. Silo can repair its access to the Mac's Keychain, and imported Macs now finish setup when one step fails."
  },
- "2026-10-14": {
-  "hash": "81ae6010bb8f7c17bb96e0ba4f27bd7ee6aca6ae",
-  "text": "Silo moved its engine into a separate background service that its app now talks to, and it can manage computers on another Mac. Fjord gained a ⌘K palette that finds inbox items, sessions, settings and computers."
+ "2026-11-10": {
+  "hash": "155fac9a074feb6f0ea31ddd4a8f6f54b740bc2e",
+  "text": "Silo made sure exported computers never include their memory, and brought computer use back on older virtual machines. Fjord's Router summary now keeps finished threads until you clear them and shows whether linked pull requests merged or closed."
+ },
+ "2026-11-11": {
+  "hash": "3a953bbf5baad14b6dd699ce06d3256be6e7f7ce",
+  "text": "harness-bench compared Claude Code with nanocode, an open-source agent, on the same model: on two sets of coding tasks, nanocode solved about as many at similar or lower cost. Silo added one page listing what agents ask for and copies waiting for review."
  },
  "2026-11-12": {
-  "hash": "a6c6966bbb2b2e60fdf490328a13270d0e2a461f",
-  "text": "lastdrop's subagents no longer fail when an account hits its usage limit partway through: the work moves to another account with room or the next model in line. It also keeps every Claude account signed in, so idle ones stay readable."
+  "hash": "133fab5c2cff81e08e342883f8c3ed950c7b97ed",
+  "text": "lastdrop subagents that hit a usage limit partway through now carry on, on another Claude account or the next model in line, instead of failing. Silo computers are now refused right away when connecting to an address not on their list, on any port."
  }
 }
