@@ -24,7 +24,7 @@ The hero is a WebGL scene (a point-cloud mountain with a Fonte river). It is gen
 - `src/scripts/signature.js`: the scene module (Three.js), loaded as a separate chunk after the page is idle.
 - `public/signature/*.bin`, `meta.json`: the baked geometry.
 - `src/assets/signature/poster-{dark,light}.png`: the posters (the LCP), converted to AVIF/WebP by Astro. Regenerate them from the live scene with `bun dev` running, then `node scripts/make-posters.mjs`.
-- `public/og.png`: the Open Graph image (1200x630).
+- `public/og.png`: the Open Graph image (1200x630), rendered by `bun scripts/make-og.mjs` from the poster, the logo, the hero sentence and the featured projects (`ORDER` in `Journal.astro`). Rerun it when any of those change; the meta tag carries a content hash so platforms refetch it.
 
 ## Scroll choreography
 
