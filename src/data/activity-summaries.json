@@ -1,4 +1,8 @@
 {
+ "2026-11-12": {
+  "hash": "ada0f1edf7bd0f4f74371059d93d6e78557b012a",
+  "text": "lastdrop now keeps every Claude account signed in, skips one that needs a new sign-in and asks you for it, and shows where work goes. In T3 Code, subagents' progress now shows live instead of only when the turn ends."
+ },
  "2026-11-11": {
   "hash": "64debb80233999e2754e6ea4a768ecbdc3dca4db",
   "text": "harness-bench compared Claude Code with nanocode, an open-source agent, on the same Claude model and tasks: neither solved detectably more, and on real GitHub issues nanocode was cheaper and faster. lastdrop now picks accounts for threads and subagents from one pool."
@@ -110,9 +114,5 @@
  "2026-10-14": {
   "hash": "81ae6010bb8f7c17bb96e0ba4f27bd7ee6aca6ae",
   "text": "Silo moved its engine into a separate background service that its app now talks to, and it can manage computers on another Mac. Fjord gained a ⌘K palette that finds inbox items, sessions, settings and computers."
- },
- "2026-11-12": {
-  "hash": "ada0f1edf7bd0f4f74371059d93d6e78557b012a",
-  "text": "lastdrop now keeps every Claude account signed in, skips one that needs a new sign-in and asks you for it, and shows where work goes. In T3 Code, subagents' progress now shows live instead of only when the turn ends."
  }
 }
