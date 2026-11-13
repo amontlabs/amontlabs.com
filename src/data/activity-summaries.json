@@ -1,8 +1,4 @@
 {
- "2026-11-12": {
-  "hash": "133fab5c2cff81e08e342883f8c3ed950c7b97ed",
-  "text": "lastdrop subagents that hit a usage limit partway through now carry on, on another Claude account or the next model in line, instead of failing. Silo computers are now refused right away when connecting to an address not on their list, on any port."
- },
  "2026-11-11": {
   "hash": "3a953bbf5baad14b6dd699ce06d3256be6e7f7ce",
   "text": "harness-bench compared Claude Code with nanocode, an open-source agent, on the same model: on two sets of coding tasks, nanocode solved about as many at similar or lower cost. Silo added one page listing what agents ask for and copies waiting for review."
@@ -111,8 +107,12 @@
   "hash": "35b528e12095aa8aa0989be7637b631424be0916",
   "text": "Fjord can now stop a running coding session or interrupt it with a new message, and each send checks whether an item should be archived or a session stopped. Silo can repair its access to the Mac's Keychain, and imported Macs now finish setup when one step fails."
  },
+ "2026-11-12": {
+  "hash": "07afa0f4d2153185bf670fb7bf47b1f5c108129e",
+  "text": "A lastdrop subagent that runs out of usage partway through no longer fails: it carries on with another Claude account or the next model in line. Silo now blocks a computer's connections to addresses not on its allowed list, on every port."
+ },
  "2026-11-13": {
-  "hash": "f9aa30b8331abd929b58e0d6d76fa1a09963186c",
-  "text": "lastdrop subagents and T3 Code threads hit by brief server errors from Claude now wait and try again on the same account, then move to another if it keeps failing. A message sent to steer a thread mid-task now continues the same work instead of starting over."
+  "hash": "71e0a6b334c2d84a7843cadbacf0f75e4febc8eb",
+  "text": "atelier was made public: a tool that lets several coding agents build one project at once, checking merged work on your own machines instead of waiting on CI. lastdrop now retries subagents and threads through brief Claude errors, then hands work to another account."
  }
 }
