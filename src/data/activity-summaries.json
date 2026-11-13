@@ -103,16 +103,16 @@
   "hash": "aa25decb07926a1de0bc7fab6596c842b463ef56",
   "text": "In Fjord, highlighted items in the Router's brief now respond to the inbox's keyboard shortcuts, and the brief's past versions moved to a resizable side panel that stays as left between launches. Pressing Esc also stopped closing the window."
  },
- "2026-10-15": {
-  "hash": "35b528e12095aa8aa0989be7637b631424be0916",
-  "text": "Fjord can now stop a running coding session or interrupt it with a new message, and each send checks whether an item should be archived or a session stopped. Silo can repair its access to the Mac's Keychain, and imported Macs now finish setup when one step fails."
- },
  "2026-11-12": {
-  "hash": "07afa0f4d2153185bf670fb7bf47b1f5c108129e",
-  "text": "A lastdrop subagent that runs out of usage partway through no longer fails: it carries on with another Claude account or the next model in line. Silo now blocks a computer's connections to addresses not on its allowed list, on every port."
+  "hash": "86b0b96e3083ff355e0939808f466a89079d9733",
+  "text": "Fjord's Router got a new page for T3 Code threads that shows each thread's subagents, background commands and waits. In lastdrop, a subagent that hits a usage limit partway through now hands its work to another account instead of failing."
  },
  "2026-11-13": {
-  "hash": "71e0a6b334c2d84a7843cadbacf0f75e4febc8eb",
-  "text": "atelier was made public: a tool that lets several coding agents build one project at once, checking merged work on your own machines instead of waiting on CI. lastdrop now retries subagents and threads through brief Claude errors, then hands work to another account."
+  "hash": "2c08bbcc147519e957aab7085608921f8e185239",
+  "text": "atelier, which lets several coding agents build one project in parallel and merge without waiting on CI, got a public README and an MIT licence, and Silo started using it. lastdrop now retries brief server errors, then hands the work to another account."
+ },
+ "2026-11-14": {
+  "hash": "be4262beff5a3ee2818a07ea650f9225ed5c5349",
+  "text": "Fjord fixed two bugs: its Router no longer loses your typing position when opened in a wide window, and a day's archive of finished threads can no longer be erased by the previous day's."
  }
 }
