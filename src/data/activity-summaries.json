@@ -112,7 +112,7 @@
   "text": "Fjord can now stop a running coding session or interrupt it with a new message, and each send checks whether an item should be archived or a session stopped. Silo can repair its access to the Mac's Keychain, and imported Macs now finish setup when one step fails."
  },
  "2026-11-13": {
-  "hash": "b602d88dd5f48bab68c8ec4c9ac5808ca5e727ca",
-  "text": "lastdrop subagents and T3 Code threads now wait and try again when Claude briefly answers with a server error, instead of stopping. If the errors keep coming, the work moves on to another account. lastdrop also stopped mistaking those errors for an expired sign-in."
+  "hash": "f9aa30b8331abd929b58e0d6d76fa1a09963186c",
+  "text": "lastdrop subagents and T3 Code threads hit by brief server errors from Claude now wait and try again on the same account, then move to another if it keeps failing. A message sent to steer a thread mid-task now continues the same work instead of starting over."
  }
 }
