@@ -112,7 +112,7 @@
   "text": "In Fjord, highlighted items in the Router's brief now respond to the inbox's keyboard shortcuts, and the brief's past versions moved to a resizable side panel that stays as left between launches. Pressing Esc also stopped closing the window."
  },
  "2026-11-14": {
-  "hash": "8a251370e2629604cd47a7b308f84182ccf0318b",
-  "text": "Fjord's Router cards now show an agent's whole message when you hover over the quoted part, and put a reply's links on the words that name them. Fjord also stopped a day's saved threads from being deleted while the previous day's were being saved."
+  "hash": "47ded15e0e4328117df873216634fb4ab1d14ac6",
+  "text": "Fjord's Router now shows an agent's whole message when you hover a mark after the words it backs. A working thread's card again lists each subagent, background command and wait, with its age."
  }
 }
