@@ -1,4 +1,16 @@
 {
+ "2026-11-14": {
+  "hash": "be4262beff5a3ee2818a07ea650f9225ed5c5349",
+  "text": "Fjord fixed two bugs: its Router no longer loses your typing position when opened in a wide window, and a day's archive of finished threads can no longer be erased by the previous day's."
+ },
+ "2026-11-13": {
+  "hash": "2c08bbcc147519e957aab7085608921f8e185239",
+  "text": "atelier, which lets several coding agents build one project in parallel and merge without waiting on CI, got a public README and an MIT licence, and Silo started using it. lastdrop now retries brief server errors, then hands the work to another account."
+ },
+ "2026-11-12": {
+  "hash": "86b0b96e3083ff355e0939808f466a89079d9733",
+  "text": "Fjord's Router got a new page for T3 Code threads that shows each thread's subagents, background commands and waits. In lastdrop, a subagent that hits a usage limit partway through now hands its work to another account instead of failing."
+ },
  "2026-11-11": {
   "hash": "3a953bbf5baad14b6dd699ce06d3256be6e7f7ce",
   "text": "harness-bench compared Claude Code with nanocode, an open-source agent, on the same model: on two sets of coding tasks, nanocode solved about as many at similar or lower cost. Silo added one page listing what agents ask for and copies waiting for review."
@@ -102,17 +114,5 @@
  "2026-10-16": {
   "hash": "aa25decb07926a1de0bc7fab6596c842b463ef56",
   "text": "In Fjord, highlighted items in the Router's brief now respond to the inbox's keyboard shortcuts, and the brief's past versions moved to a resizable side panel that stays as left between launches. Pressing Esc also stopped closing the window."
- },
- "2026-11-12": {
-  "hash": "86b0b96e3083ff355e0939808f466a89079d9733",
-  "text": "Fjord's Router got a new page for T3 Code threads that shows each thread's subagents, background commands and waits. In lastdrop, a subagent that hits a usage limit partway through now hands its work to another account instead of failing."
- },
- "2026-11-13": {
-  "hash": "2c08bbcc147519e957aab7085608921f8e185239",
-  "text": "atelier, which lets several coding agents build one project in parallel and merge without waiting on CI, got a public README and an MIT licence, and Silo started using it. lastdrop now retries brief server errors, then hands the work to another account."
- },
- "2026-11-14": {
-  "hash": "be4262beff5a3ee2818a07ea650f9225ed5c5349",
-  "text": "Fjord fixed two bugs: its Router no longer loses your typing position when opened in a wide window, and a day's archive of finished threads can no longer be erased by the previous day's."
  }
 }
