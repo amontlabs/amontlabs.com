@@ -12,15 +12,15 @@
     "forks": 0
   },
   "fjord": {
-    "version": "v0.10.0",
-    "releasedAt": "2026-11-13T23:40:38Z",
+    "version": "v0.11.0",
+    "releasedAt": "2026-11-14T10:47:36Z",
     "stars": 0,
     "forks": 1
   },
   "lcu": {
     "version": "v0.13.6",
     "releasedAt": "2026-11-10T11:29:31Z",
-    "stars": 2422,
+    "stars": 2424,
     "forks": 165
   },
   "lastdrop": {
@@ -29,5 +29,5 @@
     "stars": 3,
     "forks": 1
   },
-  "updatedAt": "2026-11-13T23:40:54.119Z"
+  "updatedAt": "2026-11-14T10:47:55.672Z"
 }
