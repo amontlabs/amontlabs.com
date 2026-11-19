@@ -116,7 +116,7 @@
   "text": "LCU added experimental support for DeepSeek Harness and stopped Hermes sessions from growing their prompt by about 3 KB every turn. In Fjord, each session the Router follows now shows a line on what it is about overall and one on what its latest turn did."
  },
  "2026-11-19": {
-  "hash": "86b0ab03020349ad83a03d3ac852975488d92d3a",
-  "text": "LCU can now be set up with Google Antigravity, as an experiment, and fixed Codex refusing every request in Oh My Pi while LCU was on. Silo's new plan now says watching a computer from inside is something you opt into or can turn off."
+  "hash": "1d82732a861be41c4e23c3f3e21984abd44c2313",
+  "text": "LCU now works with Google's Antigravity coding agent, in an early version, and fixed Codex refusing every request in Oh My Pi when LCU was on. Silo's rewritten plan now says how it will decide what an agent may do, and reopened the choice of virtual machine engine."
  }
 }
