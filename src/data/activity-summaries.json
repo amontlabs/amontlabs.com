@@ -111,12 +111,8 @@
   "hash": "a4ba9d39136ba14f56d7a50f59b97b9fa523e9a6",
   "text": "LCU added experimental support for DeepSeek Harness and stopped Hermes sessions from growing their prompt by about 3 KB every turn. In Fjord, each session the Router follows now shows a line on what it is about overall and one on what its latest turn did."
  },
- "2026-10-20": {
-  "hash": "1df5f7d9f7381b6a2ec357d4b73f7aa75df61204",
-  "text": "LCU fixed approvals in the Claude app, where answering the card for a new app could leave computer use waiting about 30 minutes, mostly in auto permission mode. Fjord's Router now checks more messages for parts meant for different sessions."
- },
  "2026-11-18": {
-  "hash": "c769f1448f2f4cd382cb33a6821ccb04c74fe3d5",
-  "text": "Silo emptied its public plan for a new design: agents work in a virtual machine on your device, Silo records everything they do there, and you can go back to any moment or try risky things in a copy. Its home page again says it is in heavy development."
+  "hash": "99444d879f8218a6e4d806dd11422054f8c2134a",
+  "text": "Silo set aside its earlier plan for a new design: agents work in one long-lived virtual machine, Silo records everything they do there, and you can go back to any moment. Its public plan page now starts empty while the plan is rewritten."
  }
 }
