@@ -1,4 +1,8 @@
 {
+ "2026-11-18": {
+  "hash": "99444d879f8218a6e4d806dd11422054f8c2134a",
+  "text": "Silo set aside its earlier plan for a new design: agents work in one long-lived virtual machine, Silo records everything they do there, and you can go back to any moment. Its public plan page now starts empty while the plan is rewritten."
+ },
  "2026-11-17": {
   "hash": "ed7b928b1354d522e8bd74607f59c59fc6a6082d",
   "text": "In LCU, computer-use approvals in T3 Code are approval requests again, so only you can answer them, not an agent. Silo's home page now plays a looping picture of a task in seven steps. Fjord's inbox list now keeps loading as you scroll to its end."
@@ -111,8 +115,8 @@
   "hash": "a4ba9d39136ba14f56d7a50f59b97b9fa523e9a6",
   "text": "LCU added experimental support for DeepSeek Harness and stopped Hermes sessions from growing their prompt by about 3 KB every turn. In Fjord, each session the Router follows now shows a line on what it is about overall and one on what its latest turn did."
  },
- "2026-11-18": {
-  "hash": "99444d879f8218a6e4d806dd11422054f8c2134a",
-  "text": "Silo set aside its earlier plan for a new design: agents work in one long-lived virtual machine, Silo records everything they do there, and you can go back to any moment. Its public plan page now starts empty while the plan is rewritten."
+ "2026-11-19": {
+  "hash": "86b0ab03020349ad83a03d3ac852975488d92d3a",
+  "text": "LCU can now be set up with Google Antigravity, as an experiment, and fixed Codex refusing every request in Oh My Pi while LCU was on. Silo's new plan now says watching a computer from inside is something you opt into or can turn off."
  }
 }
