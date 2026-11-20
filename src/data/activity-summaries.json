@@ -1,4 +1,8 @@
 {
+ "2026-11-19": {
+  "hash": "1d82732a861be41c4e23c3f3e21984abd44c2313",
+  "text": "LCU now works with Google's Antigravity coding agent, in an early version, and fixed Codex refusing every request in Oh My Pi when LCU was on. Silo's rewritten plan now says how it will decide what an agent may do, and reopened the choice of virtual machine engine."
+ },
  "2026-11-18": {
   "hash": "99444d879f8218a6e4d806dd11422054f8c2134a",
   "text": "Silo set aside its earlier plan for a new design: agents work in one long-lived virtual machine, Silo records everything they do there, and you can go back to any moment. Its public plan page now starts empty while the plan is rewritten."
@@ -110,13 +114,5 @@
  "2026-10-22": {
   "hash": "01d011412510e960611179b175d7830fe9f3cfc1",
   "text": "Fjord can now wake a Claude Code chat that the Claude app isn't running, so a message sent to it still goes through. Retrying a failed send now resends it as it was."
- },
- "2026-10-21": {
-  "hash": "a4ba9d39136ba14f56d7a50f59b97b9fa523e9a6",
-  "text": "LCU added experimental support for DeepSeek Harness and stopped Hermes sessions from growing their prompt by about 3 KB every turn. In Fjord, each session the Router follows now shows a line on what it is about overall and one on what its latest turn did."
- },
- "2026-11-19": {
-  "hash": "1d82732a861be41c4e23c3f3e21984abd44c2313",
-  "text": "LCU now works with Google's Antigravity coding agent, in an early version, and fixed Codex refusing every request in Oh My Pi when LCU was on. Silo's rewritten plan now says how it will decide what an agent may do, and reopened the choice of virtual machine engine."
  }
 }
