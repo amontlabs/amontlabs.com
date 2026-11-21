@@ -1,4 +1,8 @@
 {
+ "2026-11-20": {
+  "hash": "e3a2409d50e8897c9fbb2f282a599e71d67d6bd0",
+  "text": "Silo filled its public plan page with the rewritten plan, in thirteen parts. Every decision and feature there now has its own comment thread, comments can get a thumbs-up, and each entry shows how it changed over time."
+ },
  "2026-11-19": {
   "hash": "1d82732a861be41c4e23c3f3e21984abd44c2313",
   "text": "LCU now works with Google's Antigravity coding agent, in an early version, and fixed Codex refusing every request in Oh My Pi when LCU was on. Silo's rewritten plan now says how it will decide what an agent may do, and reopened the choice of virtual machine engine."
@@ -111,12 +115,8 @@
   "hash": "b1e322c30e341b6d1cfedc5f5199aa33d9ed35f4",
   "text": "Fjord now delivers every message the same way, through another chat the Claude app runs, whether the target is running or asleep, and shows each one going from sending to delivered. LCU's update notices now reach the person only, not the agent's model."
  },
- "2026-11-20": {
-  "hash": "e3a2409d50e8897c9fbb2f282a599e71d67d6bd0",
-  "text": "Silo filled its public plan page with the rewritten plan, in thirteen parts. Every decision and feature there now has its own comment thread, comments can get a thumbs-up, and each entry shows how it changed over time."
- },
  "2026-11-21": {
-  "hash": "ba9a50dc24830f9a5b94b37940f052cf9b8a7657",
-  "text": "Silo reworked the motion on its public plan page: the grid of tiles now rolls up into a strip like a blind and back down, the Notes and History panels grow open, and going back to where you were brings the right spot into view."
+  "hash": "143ccd5f9dad4ee6e60d8e80ba44138609f96a96",
+  "text": "Silo's public plan page got a first drawing of the product as a map, showing its thirteen parts and how they connect, offered as a proposal. Moving around the page now animates smoothly instead of jumping."
  }
 }
