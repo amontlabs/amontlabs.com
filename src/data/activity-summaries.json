@@ -111,8 +111,12 @@
   "hash": "b1e322c30e341b6d1cfedc5f5199aa33d9ed35f4",
   "text": "Fjord now delivers every message the same way, through another chat the Claude app runs, whether the target is running or asleep, and shows each one going from sending to delivered. LCU's update notices now reach the person only, not the agent's model."
  },
- "2026-10-22": {
-  "hash": "01d011412510e960611179b175d7830fe9f3cfc1",
-  "text": "Fjord can now wake a Claude Code chat that the Claude app isn't running, so a message sent to it still goes through. Retrying a failed send now resends it as it was."
+ "2026-11-20": {
+  "hash": "e3a2409d50e8897c9fbb2f282a599e71d67d6bd0",
+  "text": "Silo filled its public plan page with the rewritten plan, in thirteen parts. Every decision and feature there now has its own comment thread, comments can get a thumbs-up, and each entry shows how it changed over time."
+ },
+ "2026-11-21": {
+  "hash": "ba9a50dc24830f9a5b94b37940f052cf9b8a7657",
+  "text": "Silo reworked the motion on its public plan page: the grid of tiles now rolls up into a strip like a blind and back down, the Notes and History panels grow open, and going back to where you were brings the right spot into view."
  }
 }
