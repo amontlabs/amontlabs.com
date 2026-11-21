@@ -116,7 +116,7 @@
   "text": "Fjord now delivers every message the same way, through another chat the Claude app runs, whether the target is running or asleep, and shows each one going from sending to delivered. LCU's update notices now reach the person only, not the agent's model."
  },
  "2026-11-21": {
-  "hash": "a4ccf4c81a1f9c3c1b98b01d083d5a8a69d5f502",
-  "text": "LCU now works with Grok CLI on macOS, in an early version. Silo's plan now lists 96 proposed features in the order to build them, and describes extensions: add-ons that run in a computer of their own and use only the tools they declare."
+  "hash": "09e909958e34839a9c7c654ad63eb19d4f1481c4",
+  "text": "LCU now works with Grok CLI on macOS, in an early version. Silo's plan grew to 96 proposed features in build order, and now describes extensions: add-ons that run in a computer of their own and use only the tools they declare."
  }
 }
