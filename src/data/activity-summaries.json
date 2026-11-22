@@ -116,7 +116,7 @@
   "text": "LCU added experimental support for Junie, where the agent asks for each app and the person approves it with Touch ID or a password. On Windows, LCU now installs with the current ChatGPT Store app, including when that app is on another drive."
  },
  "2026-11-22": {
-  "hash": "7ad9ee75a6cbaa071ee4670c09d2d6da426520da",
-  "text": "Silo's plan now splits who decides: AI agents settle how Silo is built, and the owner settles its promises, behaviour and prices. Agents took 23 such decisions, and the plan's entries now carry recommendations, many rewritten after other agents read them fresh."
+  "hash": "3a83ff8180c45c849fa4f8418d3d3b52dcd9a1b1",
+  "text": "Silo's public plan page now lets its owner accept or drop a proposal from the page itself. Its home page plays a new looping film of Silo's window in eleven shots. Agents now settle how Silo is built; the owner decides its promises, behaviour and prices."
  }
 }
