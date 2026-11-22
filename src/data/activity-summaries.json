@@ -1,4 +1,8 @@
 {
+ "2026-11-21": {
+  "hash": "09e909958e34839a9c7c654ad63eb19d4f1481c4",
+  "text": "LCU now works with Grok CLI on macOS, in an early version. Silo's plan grew to 96 proposed features in build order, and now describes extensions: add-ons that run in a computer of their own and use only the tools they declare."
+ },
  "2026-11-20": {
   "hash": "d368952a9629cd744ea163560c26f7d560d86ecd",
   "text": "Silo's rewritten plan landed, split into thirteen parts, and its public plan page now shows it. Every decision and feature on that page now has its own comment thread, and comments can be upvoted."
@@ -111,12 +115,8 @@
   "hash": "92500d439e880d3b39aad61b0ed9b38cc7eecfe6",
   "text": "LCU added experimental support for Junie, where the agent asks for each app and the person approves it with Touch ID or a password. On Windows, LCU now installs with the current ChatGPT Store app, including when that app is on another drive."
  },
- "2026-10-23": {
-  "hash": "b1e322c30e341b6d1cfedc5f5199aa33d9ed35f4",
-  "text": "Fjord now delivers every message the same way, through another chat the Claude app runs, whether the target is running or asleep, and shows each one going from sending to delivered. LCU's update notices now reach the person only, not the agent's model."
- },
- "2026-11-21": {
-  "hash": "09e909958e34839a9c7c654ad63eb19d4f1481c4",
-  "text": "LCU now works with Grok CLI on macOS, in an early version. Silo's plan grew to 96 proposed features in build order, and now describes extensions: add-ons that run in a computer of their own and use only the tools they declare."
+ "2026-11-22": {
+  "hash": "7ad9ee75a6cbaa071ee4670c09d2d6da426520da",
+  "text": "Silo's plan now splits who decides: AI agents settle how Silo is built, and the owner settles its promises, behaviour and prices. Agents took 23 such decisions, and the plan's entries now carry recommendations, many rewritten after other agents read them fresh."
  }
 }
