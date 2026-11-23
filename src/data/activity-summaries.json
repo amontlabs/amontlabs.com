@@ -1,4 +1,8 @@
 {
+ "2026-11-22": {
+  "hash": "3a83ff8180c45c849fa4f8418d3d3b52dcd9a1b1",
+  "text": "Silo's public plan page now lets its owner accept or drop a proposal from the page itself. Its home page plays a new looping film of Silo's window in eleven shots. Agents now settle how Silo is built; the owner decides its promises, behaviour and prices."
+ },
  "2026-11-21": {
   "hash": "09e909958e34839a9c7c654ad63eb19d4f1481c4",
   "text": "LCU now works with Grok CLI on macOS, in an early version. Silo's plan grew to 96 proposed features in build order, and now describes extensions: add-ons that run in a computer of their own and use only the tools they declare."
@@ -110,13 +114,5 @@
  "2026-10-25": {
   "hash": "dae2d26cd54a6967051189a4b64d623b6959e92a",
   "text": "Fjord's Router now shows its answer as it is written, with its thinking and tool calls a click away. LCU fixed computer use for teammates in Claude Code agent teams, where every call had failed, and Junie on macOS now gets LCU's instructions from its first prompt."
- },
- "2026-10-24": {
-  "hash": "92500d439e880d3b39aad61b0ed9b38cc7eecfe6",
-  "text": "LCU added experimental support for Junie, where the agent asks for each app and the person approves it with Touch ID or a password. On Windows, LCU now installs with the current ChatGPT Store app, including when that app is on another drive."
- },
- "2026-11-22": {
-  "hash": "3a83ff8180c45c849fa4f8418d3d3b52dcd9a1b1",
-  "text": "Silo's public plan page now lets its owner accept or drop a proposal from the page itself. Its home page plays a new looping film of Silo's window in eleven shots. Agents now settle how Silo is built; the owner decides its promises, behaviour and prices."
  }
 }
