@@ -110,5 +110,9 @@
  "2026-10-27": {
   "hash": "0eda17c164306b4dda83115e0c281ecef92ac732",
   "text": "lastdrop switched to running Claude Code's subagents on other Claude accounts that still have room, instead of opening a Claude window per account. It also let people set up their own agents on Codex, Antigravity, Z.ai or OpenRouter models, which Claude calls like its own."
+ },
+ "2026-11-25": {
+  "hash": "05b3e3571bd176b9551e7dc47a14ea26e42ce425",
+  "text": "Silo's plan now proposes setting each computer for Claude with an API key or a plan; with a plan, Silo passes the traffic on without reading it. Research found the computer's clock stays behind after the Mac sleeps, and tested a fix that resets it on waking."
  }
 }
