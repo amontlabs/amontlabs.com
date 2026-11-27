@@ -106,5 +106,9 @@
  "2026-10-29": {
   "hash": "faa788bda095a53b65d10d4f7e07183bc92cc8fe",
   "text": "lastdrop now takes several accounts for every provider and runs agents on Codex, Z.ai and OpenRouter on the one with the most usage left. LCU's Claude Code setup stopped saving a path tied to one machine, so a skills folder kept in a repository stays the same on every machine."
+ },
+ "2026-11-27": {
+  "hash": "e98ca09d21e8f4b5c4835d1832d2d340677113ed",
+  "text": "LCU now works with any app that can plug in outside tools, such as Amp, and when such an app cannot show the request to allow a program, the agent is told how to approve it. LCU also fixed two failures when installing on Windows 11."
  }
 }
