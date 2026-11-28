@@ -1,8 +1,4 @@
 {
- "2026-11-25": {
-  "hash": "05b3e3571bd176b9551e7dc47a14ea26e42ce425",
-  "text": "Silo's plan now proposes setting each computer for Claude with an API key or a plan; with a plan, Silo passes the traffic on without reading it. Research found the computer's clock stays behind after the Mac sleeps, and tested a fix that resets it on waking."
- },
  "2026-11-23": {
   "hash": "0f13b209e1bd995d41aceb550eb6bcf043e94bcb",
   "text": "Silo's plan now says that stopping an agent's tool call comes from an add-on, not from Silo itself, and works by making the call fail inside the agent's computer while the traffic passes unchanged. The only change Silo still makes to traffic is swapping in a secret."
@@ -103,8 +99,24 @@
   "hash": "b2e90a874ea073adc4cb738071d64ffd9f837ce4",
   "text": "lastdrop added a Stats tab with token use and what it would cost at API prices, by day, project, account and model. An agent can now have backup models that run if the first can't start, and the app now updates itself."
  },
+ "2026-11-24": {
+  "hash": "82e47972ff65fa9752715c9d5f954b0f50ed9900",
+  "text": "Silo's plan added holding an agent's destructive calls until you say yes, and showed how AWS and SSH keys and database passwords can stay outside the agent's computer. A prototype also tried a morning review of a night of Claude Code and Codex work."
+ },
+ "2026-11-25": {
+  "hash": "4d068175e669cf33348ad6dbe003668eb0215871",
+  "text": "Silo's plan added a per-computer setting for Claude with an API key or a subscription, tried in a prototype with real Claude Code. Another prototype sent a held request for your approval to a paired phone and brought the answer back."
+ },
+ "2026-11-26": {
+  "hash": "f2090db61348068226d34647da23b784e9727c3c",
+  "text": "Silo's research tested a night where an agent left 29 things set to run later: Silo's record found all of them, and a reworked undo removed all 29, where the earlier one removed 8. An attack test found that a tiny network message could cut a computer off, and wrote a patch."
+ },
  "2026-11-27": {
-  "hash": "99548d81f5b6ee5b74644a067c919140645ae5a6",
-  "text": "LCU now works with any agent app that plugs in tools the standard way, such as Amp; when that app cannot show the request to allow an app, the agent is told how you can allow it. Its Windows installer, still a trial, now works with the current Store version of Codex."
+  "hash": "a723288da6a056332900b8c03435a7b7194c4a8d",
+  "text": "LCU can now be used from any agent app that can plug in tools, such as Amp, and app approvals work even when that app cannot show them. Silo's plan proposed that spending and budgets come as an add-on shipped with Silo, while Silo itself only records each call to a model."
+ },
+ "2026-11-28": {
+  "hash": "edb739aba607bd1f99189279e1a2660163994267",
+  "text": "Silo's plan took in 87 research drafts and settled that Silo does only what something outside the agent's computer can do, like recording and going back. Its first build will run Linux on the Mac. lastdrop now warns against Antigravity agents."
  }
 }
